@@ -38,7 +38,7 @@
 - [ ] Style presets: concise vs comprehensive **[NEXT]**
 
 ## 6) Local LLM Runner
-- [x] Model Runner HTTP adapter (configurable base URL, API key, max tokens) **[MVP]**
+- [x] Model Runner HTTP adapter (host/container defaults, env/API key overrides) **[MVP]**
 - [ ] llama.cpp adapter **[NEXT]**
 - [ ] Structured outputs / tool‑use compatibility **[STRETCH]**
 

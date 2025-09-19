@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+_AUTO_BASE_URL = object()
+_AUTO_API_KEY = object()
 
 
 @dataclass
@@ -28,26 +32,41 @@ class LLMRequest:
 class LLMRunner:
     """Executes prompts against the configured local model runtime."""
 
-    DEFAULT_BASE_URL = "http://model-runner.docker.internal/engines/v1"
+    DEFAULT_MODEL = "ai/smollm2:360M-Q4_K_M"
+    DEFAULT_BASE_URLS = (
+        "http://localhost:12434/engines/v1",
+        "http://model-runner.docker.internal/engines/v1",
+    )
+    ENV_MODEL_KEYS = ("DOCGEN_LLM_MODEL", "MODEL_RUNNER_MODEL", "OPENAI_MODEL")
+    ENV_BASE_URL_KEYS = (
+        "DOCGEN_LLM_BASE_URL",
+        "MODEL_RUNNER_BASE_URL",
+        "OPENAI_BASE_URL",
+    )
+    ENV_API_KEY_KEYS = (
+        "DOCGEN_LLM_API_KEY",
+        "MODEL_RUNNER_API_KEY",
+        "OPENAI_API_KEY",
+    )
 
     def __init__(
         self,
-        model: str = "llama3:8b-instruct",
+        model: str | None = None,
         *,
-        base_url: str | None = DEFAULT_BASE_URL,
+        base_url: str | None | object = _AUTO_BASE_URL,
         executable: str = "ollama",
         temperature: Optional[float] = 0.2,
         max_tokens: Optional[int] = None,
-        api_key: Optional[str] = None,
+        api_key: str | None | object = _AUTO_API_KEY,
         request_timeout: Optional[float] = 60.0,
         runner: Callable[[LLMRequest], str] | None = None,
     ) -> None:
-        self.model = model
-        self.base_url = self._normalize_base_url(base_url)
+        self.model = self._resolve_model(model)
+        self.base_url = self._resolve_base_url(base_url)
         self.executable = executable
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.api_key = api_key
+        self.api_key = self._resolve_api_key(api_key)
         self.request_timeout = request_timeout
         if runner is not None:
             self._runner = runner
@@ -70,9 +89,7 @@ class LLMRunner:
         return self._runner(request)
 
     @staticmethod
-    def _normalize_base_url(url: str | None) -> str | None:
-        if not url:
-            return None
+    def _normalize_base_url(url: str) -> str:
         return url.rstrip("/")
 
     @staticmethod
@@ -171,3 +188,37 @@ class LLMRunner:
         if isinstance(text, str):
             return text
         return ""
+
+    def _resolve_model(self, model: str | None) -> str:
+        if model:
+            return model
+        env_value = self._first_env_value(self.ENV_MODEL_KEYS)
+        if env_value:
+            return env_value
+        return self.DEFAULT_MODEL
+
+    def _resolve_base_url(self, base_url: str | None | object) -> str | None:
+        if base_url is None:
+            return None
+        if base_url is not _AUTO_BASE_URL:
+            return self._normalize_base_url(str(base_url))
+        env_value = self._first_env_value(self.ENV_BASE_URL_KEYS)
+        if env_value:
+            return self._normalize_base_url(env_value)
+        for candidate in self.DEFAULT_BASE_URLS:
+            if candidate:
+                return self._normalize_base_url(candidate)
+        return None
+
+    def _resolve_api_key(self, api_key: str | None | object) -> str | None:
+        if api_key is _AUTO_API_KEY:
+            return self._first_env_value(self.ENV_API_KEY_KEYS)
+        return api_key  # type: ignore[return-value]
+
+    @staticmethod
+    def _first_env_value(keys: Sequence[str]) -> str | None:
+        for key in keys:
+            value = os.getenv(key)
+            if value:
+                return value
+        return None

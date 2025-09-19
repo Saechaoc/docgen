@@ -91,8 +91,8 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 
 ### 3.6 Local LLM Runner
 
-* Pluggable runtime with Docker Model Runner HTTP adapter by default and optional `ollama` CLI fallback.
-* Configurable base URL (`http://model-runner.docker.internal/engines/v1` vs `http://localhost:12434/engines/v1`) and API key for offline deployments.
+* Pluggable runtime that prefers the Docker Model Runner HTTP endpoint (host `http://localhost:12434/engines/v1`, container `http://model-runner.docker.internal/engines/v1`) with environment overrides and an `ollama` CLI fallback.
+* Defaults to `ai/smollm2:360M-Q4_K_M` but respects `.docgen.yml` and OpenAI-compatible env vars for alternate weights and API keys.
 * Supports **function calling style** for structured outputs when available.
 * Streaming decode with stop tokens; **section-by-section** generation to stay within context limits.
 

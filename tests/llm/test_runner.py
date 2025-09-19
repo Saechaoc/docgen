@@ -97,3 +97,54 @@ def test_llm_runner_http_posts_payload(monkeypatch) -> None:
     assert payload["temperature"] == 0.05
     assert payload["max_tokens"] == 128
     assert captured["timeout"] == 25.0
+
+
+def test_llm_runner_defaults_to_host_base_url(monkeypatch) -> None:
+    for key in (
+        "DOCGEN_LLM_BASE_URL",
+        "MODEL_RUNNER_BASE_URL",
+        "OPENAI_BASE_URL",
+        "DOCGEN_LLM_API_KEY",
+        "MODEL_RUNNER_API_KEY",
+        "OPENAI_API_KEY",
+        "DOCGEN_LLM_MODEL",
+        "MODEL_RUNNER_MODEL",
+        "OPENAI_MODEL",
+    ):
+        monkeypatch.delenv(key, raising=False)
+
+    captured = {}
+
+    def fake_runner(request):
+        captured["base_url"] = request.base_url
+        captured["model"] = request.model
+        captured["api_key"] = request.api_key
+        return "ok"
+
+    runner = LLMRunner(runner=fake_runner)
+    runner.run("ping")
+
+    assert captured["base_url"] == "http://localhost:12434/engines/v1"
+    assert captured["model"] == "ai/smollm2:360M-Q4_K_M"
+    assert captured["api_key"] is None
+
+
+def test_llm_runner_prefers_environment_settings(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://custom-host:9000/engine")
+    monkeypatch.setenv("OPENAI_API_KEY", "env-key")
+    monkeypatch.setenv("OPENAI_MODEL", "ai/custom-model")
+
+    captured = {}
+
+    def fake_runner(request):
+        captured["base_url"] = request.base_url
+        captured["model"] = request.model
+        captured["api_key"] = request.api_key
+        return "ok"
+
+    runner = LLMRunner(runner=fake_runner)
+    runner.run("ping")
+
+    assert captured["base_url"] == "http://custom-host:9000/engine"
+    assert captured["model"] == "ai/custom-model"
+    assert captured["api_key"] == "env-key"
