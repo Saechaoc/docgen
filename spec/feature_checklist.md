@@ -1,0 +1,101 @@
+# Intelligent README Generator — Feature Checklist
+
+> Status legend: ☐ Not started · ◐ In progress · ✔ Done  
+> Scope tags: **[MVP]** required for proof‑of‑concept, **[NEXT]** nice‑to‑have soon, **[STRETCH]** later
+
+## 1) Core Workflows
+- [ ] **docgen init** — Initialize README for repos without docs **[MVP]**
+- [ ] **docgen update** — Detect changes on commit/PR and patch affected sections **[MVP]**
+- [ ] **docgen regenerate** — Manual full/partial regeneration **[MVP]**
+- [ ] Dry‑run mode (`--dry-run`) to preview diffs without writing **[NEXT]**
+- [ ] Service mode (FastAPI) endpoints for CI/bots **[STRETCH]**
+
+## 2) Repository Scanning & Indexing
+- [ ] Walk filesystem with ignore rules (`.gitignore`, `.docgen.yml`) **[MVP]**
+- [ ] Build normalized manifest of files, roles (src/test/docs/config/infra) **[MVP]**
+- [ ] Hash & cache file metadata to speed subsequent runs **[MVP]**
+- [ ] Entrypoint detection (e.g., `main()`, `@SpringBootApplication`, FastAPI app) **[NEXT]**
+- [ ] Monorepo module detection **[NEXT]**
+
+## 3) Analyzers (Plugin‑based)
+- [ ] Language analyzers: Python, Java, Node.js (Tier‑1) **[MVP]**
+- [ ] Build analyzers: Poetry/Setuptools, Maven/Gradle, npm/pnpm/yarn **[MVP]**
+- [ ] Dependency analyzers from manifest files **[MVP]**
+- [ ] Pattern analyzers: Docker/K8s, CI config, monorepo layout **[NEXT]**
+- [ ] Tree‑sitter powered symbol/entrypoint extraction (flagged) **[STRETCH]**
+
+## 4) Knowledge Store (RAG)
+- [ ] Local embedding model + chunking strategy **[MVP]**
+- [ ] Index `README`, `/docs`, top N source headers & comments **[MVP]**
+- [ ] Section‑scoped retrieval (top‑k per section) **[MVP]**
+- [ ] Lightweight knowledge graph of modules/services/signals **[NEXT]**
+
+## 5) Prompting & Templates
+- [ ] Jinja2 templates per section (intro, features, architecture, quickstart, config, build/test, deployment, troubleshooting, FAQ, license) **[MVP]**
+- [ ] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
+- [ ] Token budgeting & streaming section‑by‑section generation **[MVP]**
+- [ ] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
+- [ ] Style presets: concise vs comprehensive **[NEXT]**
+
+## 6) Local LLM Runner
+- [ ] Ollama adapter (model, temperature, max tokens) **[MVP]**
+- [ ] llama.cpp adapter **[NEXT]**
+- [ ] Structured outputs / tool‑use compatibility **[STRETCH]**
+
+## 7) Post‑Processing
+- [ ] Markdown lint: heading hierarchy, code fences, line length **[MVP]**
+- [ ] Auto ToC (≤ level 3) **[MVP]**
+- [ ] Badges (build, coverage, license) with safe defaults **[NEXT]**
+- [ ] Link validator (relative/absolute) **[NEXT]**
+- [ ] Managed markers for idempotent patching (`<!-- docgen:begin:end -->`) **[MVP]**
+
+## 8) Git Integration
+- [ ] Diff detection (map changed files → impacted sections) **[MVP]**
+- [ ] Branch + PR creation with summary of README deltas **[MVP]**
+- [ ] Commit mode for init or small changes (configurable) **[NEXT]**
+- [ ] Prevent loops on README‑only changes **[MVP]**
+
+## 9) Configuration
+- [ ] Parse `.docgen.yml` (LLM, readme style, analyzers, publish) **[MVP]**
+- [ ] Path exclusions & `watched_globs` for CI triggers **[MVP]**
+- [ ] Per‑section on/off toggles and titles **[NEXT]**
+
+## 10) CI Integration
+- [ ] GitHub Actions example workflow **[MVP]**
+- [ ] GitLab CI and Bitbucket Pipelines samples **[NEXT]**
+- [ ] Labeling (`docs:auto`) and PR update behavior **[NEXT]**
+
+## 11) Security & Privacy
+- [ ] Local‑only models; never exfiltrate code **[MVP]**
+- [ ] Respect `.gitignore`; exclude large binaries/secrets **[MVP]**
+- [ ] Optional simple secret scanner gate **[NEXT]**
+
+## 12) Multi‑Language & Project Types
+- [ ] Tier‑1: Python (Poetry/Setuptools), Java (Maven/Gradle/Spring Boot), Node.js (npm/pnpm/Express/Next) **[MVP]**
+- [ ] Tier‑2: Go, Rust, Ruby, PHP **[STRETCH]**
+- [ ] Framework‑aware quickstart commands per build system **[MVP]**
+
+## 13) Quality Gates & Evaluation
+- [ ] Command validation (existence checks) **[MVP]**
+- [ ] No‑hallucination checks: reject facts not in signals/RAG **[MVP]**
+- [ ] README scorecard (coverage, buildability, link validity, diff alignment, lint) **[NEXT]**
+
+## 14) Performance & Caching
+- [ ] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
+- [ ] Incremental RAG refresh (changed files only) **[NEXT]**
+
+## 15) Error Handling & UX
+- [ ] Fail‑safe stub generation when evidence is insufficient **[MVP]**
+- [ ] Clear run logs + PR body with rationale (“sections updated because…”) **[MVP]**
+- [ ] Helpful CLI errors and `--verbose` flag **[MVP]**
+
+## 16) Extensibility
+- [ ] Analyzer ABC and plugin discovery **[MVP]**
+- [ ] Template packs (org‑style) **[NEXT]**
+
+---
+
+### Definition of Done (per section)
+- [ ] Passing unit & integration tests for core logic
+- [ ] Golden README regression test(s)
+- [ ] Meets lint/style requirements
