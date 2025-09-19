@@ -49,3 +49,23 @@ def test_run_init_refuses_to_overwrite_existing_readme(tmp_path: Path) -> None:
 
     with pytest.raises(FileExistsError):
         orchestrator.run_init(str(repo_root))
+
+def test_run_init_respects_config_enabled_analyzers(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+    (repo_root / ".docgen.yml").write_text(
+        """
+analyzers:
+  enabled:
+    - language
+""",
+        encoding="utf-8",
+    )
+
+    orchestrator = Orchestrator()
+    readme_path = orchestrator.run_init(str(repo_root))
+    content = readme_path.read_text(encoding="utf-8")
+
+    assert "python -m pytest" not in content
+    assert "Primary language" in content

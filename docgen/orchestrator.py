@@ -1,14 +1,12 @@
-﻿"""Pipeline orchestration for init/update/regenerate flows."""
+"""Pipeline orchestration for init/update/regenerate flows."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-from .analyzers.base import Analyzer
-from .analyzers.build import BuildAnalyzer
-from .analyzers.dependencies import DependencyAnalyzer
-from .analyzers.language import LanguageAnalyzer
+from .analyzers import Analyzer, discover_analyzers
+from .config import ConfigError, DocGenConfig, load_config
 from .models import Signal
 from .prompting.builder import PromptBuilder
 from .repo_scanner import RepoScanner
@@ -24,22 +22,20 @@ class Orchestrator:
         prompt_builder: PromptBuilder | None = None,
     ) -> None:
         self.scanner = scanner or RepoScanner()
-        if analyzers is None:
-            self.analyzers: List[Analyzer] = [
-                LanguageAnalyzer(),
-                BuildAnalyzer(),
-                DependencyAnalyzer(),
-            ]
-        else:
-            self.analyzers = list(analyzers)
+        self._analyzer_overrides = list(analyzers) if analyzers is not None else None
         self.prompt_builder = prompt_builder or PromptBuilder()
 
     def run_init(self, path: str) -> Path:
         """Initialize README generation for a repository."""
-        manifest = self.scanner.scan(path)
+        repo_path = Path(path).expanduser().resolve()
+        manifest = self.scanner.scan(str(repo_path))
+
+        config = self._load_config(repo_path)
+        enabled_names = config.analyzers.enabled or None
+        analyzers = self._analyzer_overrides or discover_analyzers(enabled_names)
 
         signals: List[Signal] = []
-        for analyzer in self.analyzers:
+        for analyzer in analyzers:
             if analyzer.supports(manifest):
                 signals.extend(analyzer.analyze(manifest))
 
@@ -64,3 +60,9 @@ class Orchestrator:
         """Regenerate README sections on demand."""
         raise NotImplementedError
 
+    @staticmethod
+    def _load_config(repo_path: Path) -> DocGenConfig:
+        try:
+            return load_config(repo_path)
+        except ConfigError:
+            return DocGenConfig(root=repo_path)

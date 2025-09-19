@@ -90,7 +90,7 @@
 - [ ] Helpful CLI errors and `--verbose` flag **[MVP]**
 
 ## 16) Extensibility
-- [ ] Analyzer ABC and plugin discovery **[MVP]**
+- [x] Analyzer ABC and plugin discovery **[MVP]**
 - [ ] Template packs (org‑style) **[NEXT]**
 
 ---
