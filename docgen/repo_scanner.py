@@ -1,4 +1,4 @@
-﻿"""Repository scanning and manifest building utilities."""
+"""Repository scanning and manifest building utilities."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Dict, Iterator, List, Sequence
 
+from .config import ConfigError, load_config
 from .models import FileMeta, RepoManifest
 
 _EXCLUDED_DIRS = {
@@ -156,39 +157,15 @@ def _parse_gitignore(path: Path) -> List[IgnoreRule]:
 
 
 def _parse_docgen_excludes(path: Path) -> List[IgnoreRule]:
-    if not path.exists():
+    try:
+        config = load_config(path)
+    except ConfigError:
         return []
 
-    content = path.read_text(encoding="utf-8")
-    patterns: List[str] = []
-    capture = False
-    base_indent = 0
-    for raw_line in content.splitlines():
-        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
-            continue
-        indent = len(raw_line) - len(raw_line.lstrip())
-        stripped = raw_line.strip()
-        if stripped.startswith("exclude_paths:"):
-            remainder = stripped[len("exclude_paths:") :].strip()
-            if remainder.startswith("[") and remainder.endswith("]"):
-                inner = remainder[1:-1]
-                for part in inner.split(","):
-                    value = part.strip().strip('"').strip("'")
-                    if value:
-                        patterns.append(value)
-                capture = False
-            else:
-                capture = True
-                base_indent = indent
-            continue
-        if capture:
-            if indent <= base_indent:
-                capture = False
-            elif stripped.startswith("- "):
-                value = stripped[2:].strip().strip('"').strip("'")
-                if value:
-                    patterns.append(value)
-    rules = []
+    patterns = list(config.exclude_paths)
+    patterns.extend(config.analyzers.exclude_paths)
+
+    rules: List[IgnoreRule] = []
     for pattern in patterns:
         rule = _build_ignore_rule(pattern)
         if rule is not None:
@@ -233,7 +210,12 @@ def _load_manifest_cache(root: Path) -> Dict[str, Dict[str, object]]:
         size = entry.get("size")
         mtime_ns = entry.get("mtime_ns")
         file_hash = entry.get("hash")
-        if isinstance(rel_path, str) and isinstance(size, int) and isinstance(mtime_ns, int) and isinstance(file_hash, str):
+        if (
+            isinstance(rel_path, str)
+            and isinstance(size, int)
+            and isinstance(mtime_ns, int)
+            and isinstance(file_hash, str)
+        ):
             valid[rel_path] = {
                 "size": size,
                 "mtime_ns": mtime_ns,
@@ -248,23 +230,15 @@ def _store_manifest_cache(root: Path, entries: Dict[str, Dict[str, object]]) -> 
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = cache_dir / _CACHE_FILENAME
         payload = {"version": _CACHE_VERSION, "files": entries}
-        cache_path.write_text(
-            json.dumps(payload, indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
+        cache_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     except OSError:
-        # Best-effort caching; ignore filesystem errors.
         pass
 
 
 def _iter_files(root: Path, rules: Sequence[IgnoreRule]) -> Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
         current_dir = Path(dirpath)
-        rel_dir = (
-            current_dir.relative_to(root).as_posix()
-            if current_dir != root
-            else ""
-        )
+        rel_dir = current_dir.relative_to(root).as_posix() if current_dir != root else ""
 
         dirnames[:] = [name for name in dirnames if name not in _EXCLUDED_DIRS]
 

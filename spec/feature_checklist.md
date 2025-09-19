@@ -56,7 +56,7 @@
 - [ ] Prevent loops on README‑only changes **[MVP]**
 
 ## 9) Configuration
-- [ ] Parse `.docgen.yml` (LLM, readme style, analyzers, publish) **[MVP]**
+- [x] Parse `.docgen.yml` (LLM, readme style, analyzers, publish) **[MVP]**
 - [ ] Path exclusions & `watched_globs` for CI triggers **[MVP]**
 - [ ] Per‑section on/off toggles and titles **[NEXT]**
 
