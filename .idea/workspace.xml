@@ -4,17 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/build.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/build.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/dependencies.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/dependencies.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/language.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/language.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/git/publisher.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/git/publisher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/postproc/lint.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/lint.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/postproc/toc.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/toc.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
-    </list>
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -44,11 +34,14 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo.executor": "Run",
+    "Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request.executor": "Run",
     "Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing.executor": "Run",
     "Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart.executor": "Run",
     "Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme.executor": "Run",
     "Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language.executor": "Run",
     "Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor": "Run",
+    "Python tests.Python tests in tests.executor": "Run",
     "Python.test.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -57,7 +50,37 @@
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing">
+  <component name="RunManager" selected="Python tests.Python tests in tests">
+    <configuration name="Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="docgen" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;tests.git.test_publisher.test_publisher_noop_without_git_repo&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Python tests for tests.llm.test_runner.test_llm_runner_constructs_request" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="docgen" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;tests.llm.test_runner.test_llm_runner_constructs_request&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
       <option name="ENV_FILES" value="" />
@@ -70,51 +93,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;tests.test_config.test_load_config_returns_defaults_when_missing&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="docgen" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests.test_orchestrator.test_run_init_creates_readme_with_quickstart&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="docgen" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="docgen" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -133,13 +111,28 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Python tests in tests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="docgen" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/tests&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Python tests in tests" />
+        <item itemvalue="Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" />
+        <item itemvalue="Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request" />
         <item itemvalue="Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" />
         <item itemvalue="Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory" />
-        <item itemvalue="Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language" />
-        <item itemvalue="Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme" />
-        <item itemvalue="Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart" />
       </list>
     </recent_temporary>
   </component>
