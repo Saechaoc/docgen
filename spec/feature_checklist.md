@@ -38,7 +38,7 @@
 - [ ] Style presets: concise vs comprehensive **[NEXT]**
 
 ## 6) Local LLM Runner
-- [x] Ollama adapter (model, temperature, max tokens) **[MVP]**
+- [x] Model Runner HTTP adapter (configurable base URL, API key, max tokens) **[MVP]**
 - [ ] llama.cpp adapter **[NEXT]**
 - [ ] Structured outputs / tool‑use compatibility **[STRETCH]**
 

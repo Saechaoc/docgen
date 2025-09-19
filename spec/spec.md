@@ -91,7 +91,8 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 
 ### 3.6 Local LLM Runner
 
-* Pluggable runtime (e.g., `llama.cpp`, `Ollama`, `vLLM` locally).
+* Pluggable runtime with Docker Model Runner HTTP adapter by default and optional `ollama` CLI fallback.
+* Configurable base URL (`http://model-runner.docker.internal/engines/v1` vs `http://localhost:12434/engines/v1`) and API key for offline deployments.
 * Supports **function calling style** for structured outputs when available.
 * Streaming decode with stop tokens; **section-by-section** generation to stay within context limits.
 

@@ -1,10 +1,13 @@
-﻿"""Adapters around local model runtimes (Ollama, llama.cpp)."""
+"""Adapters around local model runtimes (Model Runner / Ollama)."""
 
 from __future__ import annotations
 
+import json
 import subprocess
 from dataclasses import dataclass
 from typing import Callable, Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 
 @dataclass
@@ -16,29 +19,43 @@ class LLMRequest:
     model: str
     temperature: Optional[float]
     max_tokens: Optional[int]
-    executable: str
+    executable: Optional[str]
+    base_url: Optional[str]
+    api_key: Optional[str]
+    request_timeout: Optional[float]
 
 
 class LLMRunner:
-    """Executes prompts against the configured local model (Ollama)."""
+    """Executes prompts against the configured local model runtime."""
+
+    DEFAULT_BASE_URL = "http://model-runner.docker.internal/engines/v1"
 
     def __init__(
         self,
         model: str = "llama3:8b-instruct",
         *,
+        base_url: str | None = DEFAULT_BASE_URL,
         executable: str = "ollama",
         temperature: Optional[float] = 0.2,
         max_tokens: Optional[int] = None,
+        api_key: Optional[str] = None,
+        request_timeout: Optional[float] = 60.0,
         runner: Callable[[LLMRequest], str] | None = None,
     ) -> None:
         self.model = model
+        self.base_url = self._normalize_base_url(base_url)
         self.executable = executable
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self._runner = runner or self._default_runner
+        self.api_key = api_key
+        self.request_timeout = request_timeout
+        if runner is not None:
+            self._runner = runner
+        else:
+            self._runner = self._http_runner if self.base_url else self._cli_runner
 
     def run(self, prompt: str, *, system: str | None = None) -> str:
-        """Send the prompt to the local model and return the response text."""
+        """Send the prompt to the configured local model and return the response text."""
         request = LLMRequest(
             prompt=prompt,
             system=system,
@@ -46,12 +63,21 @@ class LLMRunner:
             temperature=self.temperature,
             max_tokens=self.max_tokens,
             executable=self.executable,
+            base_url=self.base_url,
+            api_key=self.api_key,
+            request_timeout=self.request_timeout,
         )
         return self._runner(request)
 
     @staticmethod
-    def _default_runner(request: LLMRequest) -> str:
-        args = [request.executable, "run", request.model]
+    def _normalize_base_url(url: str | None) -> str | None:
+        if not url:
+            return None
+        return url.rstrip("/")
+
+    @staticmethod
+    def _cli_runner(request: LLMRequest) -> str:
+        args = [request.executable or "ollama", "run", request.model]
         if request.system:
             args.extend(["--system", request.system])
         if request.temperature is not None:
@@ -75,3 +101,73 @@ class LLMRunner:
                 f"LLM runner failed with exit code {exc.returncode}: {exc.stderr.strip()}"
             ) from exc
         return completed.stdout.strip()
+
+    @staticmethod
+    def _http_runner(request: LLMRequest) -> str:
+        if not request.base_url:
+            raise RuntimeError("HTTP runner requires a base_url to be configured.")
+        endpoint = f"{request.base_url}/chat/completions"
+        payload: dict[str, object] = {
+            "model": request.model,
+            "messages": LLMRunner._build_messages(request.system, request.prompt),
+        }
+        if request.temperature is not None:
+            payload["temperature"] = request.temperature
+        if request.max_tokens is not None:
+            payload["max_tokens"] = request.max_tokens
+
+        data = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if request.api_key:
+            headers["Authorization"] = f"Bearer {request.api_key}"
+
+        http_request = Request(endpoint, data=data, headers=headers, method="POST")
+        timeout = request.request_timeout or 60.0
+
+        try:
+            with urlopen(http_request, timeout=timeout) as response:  # type: ignore[arg-type]
+                raw = response.read()
+        except HTTPError as exc:  # pragma: no cover - depends on runtime
+            detail = exc.read().decode("utf-8", errors="ignore") if hasattr(exc, "read") else ""
+            message = detail.strip() or exc.reason
+            raise RuntimeError(
+                f"LLM HTTP runner failed with status {exc.code}: {message}"
+            ) from exc
+        except URLError as exc:  # pragma: no cover - depends on runtime
+            raise RuntimeError(f"LLM HTTP runner failed: {exc.reason}") from exc
+
+        try:
+            response_payload = json.loads(raw.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("LLM HTTP runner returned invalid JSON") from exc
+
+        content = LLMRunner._extract_content(response_payload)
+        if not content:
+            raise RuntimeError("LLM HTTP runner returned an empty response")
+        return content.strip()
+
+    @staticmethod
+    def _build_messages(system: str | None, prompt: str) -> list[dict[str, str]]:
+        messages: list[dict[str, str]] = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        return messages
+
+    @staticmethod
+    def _extract_content(payload: dict[str, object]) -> str:
+        choices = payload.get("choices")
+        if not isinstance(choices, list) or not choices:
+            return ""
+        first = choices[0]
+        if not isinstance(first, dict):
+            return ""
+        message = first.get("message")
+        if isinstance(message, dict):
+            content = message.get("content")
+            if isinstance(content, str):
+                return content
+        text = first.get("text")
+        if isinstance(text, str):
+            return text
+        return ""

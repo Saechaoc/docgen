@@ -24,6 +24,9 @@ class LLMConfig:
     model: Optional[str] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
+    base_url: Optional[str] = None
+    api_key: Optional[str] = None
+    request_timeout: Optional[float] = None
 
 
 @dataclass
@@ -83,8 +86,21 @@ def load_config(config_path: Path) -> DocGenConfig:
             model=_as_str(llm_data.get("model")),
             temperature=_as_float(llm_data.get("temperature")),
             max_tokens=_as_int(llm_data.get("max_tokens")),
+            base_url=_as_str(llm_data.get("base_url")),
+            api_key=_as_str(llm_data.get("api_key")),
+            request_timeout=_as_float(llm_data.get("request_timeout")),
         )
-        if not any((llm.runner, llm.model, llm.temperature, llm.max_tokens)):
+        if not any(
+            (
+                llm.runner,
+                llm.model,
+                llm.temperature,
+                llm.max_tokens,
+                llm.base_url,
+                llm.api_key,
+                llm.request_timeout,
+            )
+        ):
             llm = None
 
     readme_data = _as_dict(data.get("readme"))

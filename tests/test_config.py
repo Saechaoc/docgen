@@ -32,6 +32,10 @@ llm:
   runner: "ollama"
   model: "llama3:8b-instruct"
   temperature: 0.15
+  max_tokens: 256
+  base_url: "http://localhost:12434/engines/v1"
+  api_key: "test-key"
+  request_timeout: 60
 readme:
   style: "comprehensive"
   templates_dir: "docs/templates"
@@ -59,6 +63,10 @@ ci:
     assert config.llm.runner == "ollama"
     assert config.llm.model == "llama3:8b-instruct"
     assert config.llm.temperature == pytest.approx(0.15)
+    assert config.llm.max_tokens == 256
+    assert config.llm.base_url == "http://localhost:12434/engines/v1"
+    assert config.llm.api_key == "test-key"
+    assert config.llm.request_timeout == pytest.approx(60.0)
 
     assert config.readme_style == "comprehensive"
     assert config.templates_dir == (tmp_path / "docs" / "templates")
