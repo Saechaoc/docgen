@@ -4,7 +4,7 @@
 > Scope tags: **[MVP]** required for proof‑of‑concept, **[NEXT]** nice‑to‑have soon, **[STRETCH]** later
 
 ## 1) Core Workflows
-- [ ] **docgen init** — Initialize README for repos without docs **[MVP]**
+- [x] **docgen init** — Initialize README for repos without docs **[MVP]**
 - [ ] **docgen update** — Detect changes on commit/PR and patch affected sections **[MVP]**
 - [ ] **docgen regenerate** — Manual full/partial regeneration **[MVP]**
 - [ ] Dry‑run mode (`--dry-run`) to preview diffs without writing **[NEXT]**

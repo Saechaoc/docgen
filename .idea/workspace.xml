@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="" />
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/build.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/build.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/dependencies.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/dependencies.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/language.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/language.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/cli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/repo_scanner.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/repo_scanner.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spec/feature_checklist.md" beforeDir="false" afterPath="$PROJECT_DIR$/spec/feature_checklist.md" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -20,9 +29,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 7
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
   <component name="ProjectId" id="32vvPBijrbwPmBscpl2LFq9RUYY" />
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="2" id="Add" />
@@ -31,17 +40,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.test.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "ignore.virus.scanning.warn.message": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
