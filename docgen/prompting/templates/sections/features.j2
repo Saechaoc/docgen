@@ -1,0 +1,6 @@
+﻿{% if metadata['items'] %}
+{% for item in metadata['items'] %}- {{ item }}
+{% endfor %}
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

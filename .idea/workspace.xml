@@ -5,8 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/spec/feature_order.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/build.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/build.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/dependencies.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/dependencies.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/language.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/language.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/git/publisher.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/git/publisher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/postproc/lint.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/lint.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/postproc/toc.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/toc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

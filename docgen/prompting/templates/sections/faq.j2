@@ -1,0 +1,8 @@
+{% if metadata['qa'] %}
+{% for item in metadata['qa'] %}**Q: {{ item.question }}**
+A: {{ item.answer }}
+
+{% endfor %}
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

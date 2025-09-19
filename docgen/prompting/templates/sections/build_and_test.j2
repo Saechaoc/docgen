@@ -1,0 +1,10 @@
+{% if metadata['tools'] %}
+{% for tool, commands in metadata['tools'].items() %}
+**{{ tool.capitalize() }}**
+{% for cmd in commands %}- `{{ cmd }}`
+{% endfor %}
+
+{% endfor %}
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

@@ -1,0 +1,7 @@
+﻿{% if metadata['files'] %}
+Configuration files referenced by the project:
+{% for path in metadata['files'] %}- `{{ path }}`
+{% endfor %}
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

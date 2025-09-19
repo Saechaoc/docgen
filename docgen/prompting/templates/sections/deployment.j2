@@ -1,0 +1,5 @@
+{% if metadata['docker'] %}
+Container image can be built with `docker build -t <image> .`.
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

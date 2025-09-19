@@ -1,0 +1,16 @@
+﻿# {{ project_name }}
+
+{{ toc_placeholder }}
+
+<!-- docgen:begin:intro -->
+{{ intro.body | trim }}
+<!-- docgen:end:intro -->
+
+{% for section in sections %}
+## {{ section.title }}
+
+<!-- docgen:begin:{{ section.name }} -->
+{{ section.body | trim }}
+<!-- docgen:end:{{ section.name }} -->
+
+{% endfor %}

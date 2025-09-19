@@ -1,0 +1,5 @@
+{% if metadata['files'] %}
+License details are available in `{{ metadata['files'][0] }}`.
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

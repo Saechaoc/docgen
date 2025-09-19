@@ -1,0 +1,11 @@
+{% if metadata['languages'] %}
+{{ body | trim | safe }}
+{% if metadata['frameworks'] %}
+
+_Observed frameworks:_
+{% for lang, fw in metadata['frameworks'].items() if fw %}- {{ lang }}: {{ ', '.join(fw) }}
+{% endfor %}
+{% endif %}
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

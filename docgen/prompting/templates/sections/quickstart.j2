@@ -1,0 +1,10 @@
+﻿{% if metadata['commands'] %}
+Follow the steps below to get started:
+
+```bash
+{% for cmd in metadata['commands'] %}{{ cmd }}
+{% endfor %}
+```
+{% else %}
+{{ body | trim | safe }}
+{% endif %}

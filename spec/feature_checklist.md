@@ -18,9 +18,9 @@
 - [ ] Monorepo module detection **[NEXT]**
 
 ## 3) Analyzers (Plugin‑based)
-- [ ] Language analyzers: Python, Java, Node.js (Tier‑1) **[MVP]**
-- [ ] Build analyzers: Poetry/Setuptools, Maven/Gradle, npm/pnpm/yarn **[MVP]**
-- [ ] Dependency analyzers from manifest files **[MVP]**
+- [x] Language analyzers: Python, Java, Node.js (Tier‑1) **[MVP]**
+- [x] Build analyzers: Poetry/Setuptools, Maven/Gradle, npm/pnpm/yarn **[MVP]**
+- [x] Dependency analyzers from manifest files **[MVP]**
 - [ ] Pattern analyzers: Docker/K8s, CI config, monorepo layout **[NEXT]**
 - [ ] Tree‑sitter powered symbol/entrypoint extraction (flagged) **[STRETCH]**
 
@@ -31,28 +31,28 @@
 - [ ] Lightweight knowledge graph of modules/services/signals **[NEXT]**
 
 ## 5) Prompting & Templates
-- [ ] Jinja2 templates per section (intro, features, architecture, quickstart, config, build/test, deployment, troubleshooting, FAQ, license) **[MVP]**
-- [ ] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
-- [ ] Token budgeting & streaming section‑by‑section generation **[MVP]**
+- [x] Jinja2 templates per section (intro, features, architecture, quickstart, config, build/test, deployment, troubleshooting, FAQ, license) **[MVP]**
+- [x] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
+- [x] Token budgeting & streaming section‑by‑section generation **[MVP]**
 - [ ] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
 - [ ] Style presets: concise vs comprehensive **[NEXT]**
 
 ## 6) Local LLM Runner
-- [ ] Ollama adapter (model, temperature, max tokens) **[MVP]**
+- [x] Ollama adapter (model, temperature, max tokens) **[MVP]**
 - [ ] llama.cpp adapter **[NEXT]**
 - [ ] Structured outputs / tool‑use compatibility **[STRETCH]**
 
 ## 7) Post‑Processing
-- [ ] Markdown lint: heading hierarchy, code fences, line length **[MVP]**
-- [ ] Auto ToC (≤ level 3) **[MVP]**
+- [x] Markdown lint: heading hierarchy, code fences, line length **[MVP]**
+- [x] Auto ToC (≤ level 3) **[MVP]**
 - [ ] Badges (build, coverage, license) with safe defaults **[NEXT]**
 - [ ] Link validator (relative/absolute) **[NEXT]**
-- [ ] Managed markers for idempotent patching (`<!-- docgen:begin:end -->`) **[MVP]**
+- [x] Managed markers for idempotent patching (`<!-- docgen:begin:end -->`) **[MVP]**
 
 ## 8) Git Integration
 - [ ] Diff detection (map changed files → impacted sections) **[MVP]**
 - [ ] Branch + PR creation with summary of README deltas **[MVP]**
-- [ ] Commit mode for init or small changes (configurable) **[NEXT]**
+- [x] Commit mode for init or small changes (configurable) **[NEXT]**
 - [ ] Prevent loops on README‑only changes **[MVP]**
 
 ## 9) Configuration
