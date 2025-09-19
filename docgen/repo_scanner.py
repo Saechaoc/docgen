@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+from dataclasses import dataclass
+from fnmatch import fnmatchcase
 from pathlib import Path
-from typing import Iterator
+from typing import Dict, Iterator, List, Sequence
 
 from .models import FileMeta, RepoManifest
 
@@ -77,19 +80,209 @@ _ROLE_RULES: tuple[tuple[str, str], ...] = (
     ("infra", "infra"),
 )
 
+_CACHE_FILENAME = "manifest_cache.json"
+_CACHE_VERSION = 1
 
-def _iter_files(root: Path) -> Iterator[Path]:
+
+@dataclass
+class IgnoreRule:
+    """Represents an ignore rule parsed from .gitignore or .docgen.yml."""
+
+    pattern: str
+    directory_only: bool
+    anchored: bool
+    negate: bool
+    has_slash: bool
+
+    def matches(self, rel_path: str, is_dir: bool) -> bool:
+        if not self.pattern:
+            return False
+        if self.directory_only and not is_dir:
+            return False
+
+        target = rel_path
+        if self.anchored or self.has_slash:
+            if fnmatchcase(target, self.pattern):
+                return True
+            if self.directory_only and target.startswith(f"{self.pattern}/"):
+                return True
+            return False
+
+        for part in target.split("/"):
+            if fnmatchcase(part, self.pattern):
+                return True
+        return False
+
+
+def _build_ignore_rule(pattern: str, negate: bool = False) -> IgnoreRule | None:
+    pattern = pattern.strip()
+    if not pattern:
+        return None
+
+    directory_only = pattern.endswith("/")
+    if directory_only:
+        pattern = pattern[:-1]
+
+    anchored = pattern.startswith("/")
+    if anchored:
+        pattern = pattern[1:]
+
+    has_slash = "/" in pattern
+    return IgnoreRule(
+        pattern=pattern,
+        directory_only=directory_only,
+        anchored=anchored,
+        negate=negate,
+        has_slash=has_slash,
+    )
+
+
+def _parse_gitignore(path: Path) -> List[IgnoreRule]:
+    if not path.exists():
+        return []
+
+    rules: List[IgnoreRule] = []
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        negate = line.startswith("!")
+        if negate:
+            line = line[1:]
+        rule = _build_ignore_rule(line, negate=negate)
+        if rule is not None:
+            rules.append(rule)
+    return rules
+
+
+def _parse_docgen_excludes(path: Path) -> List[IgnoreRule]:
+    if not path.exists():
+        return []
+
+    content = path.read_text(encoding="utf-8")
+    patterns: List[str] = []
+    capture = False
+    base_indent = 0
+    for raw_line in content.splitlines():
+        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip())
+        stripped = raw_line.strip()
+        if stripped.startswith("exclude_paths:"):
+            remainder = stripped[len("exclude_paths:") :].strip()
+            if remainder.startswith("[") and remainder.endswith("]"):
+                inner = remainder[1:-1]
+                for part in inner.split(","):
+                    value = part.strip().strip('"').strip("'")
+                    if value:
+                        patterns.append(value)
+                capture = False
+            else:
+                capture = True
+                base_indent = indent
+            continue
+        if capture:
+            if indent <= base_indent:
+                capture = False
+            elif stripped.startswith("- "):
+                value = stripped[2:].strip().strip('"').strip("'")
+                if value:
+                    patterns.append(value)
+    rules = []
+    for pattern in patterns:
+        rule = _build_ignore_rule(pattern)
+        if rule is not None:
+            rules.append(rule)
+    return rules
+
+
+def _load_ignore_rules(root: Path) -> List[IgnoreRule]:
+    rules = _parse_gitignore(root / ".gitignore")
+    rules.extend(_parse_docgen_excludes(root / ".docgen.yml"))
+    return rules
+
+
+def _should_ignore(rel_path: str, is_dir: bool, rules: Sequence[IgnoreRule]) -> bool:
+    ignored = False
+    for rule in rules:
+        if rule.matches(rel_path, is_dir):
+            ignored = not rule.negate
+    return ignored
+
+
+def _load_manifest_cache(root: Path) -> Dict[str, Dict[str, object]]:
+    cache_path = root / ".docgen" / _CACHE_FILENAME
+    try:
+        payload = json.loads(cache_path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError, json.JSONDecodeError):
+        return {}
+
+    if not isinstance(payload, dict) or payload.get("version") != _CACHE_VERSION:
+        return {}
+
+    files = payload.get("files")
+    if not isinstance(files, dict):
+        return {}
+
+    valid: Dict[str, Dict[str, object]] = {}
+    for rel_path, entry in files.items():
+        if not isinstance(entry, dict):
+            continue
+        size = entry.get("size")
+        mtime_ns = entry.get("mtime_ns")
+        file_hash = entry.get("hash")
+        if isinstance(rel_path, str) and isinstance(size, int) and isinstance(mtime_ns, int) and isinstance(file_hash, str):
+            valid[rel_path] = {
+                "size": size,
+                "mtime_ns": mtime_ns,
+                "hash": file_hash,
+            }
+    return valid
+
+
+def _store_manifest_cache(root: Path, entries: Dict[str, Dict[str, object]]) -> None:
+    cache_dir = root / ".docgen"
+    try:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_path = cache_dir / _CACHE_FILENAME
+        payload = {"version": _CACHE_VERSION, "files": entries}
+        cache_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+    except OSError:
+        # Best-effort caching; ignore filesystem errors.
+        pass
+
+
+def _iter_files(root: Path, rules: Sequence[IgnoreRule]) -> Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
-        dirnames[:] = [
-            name
-            for name in dirnames
-            if name not in _EXCLUDED_DIRS and not name.startswith(".")
-        ]
+        current_dir = Path(dirpath)
+        rel_dir = (
+            current_dir.relative_to(root).as_posix()
+            if current_dir != root
+            else ""
+        )
+
+        dirnames[:] = [name for name in dirnames if name not in _EXCLUDED_DIRS]
+
+        filtered_dirs = []
+        for name in dirnames:
+            rel_path = f"{rel_dir}/{name}" if rel_dir else name
+            if _should_ignore(rel_path, True, rules):
+                continue
+            filtered_dirs.append(name)
+        dirnames[:] = filtered_dirs
+
         for filename in filenames:
             if filename in _EXCLUDED_FILES:
                 continue
-            path = Path(dirpath, filename)
-            yield path
+            rel_path = f"{rel_dir}/{filename}" if rel_dir else filename
+            if _should_ignore(rel_path, False, rules):
+                continue
+            yield current_dir / filename
 
 
 def _detect_language(path: Path) -> str | None:
@@ -130,13 +323,31 @@ class RepoScanner:
         if not root_path.is_dir():
             raise NotADirectoryError(f"Repository path is not a directory: {root}")
 
-        files: list[FileMeta] = []
-        for path in _iter_files(root_path):
+        rules = _load_ignore_rules(root_path)
+        cache = _load_manifest_cache(root_path)
+        cache_entries: Dict[str, Dict[str, object]] = {}
+
+        files: List[FileMeta] = []
+        for path in _iter_files(root_path, rules):
             rel_path = path.relative_to(root_path).as_posix()
+            stat_result = path.stat()
+            size = stat_result.st_size
+            mtime_ns = getattr(stat_result, "st_mtime_ns", int(stat_result.st_mtime * 1_000_000_000))
+
+            cached = cache.get(rel_path)
+            if (
+                cached
+                and cached.get("size") == size
+                and cached.get("mtime_ns") == mtime_ns
+                and isinstance(cached.get("hash"), str)
+            ):
+                file_hash = cached["hash"]  # type: ignore[index]
+            else:
+                file_hash = _hash_file(path)
+
             language = _detect_language(path)
             role = _detect_role(rel_path)
-            size = path.stat().st_size
-            file_hash = _hash_file(path)
+
             files.append(
                 FileMeta(
                     path=rel_path,
@@ -146,5 +357,13 @@ class RepoScanner:
                     hash=file_hash,
                 )
             )
+
+            cache_entries[rel_path] = {
+                "size": size,
+                "mtime_ns": mtime_ns,
+                "hash": file_hash,
+            }
+
+        _store_manifest_cache(root_path, cache_entries)
 
         return RepoManifest(root=str(root_path), files=files)

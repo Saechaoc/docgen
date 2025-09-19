@@ -11,9 +11,9 @@
 - [ ] Service mode (FastAPI) endpoints for CI/bots **[STRETCH]**
 
 ## 2) Repository Scanning & Indexing
-- [ ] Walk filesystem with ignore rules (`.gitignore`, `.docgen.yml`) **[MVP]**
-- [ ] Build normalized manifest of files, roles (src/test/docs/config/infra) **[MVP]**
-- [ ] Hash & cache file metadata to speed subsequent runs **[MVP]**
+- [x] Walk filesystem with ignore rules (`.gitignore`, `.docgen.yml`) **[MVP]**
+- [x] Build normalized manifest of files, roles (src/test/docs/config/infra) **[MVP]**
+- [x] Hash & cache file metadata to speed subsequent runs **[MVP]**
 - [ ] Entrypoint detection (e.g., `main()`, `@SpringBootApplication`, FastAPI app) **[NEXT]**
 - [ ] Monorepo module detection **[NEXT]**
 
