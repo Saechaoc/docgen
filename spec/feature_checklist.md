@@ -33,9 +33,9 @@
 ## 5) Prompting & Templates
 - [x] Jinja2 templates per section (intro, features, architecture, quickstart, config, build/test, deployment, troubleshooting, FAQ, license) **[MVP]**
 - [x] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
-- [x] Token budgeting & streaming section‑by‑section generation **[MVP]**
+- [x] Token budgeting & streaming section-by-section generation **[MVP]**
 - [ ] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
-- [ ] Style presets: concise vs comprehensive **[NEXT]**
+- [x] Style presets: concise vs comprehensive **[NEXT]**
 - [ ] Mermaid.js diagrams for architecture/flow sections where appropriate **[NEXT]**
 
 ## 6) Local LLM Runner
@@ -58,11 +58,11 @@
 
 ## 9) Configuration
 - [x] Parse `.docgen.yml` (LLM, readme style, analyzers, publish) **[MVP]**
-- [ ] Path exclusions & `watched_globs` for CI triggers **[MVP]**
-- [ ] Per‑section on/off toggles and titles **[NEXT]**
+- [x] Path exclusions & `watched_globs` for CI triggers **[MVP]**
+- [ ] Per-section on/off toggles and titles **[NEXT]**
 
 ## 10) CI Integration
-- [ ] GitHub Actions example workflow **[MVP]**
+- [x] GitHub Actions example workflow **[MVP]**
 - [ ] GitLab CI and Bitbucket Pipelines samples **[NEXT]**
 - [ ] Labeling (`docs:auto`) and PR update behavior **[NEXT]**
 

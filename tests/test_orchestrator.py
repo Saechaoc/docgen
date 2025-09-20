@@ -135,13 +135,14 @@ publish:
 
 
 class _StubDiffAnalyzer:
-    def __init__(self, sections: list[str]) -> None:
+    def __init__(self, sections: list[str], changed_files: list[str] | None = None) -> None:
         self.sections = sections
+        self.changed_files = changed_files or ["requirements.txt"]
         self.calls: list[tuple[str, str]] = []
 
     def compute(self, repo_path: str, diff_base: str) -> DiffResult:
         self.calls.append((repo_path, diff_base))
-        return DiffResult(base=diff_base, changed_files=["requirements.txt"], sections=self.sections)
+        return DiffResult(base=diff_base, changed_files=self.changed_files, sections=self.sections)
 
 
 class _StubPromptBuilder:
@@ -228,3 +229,61 @@ def test_run_update_uses_stub_when_builder_fails(tmp_path: Path) -> None:
 
     content = (repo_root / "README.md").read_text(encoding="utf-8")
     assert "docgen could not populate the Build & Test section automatically." in content
+
+
+def test_run_update_skips_when_no_watched_globs_match(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    Orchestrator().run_init(str(repo_root))
+
+    (repo_root / ".docgen.yml").write_text(
+        """
+ci:
+  watched_globs:
+    - docs/**
+""",
+        encoding="utf-8",
+    )
+
+    diff_analyzer = _StubDiffAnalyzer(["features"], changed_files=["src/app.py"])
+    orchestrator = Orchestrator(
+        prompt_builder=_StubPromptBuilder(),
+        analyzers=[],
+        diff_analyzer=diff_analyzer,
+    )
+
+    result = orchestrator.run_update(str(repo_root), "origin/main")
+
+    assert result is None
+
+
+def test_run_update_respects_recursive_watched_globs(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    Orchestrator().run_init(str(repo_root))
+
+    (repo_root / ".docgen.yml").write_text(
+        """
+ci:
+  watched_globs:
+    - '**/*.py'
+""",
+        encoding="utf-8",
+    )
+
+    diff_analyzer = _StubDiffAnalyzer(["features"], changed_files=["main.py"])
+    orchestrator = Orchestrator(
+        prompt_builder=_StubPromptBuilder(),
+        analyzers=[],
+        diff_analyzer=diff_analyzer,
+    )
+
+    result = orchestrator.run_update(str(repo_root), "origin/main")
+
+    assert result == repo_root.resolve() / "README.md"
+    content = (repo_root / "README.md").read_text(encoding="utf-8")
+    assert "UPDATED features" in content

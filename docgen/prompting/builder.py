@@ -45,8 +45,16 @@ class PromptBuilder:
         "Never invent commands. Prefer commands detected by analyzers."
     )
 
-    def __init__(self, templates_dir: Path | None = None) -> None:
+    def __init__(
+        self,
+        templates_dir: Path | None = None,
+        *,
+        style: str | None = None,
+    ) -> None:
         self.templates_dir = templates_dir or Path(__file__).with_name("templates")
+        self.style = (style or "comprehensive").lower()
+        if self.style not in {"concise", "comprehensive"}:
+            self.style = "comprehensive"
         self._env = self._create_env(self.templates_dir)
         self._toc_placeholder = TableOfContentsBuilder.PLACEHOLDER
 
@@ -128,6 +136,7 @@ class PromptBuilder:
         intro_meta["context"] = intro_context
         intro_rendered = self._render_section("intro", intro_body, intro_meta)
         intro_meta["token_estimate"] = self._estimate_tokens(intro_rendered)
+        intro_meta["style"] = self.style
         intro_section = Section(name="intro", title="Introduction", body=intro_rendered, metadata=intro_meta)
 
         sections: List[Section] = []
@@ -151,6 +160,7 @@ class PromptBuilder:
             meta["context"] = section_context
             rendered = self._render_section(name, body, meta)
             meta["token_estimate"] = self._estimate_tokens(rendered)
+            meta["style"] = self.style
             sections.append(Section(name=name, title=title, body=rendered, metadata=meta))
 
         return intro_section, sections
@@ -202,8 +212,9 @@ class PromptBuilder:
             tool_list = ", ".join(sorted(build_commands.keys()))
             items.append(f"Supported build tooling: {tool_list}")
         items.append("Ready for continuous README generation via docgen.")
-        body = self._format_bullet_list(items)
-        return body, {"items": items}
+        display_items = self._select_items(items, max_items=4)
+        body = self._format_bullet_list(display_items)
+        return body, {"items": display_items, "all_items": items}
 
     def _build_architecture(
         self,
@@ -230,16 +241,18 @@ class PromptBuilder:
 
         if not entries:
             body = "Document the project structure here."
+            display_entries: List[Dict[str, object]] = []
         else:
+            display_entries = self._select_entries(entries, max_items=5)
             lines: List[str] = []
-            for entry in entries:
+            for entry in display_entries:
                 count = entry.get("count", 0)
                 descriptor = "file" if count == 1 else "files"
                 lines.append(
                     f"`{entry['path']}/` - {entry['description']} ({count} {descriptor})"
                 )
             body = self._format_bullet_list(lines)
-        return body, {"entries": entries}
+        return body, {"entries": display_entries, "all_entries": entries}
 
     def _build_quickstart(
         self,
@@ -271,9 +284,11 @@ class PromptBuilder:
         config_files.sort()
         if not config_files:
             body = "List configuration files or environment variables required to run the project."
+            display_files: List[str] = []
         else:
-            body = self._format_bullet_list([f"`{path}`" for path in config_files])
-        return body, {"files": config_files}
+            display_files = self._select_items([f"`{path}`" for path in config_files], max_items=6)
+            body = self._format_bullet_list(display_files)
+        return body, {"files": display_files, "all_files": config_files}
 
     def _build_build_and_test(
         self,
@@ -322,7 +337,8 @@ class PromptBuilder:
             "Use `docgen update` after code changes to refresh sections automatically.",
             f"Open an issue when {project_name} requires additional diagnostics in this section.",
         ]
-        return self._format_bullet_list(items), {"items": items}
+        display_items = self._select_items(items, max_items=5)
+        return self._format_bullet_list(display_items), {"items": display_items, "all_items": items}
 
     def _build_faq(
         self,
@@ -522,9 +538,32 @@ class PromptBuilder:
             return 0
         return max(1, len(cleaned) // 4)
 
-    @staticmethod
-    def _format_bullet_list(items: Sequence[str]) -> str:
+    def _select_items(
+        self,
+        items: Sequence[str],
+        max_items: int | None,
+    ) -> List[str]:
+        entries = list(items)
+        if self.style == "concise" and max_items is not None and len(entries) > max_items:
+            if max_items >= 2:
+                return entries[: max_items - 1] + [entries[-1]]
+            return [entries[-1]]
+        return entries
+
+    def _format_bullet_list(self, items: Sequence[str]) -> str:
         return "\n".join(f"- {item}" for item in items)
+
+    def _select_entries(
+        self,
+        entries: Sequence[Dict[str, object]],
+        max_items: int | None,
+    ) -> List[Dict[str, object]]:
+        items = list(entries)
+        if self.style == "concise" and max_items is not None and len(items) > max_items:
+            if max_items >= 2:
+                return items[: max_items - 1] + [items[-1]]
+            return [items[-1]]
+        return items
 
 
 _KNOWN_COMMAND_PREFIXES = (

@@ -7,6 +7,7 @@ from pathlib import Path
 from docgen.analyzers.build import BuildAnalyzer
 from docgen.analyzers.dependencies import DependencyAnalyzer
 from docgen.analyzers.language import LanguageAnalyzer
+from docgen.models import Signal
 from docgen.prompting.builder import PromptBuilder
 from docgen.repo_scanner import RepoScanner
 
@@ -119,3 +120,62 @@ def test_prompt_builder_filters_missing_commands(tmp_path: Path) -> None:
     filtered = PromptBuilder._validate_commands(commands, manifest)
     assert "python -m pytest" in filtered
     assert all("requirements.txt" not in cmd for cmd in filtered)
+
+
+def test_prompt_builder_concise_style_limits_feature_list(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+
+    signals = [
+        Signal(
+            name="language.all",
+            value="languages",
+            source="test",
+            metadata={"languages": ["Python", "JavaScript", "Go", "Rust"]},
+        ),
+        Signal(
+            name="language.frameworks.python",
+            value="python",
+            source="test",
+            metadata={"frameworks": ["FastAPI", "Django"]},
+        ),
+        Signal(
+            name="dependencies.python",
+            value="python",
+            source="test",
+            metadata={"packages": ["fastapi", "sqlalchemy", "alembic", "uvicorn", "pydantic"]},
+        ),
+        Signal(
+            name="dependencies.node",
+            value="node",
+            source="test",
+            metadata={"packages": ["express", "react", "redux", "webpack"]},
+        ),
+        Signal(
+            name="build.python",
+            value="python",
+            source="test",
+            metadata={"commands": ["python -m pytest"]},
+        ),
+        Signal(
+            name="build.node",
+            value="npm",
+            source="test",
+            metadata={"commands": ["npm test"]},
+        ),
+    ]
+
+    comprehensive = PromptBuilder()
+    conciseness = PromptBuilder(style="concise")
+
+    full_section = comprehensive.render_sections(manifest, signals, ["features"])["features"].body
+    concise_section = conciseness.render_sections(manifest, signals, ["features"])["features"].body
+
+    full_bullets = [line for line in full_section.splitlines() if line.startswith("- ")]
+    concise_bullets = [line for line in concise_section.splitlines() if line.startswith("- ")]
+
+    assert len(full_bullets) > len(concise_bullets)
+    assert len(concise_bullets) <= 4

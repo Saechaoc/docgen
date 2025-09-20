@@ -57,7 +57,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Coordinates end-to-end pipelines (init, update, regenerate).
 * Computes *change impact* from Git diff; decides whether to regenerate full README or patch sections.
 * Schedules tasks and caches intermediate results.
-* Emits structured logs (info by default, debug with `--verbose`) and substitutes fail-safe stubs when generation fails.
+* Emits structured logs (info by default, debug with `--verbose`), respects `.docgen.yml` `ci.watched_globs` to skip unrelated diffs, and substitutes fail-safe stubs when generation fails.
 
 ### 3.2 Repo Scanner & Indexer
 
@@ -88,7 +88,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 
   * Project intro, key features, architecture overview, quick start, configuration, build/test, deployment, troubleshooting, FAQ, roadmap, contribution, license, badges.
 * Dynamically injects repo signals and retrieved context per section.
-* Produces **LLM-ready structured prompts** (system + user messages) with token budgets.
+* Produces **LLM-ready structured prompts** (system + user messages) with token budgets and honours `readme.style` presets (`concise` trims list-heavy sections, `comprehensive` keeps full detail).
 
 ### 3.6 Local LLM Runner
 
@@ -244,8 +244,9 @@ ci:
    * `Dockerfile`/`k8s` → *Deployment*.
    * `src/**` entrypoints → *Architecture*, *Features*.
 2. **Decide UpdatePlan**: patch impacted sections; regenerate only those.
-3. **RAG retrieval**: fetch top-k chunks relevant to each section.
-4. **Generate** → **Post-process** → **Open PR** with summary of deltas.
+3. **Skip** if no changed file matches `.docgen.yml` `ci.watched_globs` (allows CI to avoid unnecessary runs).
+4. **RAG retrieval**: fetch top-k chunks relevant to each section.
+5. **Generate** → **Post-process** → **Open PR** with summary of deltas.
 
 ### 6.3 Regenerate (Manual)
 

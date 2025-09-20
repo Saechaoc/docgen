@@ -5,12 +5,12 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Sequence
 
 from .analyzers import Analyzer, discover_analyzers
 from .config import ConfigError, DocGenConfig, load_config
 from .failsafe import build_readme_stub, build_section_stubs
-from .git.diff import DiffAnalyzer, DiffResult
+from .git.diff import DiffAnalyzer, DiffResult, _pattern_matches as diff_pattern_matches
 from .git.publisher import Publisher
 from .logging import get_logger
 from .models import RepoManifest, Signal
@@ -65,10 +65,7 @@ class Orchestrator:
                 self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
                 signals.extend(analyzer.analyze(manifest))
 
-        builder = self.prompt_builder
-        if config.templates_dir is not None:
-            builder = PromptBuilder(config.templates_dir)
-            self.logger.debug("Using custom templates from %s", config.templates_dir)
+        builder = self._resolve_prompt_builder(config)
 
         contexts = self._build_contexts(manifest, sections=None)
 
@@ -108,9 +105,18 @@ class Orchestrator:
             return None
         self.logger.debug("Update targets sections: %s", ", ".join(diff.sections))
 
+        config = self._load_config(repo_path)
+        if config.ci.watched_globs and not self._has_watched_changes(
+            diff.changed_files,
+            config.ci.watched_globs,
+        ):
+            self.logger.info(
+                "Skipping README update because no changes matched watched_globs",
+            )
+            return None
+
         manifest = self.scanner.scan(str(repo_path))
         self.logger.debug("Scanner discovered %d files", len(manifest.files))
-        config = self._load_config(repo_path)
         analyzers = self._select_analyzers(config)
         self.logger.debug("Selected %d analyzers", len(analyzers))
 
@@ -120,9 +126,7 @@ class Orchestrator:
                 self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
                 signals.extend(analyzer.analyze(manifest))
 
-        builder = self.prompt_builder
-        if config.templates_dir is not None:
-            builder = PromptBuilder(config.templates_dir)
+        builder = self._resolve_prompt_builder(config)
 
         contexts = self._build_contexts(manifest, sections=diff.sections)
 
@@ -270,6 +274,37 @@ class Orchestrator:
             self.logger.exception("%s: %s", message, exc)
         else:
             self.logger.error("%s: %s", message, exc)
+
+    def _resolve_prompt_builder(self, config: DocGenConfig) -> PromptBuilder:
+        base = self.prompt_builder
+        style = config.readme_style or getattr(base, "style", "comprehensive")
+        templates_dir = config.templates_dir
+        if templates_dir is None and config.readme_style is None:
+            return base
+        if templates_dir is not None:
+            self.logger.debug("Using custom templates from %s", templates_dir)
+        return PromptBuilder(templates_dir, style=style)
+
+    @staticmethod
+    def _has_watched_changes(paths: Sequence[str], globs: Sequence[str]) -> bool:
+        if not globs:
+            return True
+        normalised_patterns = [pattern.replace("\\", "/") for pattern in globs]
+        for raw_path in paths:
+            path = raw_path.replace("\\", "/")
+            for pattern in normalised_patterns:
+                if Orchestrator._match_pattern(path, pattern):
+                    return True
+        return False
+
+    @staticmethod
+    def _match_pattern(path: str, pattern: str) -> bool:
+        normalized = path.replace("\\", "/")
+        if diff_pattern_matches(normalized, pattern):
+            return True
+        if pattern.startswith("**/"):
+            return diff_pattern_matches(normalized, pattern[3:])
+        return False
 
     @staticmethod
     def _build_branch_name(prefix: str) -> str:
