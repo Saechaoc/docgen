@@ -15,31 +15,7 @@ except ModuleNotFoundError:  # pragma: no cover - optional dependency
 
 from ..models import RepoManifest, Signal
 from ..postproc.toc import TableOfContentsBuilder
-
-_DEFAULT_SECTIONS: Sequence[str] = (
-    "intro",
-    "features",
-    "architecture",
-    "quickstart",
-    "configuration",
-    "build_and_test",
-    "deployment",
-    "troubleshooting",
-    "faq",
-    "license",
-)
-
-_SECTION_TITLES: Dict[str, str] = {
-    "features": "Features",
-    "architecture": "Architecture",
-    "quickstart": "Quick Start",
-    "configuration": "Configuration",
-    "build_and_test": "Build & Test",
-    "deployment": "Deployment",
-    "troubleshooting": "Troubleshooting",
-    "faq": "FAQ",
-    "license": "License",
-}
+from .constants import DEFAULT_SECTIONS, SECTION_TITLES
 
 _ROLE_DESCRIPTIONS: Dict[str, str] = {
     "src": "Primary application and library code",
@@ -83,7 +59,7 @@ class PromptBuilder:
     ) -> str:
         selected_sections = self._normalise_section_order(sections)
         if not selected_sections:
-            selected_sections = list(_DEFAULT_SECTIONS)
+            selected_sections = list(DEFAULT_SECTIONS)
         grouped = self._group_signals(signals)
         project_name = Path(manifest.root).name or "Repository"
 
@@ -158,7 +134,7 @@ class PromptBuilder:
         for name in selected_sections:
             if name == "intro":
                 continue
-            title = _SECTION_TITLES.get(name, name.replace("_", " " ).title())
+            title = SECTION_TITLES.get(name, name.replace("_", " ").title())
             builder = getattr(self, f"_build_{name}", None)
             if builder is None:
                 body, meta = "(section content pending)", {}
@@ -433,8 +409,8 @@ class PromptBuilder:
     def _normalise_section_order(sections: Iterable[str] | None) -> List[str]:
         if sections is None:
             return []
-        requested = {section for section in sections if section in _DEFAULT_SECTIONS}
-        return [section for section in _DEFAULT_SECTIONS if section in requested]
+        requested = {section for section in sections if section in DEFAULT_SECTIONS}
+        return [section for section in DEFAULT_SECTIONS if section in requested]
 
     def _render_section(self, name: str, body: str, metadata: Dict[str, object]) -> str:
         if not self._env:

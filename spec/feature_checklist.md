@@ -67,7 +67,7 @@
 - [ ] Labeling (`docs:auto`) and PR update behavior **[NEXT]**
 
 ## 11) Security & Privacy
-- [ ] Local‑only models; never exfiltrate code **[MVP]**
+- [x] Local-only models; never exfiltrate code **[MVP]**
 - [ ] Respect `.gitignore`; exclude large binaries/secrets **[MVP]**
 - [ ] Optional simple secret scanner gate **[NEXT]**
 
@@ -86,9 +86,9 @@
 - [ ] Incremental RAG refresh (changed files only) **[NEXT]**
 
 ## 15) Error Handling & UX
-- [ ] Fail‑safe stub generation when evidence is insufficient **[MVP]**
+- [x] Fail-safe stub generation when evidence is insufficient **[MVP]**
 - [ ] Clear run logs + PR body with rationale (“sections updated because…”) **[MVP]**
-- [ ] Helpful CLI errors and `--verbose` flag **[MVP]**
+- [x] Helpful CLI errors and `--verbose` flag **[MVP]**
 
 ## 16) Extensibility
 - [x] Analyzer ABC and plugin discovery **[MVP]**

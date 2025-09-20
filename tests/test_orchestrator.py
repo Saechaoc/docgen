@@ -160,6 +160,14 @@ class _StubPromptBuilder:
         }
 
 
+class _FailingPromptBuilder:
+    def build(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        raise RuntimeError("prompt builder exploded")
+
+    def render_sections(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+        raise RuntimeError("prompt builder exploded")
+
+
 def test_run_update_patches_targeted_sections(tmp_path: Path) -> None:
     repo_root = tmp_path / "sample"
     repo_root.mkdir()
@@ -187,3 +195,36 @@ def test_run_update_patches_targeted_sections(tmp_path: Path) -> None:
     assert publisher.pr_calls, "Expected publish_pr to be invoked"
     pr_call = publisher.pr_calls[0]
     assert pr_call["branch_name"].startswith("docgen/readme-update")
+
+
+def test_run_init_falls_back_to_stub_on_prompt_failure(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    orchestrator = Orchestrator(prompt_builder=_FailingPromptBuilder())
+    readme_path = orchestrator.run_init(str(repo_root))
+
+    content = readme_path.read_text(encoding="utf-8")
+    assert "placeholder README" in content
+    assert "## Table of Contents" in content
+
+
+def test_run_update_uses_stub_when_builder_fails(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    Orchestrator().run_init(str(repo_root))
+
+    diff_analyzer = _StubDiffAnalyzer(["build_and_test"])
+    orchestrator = Orchestrator(
+        prompt_builder=_FailingPromptBuilder(),
+        analyzers=[],
+        diff_analyzer=diff_analyzer,
+    )
+
+    orchestrator.run_update(str(repo_root), "origin/main")
+
+    content = (repo_root / "README.md").read_text(encoding="utf-8")
+    assert "docgen could not populate the Build & Test section automatically." in content

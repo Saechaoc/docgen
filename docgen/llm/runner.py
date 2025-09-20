@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import subprocess
 from dataclasses import dataclass
 from typing import Callable, Optional, Sequence
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 _AUTO_BASE_URL = object()
@@ -201,13 +203,13 @@ class LLMRunner:
         if base_url is None:
             return None
         if base_url is not _AUTO_BASE_URL:
-            return self._normalize_base_url(str(base_url))
+            return self._ensure_local_url(str(base_url))
         env_value = self._first_env_value(self.ENV_BASE_URL_KEYS)
         if env_value:
-            return self._normalize_base_url(env_value)
+            return self._ensure_local_url(env_value)
         for candidate in self.DEFAULT_BASE_URLS:
             if candidate:
-                return self._normalize_base_url(candidate)
+                return self._ensure_local_url(candidate)
         return None
 
     def _resolve_api_key(self, api_key: str | None | object) -> str | None:
@@ -222,3 +224,36 @@ class LLMRunner:
             if value:
                 return value
         return None
+
+    @classmethod
+    def _ensure_local_url(cls, url: str) -> str:
+        normalized = cls._normalize_base_url(url)
+        parsed = urlparse(normalized)
+        host = parsed.hostname
+        if host is None:
+            return normalized
+        if cls._is_local_host(host):
+            return normalized
+        raise RuntimeError(
+            f"Remote base_url '{url}' is not permitted. Configure a local model runner."
+        )
+
+    @staticmethod
+    def _is_local_host(host: str) -> bool:
+        lowered = host.lower()
+        allowed_hosts = {
+            "localhost",
+            "127.0.0.1",
+            "0.0.0.0",
+            "::1",
+            "model-runner.docker.internal",
+        }
+        if lowered in allowed_hosts:
+            return True
+        if lowered.endswith(".local") or lowered.endswith(".localdomain"):
+            return True
+        try:
+            ip = ipaddress.ip_address(lowered)
+        except ValueError:
+            return False
+        return ip.is_loopback

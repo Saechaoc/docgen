@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from docgen.llm.runner import LLMRunner
 
 
@@ -129,8 +131,24 @@ def test_llm_runner_defaults_to_host_base_url(monkeypatch) -> None:
     assert captured["api_key"] is None
 
 
+def test_llm_runner_accepts_docker_internal_host() -> None:
+    captured = {}
+
+    def fake_runner(request):
+        captured["base_url"] = request.base_url
+        return "ok"
+
+    runner = LLMRunner(
+        base_url="http://model-runner.docker.internal:12434/engines/v1",
+        runner=fake_runner,
+    )
+    runner.run("ping")
+
+    assert captured["base_url"] == "http://model-runner.docker.internal:12434/engines/v1"
+
+
 def test_llm_runner_prefers_environment_settings(monkeypatch) -> None:
-    monkeypatch.setenv("OPENAI_BASE_URL", "http://custom-host:9000/engine")
+    monkeypatch.setenv("OPENAI_BASE_URL", "http://localhost:9000/engine")
     monkeypatch.setenv("OPENAI_API_KEY", "env-key")
     monkeypatch.setenv("OPENAI_MODEL", "ai/custom-model")
 
@@ -145,6 +163,18 @@ def test_llm_runner_prefers_environment_settings(monkeypatch) -> None:
     runner = LLMRunner(runner=fake_runner)
     runner.run("ping")
 
-    assert captured["base_url"] == "http://custom-host:9000/engine"
+    assert captured["base_url"] == "http://localhost:9000/engine"
     assert captured["model"] == "ai/custom-model"
     assert captured["api_key"] == "env-key"
+
+
+def test_llm_runner_rejects_remote_base_url() -> None:
+    with pytest.raises(RuntimeError) as excinfo:
+        LLMRunner(base_url="https://example.com/api", runner=lambda req: "ok")
+    assert "Remote base_url" in str(excinfo.value)
+
+
+def test_llm_runner_rejects_remote_env_base_url(monkeypatch) -> None:
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://example.com/api")
+    with pytest.raises(RuntimeError):
+        LLMRunner(runner=lambda req: "ok")

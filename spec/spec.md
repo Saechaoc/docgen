@@ -57,6 +57,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Coordinates end-to-end pipelines (init, update, regenerate).
 * Computes *change impact* from Git diff; decides whether to regenerate full README or patch sections.
 * Schedules tasks and caches intermediate results.
+* Emits structured logs (info by default, debug with `--verbose`) and substitutes fail-safe stubs when generation fails.
 
 ### 3.2 Repo Scanner & Indexer
 
@@ -95,6 +96,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Defaults to `ai/smollm2:360M-Q4_K_M` but respects `.docgen.yml` and OpenAI-compatible env vars for alternate weights and API keys.
 * Supports **function calling style** for structured outputs when available.
 * Streaming decode with stop tokens; **section-by-section** generation to stay within context limits.
+* Validates configuration to ensure runners stay local (loopback/`*.internal` hosts only).
 
 ### 3.7 Post-Processor
 
@@ -301,6 +303,8 @@ ci:
 docgen/
   __init__.py
   cli.py                  # click/typer CLI
+  failsafe.py             # fail-safe README stubs
+  logging.py              # logging configuration helpers
   orchestrator.py
   repo_scanner.py
   analyzers/
@@ -314,12 +318,14 @@ docgen/
     store.py
   prompting/
     builder.py            # Jinja2 templates, token mgmt
+    constants.py
     templates/           # *.j2 per section
   llm/
     runner.py             # adapter for ollama/llama.cpp
   postproc/
     lint.py
     links.py
+    markers.py
     toc.py
   git/
     diff.py
