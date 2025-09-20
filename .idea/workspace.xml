@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="- Enhanced the pipeline to understand project execution paths and infrastructure cues: new entrypoint and pattern analyzers emit run commands/quick‑start hints, the prompt builder weaves them into Features/Quick Start, and the&#10;  RAG index now caches embeddings incrementally instead of rebuilding from scratch (docgen/analyzers/entrypoints.py, docgen/analyzers/patterns.py, docgen/prompting/builder.py, docgen/rag/indexer.py, docgen/rag/store.py, related&#10;  tests).&#10;  - Hardened post-processing and quality gates with badge insertion, local link validation, and README scorecards persisted under .docgen/scorecard.json; updated publisher/config/CLI plumbing adds dry-run support, PR labelling/&#10;  updating, and richer template overrides (docs/templates + packs) (docgen/postproc/badges.py, docgen/postproc/links.py, docgen/postproc/scorecard.py, docgen/orchestrator.py, docgen/cli.py, docgen/git/publisher.py, docgen/&#10;  config.py, docs/ci/github-actions.md).&#10;  - Documented and marked off Phases 7 &amp; 8 in the spec/checklist while expanding coverage with new analyzer, postproc, CLI, publisher, and config tests (spec/spec.md, spec/feature_checklist.md, tests/analyzers/&#10;  test_entrypoints.py, tests/analyzers/test_patterns.py, tests/postproc/test_postproc.py, tests/test_cli.py, tests/test_config.py, tests/test_orchestrator.py, tests/git/test_publisher.py).">
-      <change beforePath="$PROJECT_DIR$/.docgen/manifest_cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/manifest_cache.json" afterDir="false" />
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="Move git ignore">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,6 +55,11 @@
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\chris\PycharmProjects\docgen" />
+    </key>
+  </component>
   <component name="RunManager" selected="Python tests.Python tests in tests">
     <configuration name="Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
@@ -190,7 +193,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758345103962</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Move git ignore">
+      <option name="closed" value="true" />
+      <created>1758381589963</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1758381589964</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -198,6 +209,7 @@
     <MESSAGE value=" - Introduced configuration-aware prompt styling so readme.style toggles between concise and comprehensive output; list-heavy sections now trim appropriately and expose metadata for templates (docgen/prompting/builder.py:200,&#10;  tests/prompting/test_builder.py:115).&#10;  - Taught the orchestrator to honour .docgen.yml ci.watched_globs, short-circuiting updates when no watched files changed, and ensured prompt builders inherit per-run style/ template overrides without reusing stale instances&#10;  (docgen/orchestrator.py:68, tests/test_orchestrator.py:214).&#10;  - Added a GitHub Actions reference workflow plus documentation for self-hosted runners, covering installation, diff-base resolution, and optional committing of README changes (docs/ci/docgen-update.yml:1, docs/ci/github-&#10;  actions.md:1).&#10;  - Updated the spec and feature checklist to reflect the new CI integration, style presets, and watched-glob behaviour (spec/spec.md:55, spec/feature_checklist.md:69)." />
     <MESSAGE value="phase 6 complete" />
     <MESSAGE value="- Enhanced the pipeline to understand project execution paths and infrastructure cues: new entrypoint and pattern analyzers emit run commands/quick‑start hints, the prompt builder weaves them into Features/Quick Start, and the&#10;  RAG index now caches embeddings incrementally instead of rebuilding from scratch (docgen/analyzers/entrypoints.py, docgen/analyzers/patterns.py, docgen/prompting/builder.py, docgen/rag/indexer.py, docgen/rag/store.py, related&#10;  tests).&#10;  - Hardened post-processing and quality gates with badge insertion, local link validation, and README scorecards persisted under .docgen/scorecard.json; updated publisher/config/CLI plumbing adds dry-run support, PR labelling/&#10;  updating, and richer template overrides (docs/templates + packs) (docgen/postproc/badges.py, docgen/postproc/links.py, docgen/postproc/scorecard.py, docgen/orchestrator.py, docgen/cli.py, docgen/git/publisher.py, docgen/&#10;  config.py, docs/ci/github-actions.md).&#10;  - Documented and marked off Phases 7 &amp; 8 in the spec/checklist while expanding coverage with new analyzer, postproc, CLI, publisher, and config tests (spec/spec.md, spec/feature_checklist.md, tests/analyzers/&#10;  test_entrypoints.py, tests/analyzers/test_patterns.py, tests/postproc/test_postproc.py, tests/test_cli.py, tests/test_config.py, tests/test_orchestrator.py, tests/git/test_publisher.py)." />
-    <option name="LAST_COMMIT_MESSAGE" value="- Enhanced the pipeline to understand project execution paths and infrastructure cues: new entrypoint and pattern analyzers emit run commands/quick‑start hints, the prompt builder weaves them into Features/Quick Start, and the&#10;  RAG index now caches embeddings incrementally instead of rebuilding from scratch (docgen/analyzers/entrypoints.py, docgen/analyzers/patterns.py, docgen/prompting/builder.py, docgen/rag/indexer.py, docgen/rag/store.py, related&#10;  tests).&#10;  - Hardened post-processing and quality gates with badge insertion, local link validation, and README scorecards persisted under .docgen/scorecard.json; updated publisher/config/CLI plumbing adds dry-run support, PR labelling/&#10;  updating, and richer template overrides (docs/templates + packs) (docgen/postproc/badges.py, docgen/postproc/links.py, docgen/postproc/scorecard.py, docgen/orchestrator.py, docgen/cli.py, docgen/git/publisher.py, docgen/&#10;  config.py, docs/ci/github-actions.md).&#10;  - Documented and marked off Phases 7 &amp; 8 in the spec/checklist while expanding coverage with new analyzer, postproc, CLI, publisher, and config tests (spec/spec.md, spec/feature_checklist.md, tests/analyzers/&#10;  test_entrypoints.py, tests/analyzers/test_patterns.py, tests/postproc/test_postproc.py, tests/test_cli.py, tests/test_config.py, tests/test_orchestrator.py, tests/git/test_publisher.py)." />
+    <MESSAGE value="Move git ignore" />
+    <option name="LAST_COMMIT_MESSAGE" value="Move git ignore" />
   </component>
 </project>
