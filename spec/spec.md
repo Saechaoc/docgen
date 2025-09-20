@@ -76,6 +76,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * **Dependency analyzers** (extract top-level libs & notable transitive categories).
 * **Entrypoint analyzers** (infer run commands for FastAPI, Django, Spring Boot, Node scripts).
 * **Pattern analyzers** (monorepo layout, CI/CD, containerization/K8s heuristics).
+* **Structure analyzer** (module topology, detected entities/DTOs, API endpoint sequences, service interactions).
 * Each analyzer returns **Signals** (key facts) to the knowledge graph.
 
 ### 3.4 Knowledge Graph & Embeddings (RAG)
@@ -92,6 +93,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Dynamically injects repo signals and retrieved context per section.
 * Produces **LLM-ready structured prompts** (system + user messages) with token budgets and honours `readme.style` presets (`concise` trims list-heavy sections, `comprehensive` keeps full detail).
 * Injects detected entrypoints and infrastructure patterns into Quick Start guidance (e.g., `uvicorn ...`, `docker compose up`).
+* Generates Mermaid sequence diagrams highlighting request flow across services when API endpoints are detected.
 
 ### 3.6 Local LLM Runner
 
@@ -107,12 +109,14 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Enforces internal style guide and **README contract** (required sections).
 * Validates links (relative/absolute), code block languages, and line length.
 * Computes **diff-aware updates**: only modifies sections impacted by changes.
-* Adds build/coverage/license badges, validates local link targets, and persists a README scorecard for quality gating.
+* Persists a README scorecard (`.docgen/scorecard.json`) capturing coverage, quick start health, and link results.
+* Adds build/coverage/license badges with safe defaults and reports link warnings during post-processing.
 
 ### 3.8 Doc Store (Artifacts & Versions)
 
 * Keeps generated drafts, logs, prompts, inputs/outputs, and diffs under `.docgen/` per repo.
 * Supports rollback and regression testing via “golden” READMEs.
+* Stores embedding cache (`embeddings.json`) and scorecards so subsequent runs are incremental.
 
 ### 3.9 Git Publisher
 

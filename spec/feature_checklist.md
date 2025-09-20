@@ -5,7 +5,7 @@
 
 ## 1) Core Workflows
 - [x] **docgen init** — Initialize README for repos without docs **[MVP]**
-- [ ] **docgen update** — Detect changes on commit/PR and patch affected sections **[MVP]**
+- [x] **docgen update** — Detect changes on commit/PR and patch affected sections **[MVP]**
 - [ ] **docgen regenerate** — Manual full/partial regeneration **[MVP]**
 - [x] Dry‑run mode (`--dry-run`) to preview diffs without writing **[NEXT]**
 - [ ] Service mode (FastAPI) endpoints for CI/bots **[STRETCH]**
@@ -15,7 +15,7 @@
 - [x] Build normalized manifest of files, roles (src/test/docs/config/infra) **[MVP]**
 - [x] Hash & cache file metadata to speed subsequent runs **[MVP]**
 - [x] Entrypoint detection (e.g., `main()`, `@SpringBootApplication`, FastAPI app) **[NEXT]**
-- [ ] Monorepo module detection **[NEXT]**
+- [x] Monorepo module detection **[NEXT]**
 
 ## 3) Analyzers (Plugin‑based)
 - [x] Language analyzers: Python, Java, Node.js (Tier‑1) **[MVP]**
@@ -36,7 +36,7 @@
 - [x] Token budgeting & streaming section-by-section generation **[MVP]**
 - [x] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
 - [x] Style presets: concise vs comprehensive **[NEXT]**
-- [ ] Mermaid.js diagrams for architecture/flow sections where appropriate **[NEXT]**
+- [x] Mermaid.js diagrams for architecture/flow sections where appropriate **[NEXT]**
 
 ## 6) Local LLM Runner
 - [x] Model Runner HTTP adapter (host/container defaults, env/API key overrides) **[MVP]**
@@ -51,8 +51,8 @@
 - [x] Managed markers for idempotent patching (`<!-- docgen:begin:end -->`) **[MVP]**
 
 ## 8) Git Integration
-- [ ] Diff detection (map changed files → impacted sections) **[MVP]**
-- [ ] Branch + PR creation with summary of README deltas **[MVP]**
+- [x] Diff detection (map changed files → impacted sections) **[MVP]**
+- [x] Branch + PR creation with summary of README deltas **[MVP]**
 - [x] Commit mode for init or small changes (configurable) **[NEXT]**
 - [ ] Prevent loops on README‑only changes **[MVP]**
 
@@ -74,7 +74,7 @@
 ## 12) Multi‑Language & Project Types
 - [ ] Tier‑1: Python (Poetry/Setuptools), Java (Maven/Gradle/Spring Boot), Node.js (npm/pnpm/Express/Next) **[MVP]**
 - [ ] Tier‑2: Go, Rust, Ruby, PHP **[STRETCH]**
-- [ ] Framework‑aware quickstart commands per build system **[MVP]**
+- [x] Framework‑aware quickstart commands per build system **[MVP]**
 
 ## 13) Quality Gates & Evaluation
 - [ ] Command validation (existence checks) **[MVP]**

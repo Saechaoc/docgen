@@ -121,6 +121,9 @@ class PromptBuilder:
         build_signals = [sig for name, values in grouped.items() if name.startswith("build.") for sig in values]
         entrypoint_signals = [sig for name, values in grouped.items() if name.startswith("entrypoint.") for sig in values]
         pattern_signals = [sig for name, values in grouped.items() if name.startswith("pattern.") for sig in values]
+        structure_modules = self._collect_modules(grouped)
+        api_signals = grouped.get("architecture.api", [])
+        entity_signals = grouped.get("architecture.entity", [])
         build_commands = self._collect_build_commands(build_signals)
         entrypoint_commands = self._collect_entrypoints(entrypoint_signals)
         pattern_commands = self._collect_pattern_commands(pattern_signals)
@@ -163,6 +166,9 @@ class PromptBuilder:
                     entrypoints=entrypoint_commands,
                     patterns=pattern_signals,
                     pattern_commands=pattern_commands,
+                    modules=structure_modules,
+                    apis=api_signals,
+                    entities=entity_signals,
                 )
             section_context = contexts.get(name, [])
             body = self._inject_context(name, body, section_context)
@@ -209,6 +215,9 @@ class PromptBuilder:
         entrypoints: List[Dict[str, object]],
         patterns: Sequence[Signal],
         pattern_commands: List[str],
+        modules: Sequence[Dict[str, object]],
+        apis: Sequence[Signal],
+        entities: Sequence[Signal],
     ) -> Tuple[str, Dict[str, object]]:
         items: List[str] = []
         if languages:
@@ -227,6 +236,14 @@ class PromptBuilder:
             labels = [ep.get("label") or ep.get("command") for ep in entrypoints]
             if labels:
                 items.append(f"Entry points: {', '.join(labels[:3])}")
+        if modules:
+            module_summary = ", ".join(f"{mod['name']} ({mod['files']} files)" for mod in modules[:3])
+            items.append(f"Key modules: {module_summary}")
+        if apis:
+            api_preview = ", ".join(sig.metadata.get("path", sig.value) for sig in apis[:3])
+            items.append(f"API surface: {api_preview}")
+        if entities:
+            items.append(f"Entities detected: {', '.join(sig.value for sig in entities[:3])}")
         for pattern in patterns:
             summary = pattern.metadata.get("summary") if pattern.metadata else None
             if summary:
@@ -242,39 +259,65 @@ class PromptBuilder:
         self,
         *,
         manifest: RepoManifest,
+        modules: Sequence[Dict[str, object]] = (),
+        apis: Sequence[Signal] = (),
+        entities: Sequence[Signal] = (),
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
-        layout: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
-        for file in manifest.files:
-            parts = file.path.split("/")
-            top = parts[0]
-            layout[top][file.role] += 1
-
-        entries: List[Dict[str, object]] = []
-        for top, role_counts in sorted(layout.items()):
-            role = max(role_counts, key=role_counts.get)
-            description = _ROLE_DESCRIPTIONS.get(role, "Project files")
-            entries.append({
-                "path": top,
-                "role": role,
-                "description": description,
-                "count": sum(role_counts.values()),
-            })
-
-        if not entries:
-            body = "Document the project structure here."
-            display_entries: List[Dict[str, object]] = []
-        else:
-            display_entries = self._select_entries(entries, max_items=5)
-            lines: List[str] = []
-            for entry in display_entries:
-                count = entry.get("count", 0)
-                descriptor = "file" if count == 1 else "files"
-                lines.append(
-                    f"`{entry['path']}/` - {entry['description']} ({count} {descriptor})"
+        module_list = list(modules)
+        if not module_list:
+            layout: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+            for file in manifest.files:
+                parts = file.path.split("/")
+                top = parts[0]
+                layout[top][file.role] += 1
+            for top, role_counts in sorted(layout.items()):
+                module_list.append(
+                    {
+                        "name": top,
+                        "files": sum(role_counts.values()),
+                        "roles": list(role_counts.keys()),
+                    }
                 )
+
+        display_entries = self._select_entries(module_list, max_items=5) if module_list else []
+        if display_entries:
+            lines = []
+            for entry in display_entries:
+                count = entry.get("files", entry.get("count", 0))
+                descriptor = "file" if count == 1 else "files"
+                roles = entry.get("roles") or entry.get("role") or []
+                if isinstance(roles, list):
+                    description = ", ".join(roles) or "Project files"
+                else:
+                    description = str(roles)
+                name = entry.get("name") or entry.get("path") or 'module'
+                suffix = "/" if name and not name.endswith("/") else ""
+                lines.append(f"`{name}{suffix}` - {description} ({count} {descriptor})")
             body = self._format_bullet_list(lines)
-        return body, {"entries": display_entries, "all_entries": entries}
+        else:
+            body = "Document the project structure here."
+
+        if entities:
+            entity_lines = []
+            for entity in entities[:5]:
+                metadata = entity.metadata or {}
+                file = metadata.get("file")
+                bases = metadata.get("bases")
+                base_text = ", ".join(bases) if isinstance(bases, list) else ""
+                entity_lines.append(f"- `{entity.value}` ({base_text}) — `{file}`")
+            if entity_lines:
+                body += "\n\nDetected entities:\n" + "\n".join(entity_lines)
+
+        diagram = self._build_sequence_diagram(apis[:3])
+
+        info = {
+            "entries": display_entries,
+            "apis": [sig.metadata for sig in apis[:5]],
+            "entities": [sig.metadata for sig in entities[:5]],
+            "diagram": diagram,
+        }
+        return body.strip(), info
 
     def _build_quickstart(
         self,
@@ -611,6 +654,45 @@ class PromptBuilder:
                     if isinstance(cmd, str) and cmd not in commands:
                         commands.append(cmd)
         return commands
+
+    @staticmethod
+    def _collect_modules(grouped: Dict[str, List[Signal]]) -> List[Dict[str, object]]:
+        signal = PromptBuilder._first_signal(grouped, "architecture.modules")
+        if signal and signal.metadata:
+            modules = signal.metadata.get("modules")
+            if isinstance(modules, list):
+                return modules
+        return []
+
+    @staticmethod
+    def _build_sequence_diagram(api_signals: Sequence[Signal]) -> str:
+        if not api_signals:
+            return ""
+        participants: set[str] = set()
+        edges: List[tuple[str, str, str, str]] = []
+        for sig in api_signals:
+            metadata = sig.metadata or {}
+            sequence = metadata.get("sequence")
+            if not isinstance(sequence, list):
+                continue
+            for step in sequence:
+                frm = step.get("from")
+                to = step.get("to")
+                msg = step.get("message", "")
+                if not frm or not to:
+                    continue
+                participants.add(frm)
+                participants.add(to)
+                arrow = "->>" if "Response" not in msg else "-->>"
+                edges.append((frm, to, arrow, msg))
+        if not edges:
+            return ""
+        lines = ["sequenceDiagram"]
+        for name in participants:
+            lines.append(f"    participant {name}")
+        for frm, to, arrow, msg in edges:
+            lines.append(f"    {frm} {arrow} {to}: {msg}")
+        return "\n".join(lines)
 
     @staticmethod
     def _unique_commands(commands_by_tool: Dict[str, List[str]]) -> List[str]:

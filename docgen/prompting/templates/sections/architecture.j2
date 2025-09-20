@@ -1,6 +1,11 @@
 {% if metadata['entries'] %}
-{% for entry in metadata['entries'] %}{% set descriptor = 'file' if entry.count == 1 else 'files' %}- `{{ entry.path }}{% if '/' not in entry.path %}/{% endif %}` - {{ entry.description }} ({{ entry.count }} {{ descriptor }})
+{% for entry in metadata['entries'] %}{% set name = entry.name if entry.name is defined else entry.path %}{% if not name %}{% set name = 'module' %}{% endif %}{% set count = entry.count if entry.count is defined else entry.files %}{% set roles = entry.description if entry.description is defined else (', '.join(entry.roles) if entry.roles is defined else 'Project files') %}{% set descriptor = 'file' if count == 1 else 'files' %}- `{{ name }}{% if name and '/' not in name %}/{% endif %}` - {{ roles }} ({{ count }} {{ descriptor }})
 {% endfor %}
+{% if metadata.diagram %}
+```mermaid
+{{ metadata.diagram }}
+```
+{% endif %}
 {% if metadata.context %}
 > Context highlights:
 {% for snippet in metadata.context %}> {{ snippet }}

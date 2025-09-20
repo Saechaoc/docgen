@@ -11,6 +11,7 @@ from .dependencies import DependencyAnalyzer
 from .entrypoints import EntryPointAnalyzer
 from .language import LanguageAnalyzer
 from .patterns import PatternAnalyzer
+from .structure import StructureAnalyzer
 
 _ENTRY_POINT_GROUP = "docgen.analyzers"
 
@@ -20,6 +21,7 @@ _BUILTIN_FACTORIES: dict[str, Callable[[], Analyzer]] = {
     "dependencies": DependencyAnalyzer,
     "entrypoints": EntryPointAnalyzer,
     "patterns": PatternAnalyzer,
+    "structure": StructureAnalyzer,
 }
 
 
