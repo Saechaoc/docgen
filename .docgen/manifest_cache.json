@@ -7,13 +7,18 @@
     },
     "README.md": {
       "hash": "32e3ca68398e309894dfef3ba67276bf96fea725596fd157d0d4112daeab17c3",
-      "mtime_ns": 1758332956308404700,
+      "mtime_ns": 1758333311556495000,
       "size": 2445
     },
     "docgen/__init__.py": {
       "hash": "48c6f91c4fa6b6ea7ee0e8e593941b642dffacfde200c375e609f469005f90af",
       "mtime_ns": 1758315439439818900,
       "size": 103
+    },
+    "docgen/analyzer.py": {
+      "hash": "2f0740659cc32be25069fdd0e02bf3965d958a03af1a46c67501e98e96968e02",
+      "mtime_ns": 1758333343028392500,
+      "size": 12535
     },
     "docgen/analyzers/__init__.py": {
       "hash": "6a78003e8ddc635bf66052b2e74c4f90641cb2f3c81f56578315c69dfe0ad31e",
@@ -126,9 +131,9 @@
       "size": 38
     },
     "docgen/prompting/builder.py": {
-      "hash": "4f368ce5149f741b7a9f80c2f0decb6cc15575539e36b5662428f9c3c27608a3",
-      "mtime_ns": 1758331891416054100,
-      "size": 18706
+      "hash": "edae1b0872a820ec0c5a3e8eba30beb3596a9d921e62432f0029f0301f013f85",
+      "mtime_ns": 1758333441556464300,
+      "size": 18920
     },
     "docgen/prompting/templates/readme.j2": {
       "hash": "a0641433b60178ba1d2f03e96aa0962304ea610997af7375e471e06a10e6b1f4",
@@ -136,9 +141,9 @@
       "size": 314
     },
     "docgen/prompting/templates/sections/architecture.j2": {
-      "hash": "b366c8e7c6418d4ab4cfba01a52c437b26e966b316f97282adce48744cb5f959",
-      "mtime_ns": 1758330281712530100,
-      "size": 182
+      "hash": "0a275d1280acecf0c2e7ff725604e545e9c925d8b40600bd4f23076482cae782",
+      "mtime_ns": 1758333496214389500,
+      "size": 320
     },
     "docgen/prompting/templates/sections/build_and_test.j2": {
       "hash": "b7c41cfd1935031da9ae11bc9627f37efcd91c38d638d25ff0af913764613cf3",
@@ -261,9 +266,9 @@
       "size": 1843
     },
     "tests/prompting/test_builder.py": {
-      "hash": "e076a7c17664417f378c8c90c8c98abfb0a98187da404cf294fe0c27226703c5",
-      "mtime_ns": 1758332204671187000,
-      "size": 2028
+      "hash": "8a7d52abe55d3d64b9bd1184b7c979373d153d645a021ed4ac99610093c2e37f",
+      "mtime_ns": 1758333448393777600,
+      "size": 2593
     },
     "tests/test_config.py": {
       "hash": "5e62578d62ee4ba4e31dcc06cba8d3f67c381f314579dadf5978af7243b3d111",

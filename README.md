@@ -29,11 +29,11 @@ docgen is a Python project. This README was bootstrapped by ``docgen init`` to s
 ## Architecture
 
 <!-- docgen:begin:architecture -->
-- `AGENTS.md/` - Project documentation assets
-- `README.md/` - Project documentation assets
-- `docgen/` - Primary application and library code
-- `spec/` - Project documentation assets
-- `tests/` - Automated tests that guard behaviour
+- `AGENTS.md/` - Project documentation assets (1 file)
+- `README.md/` - Project documentation assets (1 file)
+- `docgen/` - Primary application and library code (41 files)
+- `spec/` - Project documentation assets (3 files)
+- `tests/` - Automated tests that guard behaviour (11 files)
 <!-- docgen:end:architecture -->
 
 ## Quick Start
