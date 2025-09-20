@@ -125,6 +125,33 @@ class DiffAnalyzer:
 
     _DOCS_PREFIXES: Sequence[str] = ("docs/", "documentation/", "handbook/")
 
+    _CODE_SUFFIXES: Sequence[str] = (
+        ".py",
+        ".pyi",
+        ".pyx",
+        ".c",
+        ".h",
+        ".cc",
+        ".cpp",
+        ".hpp",
+        ".java",
+        ".kt",
+        ".kts",
+        ".go",
+        ".rs",
+        ".rb",
+        ".php",
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".cs",
+        ".swift",
+        ".scala",
+        ".m",
+        ".mm",
+    )
+
     def __init__(self, runner: Callable[..., str] | None = None) -> None:
         self._runner = runner or self._default_runner
 
@@ -169,6 +196,8 @@ class DiffAnalyzer:
             for rule in self._SECTION_RULES:
                 if rule.matches(normalized):
                     sections.add(rule.section)
+            if self._looks_like_code(normalized):
+                sections.update({"features", "architecture"})
         # Keep intro aligned with major content updates.
         if sections.intersection({"features", "architecture", "quickstart"}):
             sections.add("intro")
@@ -177,6 +206,15 @@ class DiffAnalyzer:
     def _is_docs_path(self, path: str) -> bool:
         normalized = path.replace("\\", "/")
         return any(normalized.startswith(prefix) for prefix in self._DOCS_PREFIXES)
+
+    def _looks_like_code(self, path: str) -> bool:
+        normalized = path.replace("\\", "/")
+        if "/tests/" in f"/{normalized}/" or normalized.startswith("tests/"):
+            return False
+        if normalized.startswith("docs/"):
+            return False
+        suffix = Path(normalized).suffix.lower()
+        return bool(suffix) and suffix in self._CODE_SUFFIXES
 
     def _run(
         self,

@@ -6,9 +6,9 @@
       "size": 3072
     },
     "README.md": {
-      "hash": "5da1210c8c15c4e12eeb03d024750f2038147e85b8d84a97dd5cb26f88565294",
-      "mtime_ns": 1758330290709423800,
-      "size": 2355
+      "hash": "32e3ca68398e309894dfef3ba67276bf96fea725596fd157d0d4112daeab17c3",
+      "mtime_ns": 1758332956308404700,
+      "size": 2445
     },
     "docgen/__init__.py": {
       "hash": "48c6f91c4fa6b6ea7ee0e8e593941b642dffacfde200c375e609f469005f90af",
@@ -51,9 +51,9 @@
       "size": 6293
     },
     "docgen/cli.py": {
-      "hash": "14cad0120785f6db7144334a2b7a3f273de310feb4989cafaa4e04c389b59dee",
-      "mtime_ns": 1758329698241222400,
-      "size": 2292
+      "hash": "0e828b0c3e0ed83902f26bf04b406610a2830d2bb3bafa153b425081b9c23fa1",
+      "mtime_ns": 1758332040153260300,
+      "size": 2962
     },
     "docgen/config.py": {
       "hash": "de130bdb684a9623751e484e4018180b485c0f6b2c848eef779eb9af1e840603",
@@ -66,14 +66,14 @@
       "size": 32
     },
     "docgen/git/diff.py": {
-      "hash": "1e0d2ab68d54b691b1e6c71a0a43c4b6d6a6f87722866a6e01a2706fd8f6cc55",
-      "mtime_ns": 1758315439444932700,
-      "size": 216
+      "hash": "087b70c1dfcbcc5ae450f4519728b996498754279cd7d851840c485eac49253a",
+      "mtime_ns": 1758332888814932500,
+      "size": 8457
     },
     "docgen/git/publisher.py": {
-      "hash": "b80039733e4e0eef2c40b03e0659dcac01ca623bdda14c383845c345688c6442",
-      "mtime_ns": 1758329698242222100,
-      "size": 2557
+      "hash": "939ae1fd8cfe6b876db6b05ea19e4e12a624b2ddd1ee0c995e5fb38219fa6163",
+      "mtime_ns": 1758332050544883900,
+      "size": 4027
     },
     "docgen/llm/__init__.py": {
       "hash": "440946369bcf7705557601e6aca3c2ac35531d9156433e9201a19c3253e8c5ec",
@@ -91,9 +91,9 @@
       "size": 676
     },
     "docgen/orchestrator.py": {
-      "hash": "e9772e007f6bad9d269d2b07ce8139c2ca09a4be585df10437f196fbe32ac29f",
-      "mtime_ns": 1758321770528551500,
-      "size": 3861
+      "hash": "ffb71b05a92657bd5cc2d687cec4c3a427bbe70f3b56af4d44c0cf6fd7d6ec7f",
+      "mtime_ns": 1758332034793055900,
+      "size": 8233
     },
     "docgen/postproc/__init__.py": {
       "hash": "936e6b16a4c3a589f7d0ea2db1cfb0191b8e71b4ebb2aaca348ade3a5c1e4340",
@@ -116,9 +116,9 @@
       "size": 2233
     },
     "docgen/postproc/toc.py": {
-      "hash": "a12291be47cb754e144590787f7e2f813614f3599887d982509b5b0437f08c4d",
-      "mtime_ns": 1758329698245222300,
-      "size": 1914
+      "hash": "7ec1ee0c6662555da42667eeb1247238fa98104a170160344bbad14b1aace376",
+      "mtime_ns": 1758331850276876500,
+      "size": 2176
     },
     "docgen/prompting/__init__.py": {
       "hash": "f4f40c0c468af6c365adc7d7c6cde36c02ba2156e469d1814f7d483cca936124",
@@ -126,9 +126,9 @@
       "size": 38
     },
     "docgen/prompting/builder.py": {
-      "hash": "2a583d47df65e320f6dd20e3f874ef34b22473ee22e2bcb8aec33cb98f7f4c57",
-      "mtime_ns": 1758330138513235500,
-      "size": 17678
+      "hash": "4f368ce5149f741b7a9f80c2f0decb6cc15575539e36b5662428f9c3c27608a3",
+      "mtime_ns": 1758331891416054100,
+      "size": 18706
     },
     "docgen/prompting/templates/readme.j2": {
       "hash": "a0641433b60178ba1d2f03e96aa0962304ea610997af7375e471e06a10e6b1f4",
@@ -211,9 +211,9 @@
       "size": 9899
     },
     "spec/feature_checklist.md": {
-      "hash": "4987acebbd0d7d8122b528be3c24c68a37509d9f4e941ebf42be8dce9bac7788",
-      "mtime_ns": 1758325887086655900,
-      "size": 5038
+      "hash": "5e5bda9c7e64703c5d04aa6ff1baa2b34ee0bb468ab7908acfc0da6376d812bd",
+      "mtime_ns": 1758331362795687700,
+      "size": 5125
     },
     "spec/feature_order.md": {
       "hash": "3543629e0718489a71e908cb3e1201d42e4979f9e834c55e54d2acac6b9e71a0",
@@ -240,10 +240,15 @@
       "mtime_ns": 1758321357317589900,
       "size": 3792
     },
+    "tests/git/test_diff.py": {
+      "hash": "9dcaa43b49ee91839044026e80a78aca19621934d6b2a9d6c351e629527a07f3",
+      "mtime_ns": 1758332898589605100,
+      "size": 2389
+    },
     "tests/git/test_publisher.py": {
-      "hash": "5a68f6e134837eb9c906d99784cd7f02bbd4008fc7ccb95813ba7a3a72362990",
-      "mtime_ns": 1758322099015243400,
-      "size": 1432
+      "hash": "c7103d8f19159b22eec963eb606498bde51a44252df5f9e4d03bd765517d5d2e",
+      "mtime_ns": 1758332185409382500,
+      "size": 2641
     },
     "tests/llm/test_runner.py": {
       "hash": "cde91a15642a874036eb64a33eac6319ad9b9fcd66b454663f84d8ee51d8ce6e",
@@ -251,14 +256,14 @@
       "size": 4727
     },
     "tests/postproc/test_postproc.py": {
-      "hash": "78be7bdf1704126c87c752b95ace3420657e5beca8d789f8b8bc28f12041aef3",
-      "mtime_ns": 1758322027254550700,
-      "size": 1424
+      "hash": "b98a6b1ae863fdbf77c6108f2440e993ccecd8f05801ca851552a686af620120",
+      "mtime_ns": 1758332119202479000,
+      "size": 1843
     },
     "tests/prompting/test_builder.py": {
-      "hash": "dcadca92473020704653f402cad62a15f8cb97fadd9bebaa121771452742e903",
-      "mtime_ns": 1758322058821378100,
-      "size": 1407
+      "hash": "e076a7c17664417f378c8c90c8c98abfb0a98187da404cf294fe0c27226703c5",
+      "mtime_ns": 1758332204671187000,
+      "size": 2028
     },
     "tests/test_config.py": {
       "hash": "5e62578d62ee4ba4e31dcc06cba8d3f67c381f314579dadf5978af7243b3d111",
@@ -266,9 +271,9 @@
       "size": 3121
     },
     "tests/test_orchestrator.py": {
-      "hash": "88f8191fe1c0380996617fbe396e05dc3ff904a0d4240b6ab4cdd14cbef06990",
-      "mtime_ns": 1758321986879200800,
-      "size": 3323
+      "hash": "665655ec717bcc4619c3d48271eaaa8daf4e60edc6fd45844a75ba5991a60abe",
+      "mtime_ns": 1758332167959070400,
+      "size": 6033
     },
     "tests/test_repo_scanner.py": {
       "hash": "60c5915733f7b8c77c9aaa73495b2182f1baf6338951d99f653b5f2b32f56d66",

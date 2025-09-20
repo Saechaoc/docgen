@@ -52,3 +52,20 @@ def test_diff_analyzer_flags_docs_changes(tmp_path: Path) -> None:
     assert result.sections[:3] == ["intro", "features", "architecture"]
     assert len(result.sections) == 10
     assert "docs/guide.md" in result.changed_files
+
+
+def test_diff_analyzer_infers_code_sections_from_suffix(tmp_path: Path) -> None:
+    repo = _make_repo(tmp_path)
+
+    def runner(args, cwd, capture_output=False):  # type: ignore[no-untyped-def]
+        if args[:3] == ["git", "diff", "--name-only"]:
+            return "docgen/analyzer.py\n"
+        if args[:2] == ["git", "status"]:
+            return " M docgen/analyzer.py\n"
+        return ""
+
+    analyzer = DiffAnalyzer(runner=runner)
+    result = analyzer.compute(str(repo), "origin/master")
+
+    assert result.sections[:3] == ["intro", "features", "architecture"]
+    assert "docgen/analyzer.py" in result.changed_files
