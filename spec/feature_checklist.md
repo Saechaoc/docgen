@@ -88,7 +88,7 @@
 ## 15) Error Handling & UX
 - [x] Fail-safe stub generation when evidence is insufficient **[MVP]**
 - [ ] Clear run logs + PR body with rationale (“sections updated because…”) **[MVP]**
-- [x] Helpful CLI errors and `--verbose` flag **[MVP]**
+- [x] Helpful CLI errors and `--verbose` flag (works pre/post subcommand) **[MVP]**
 
 ## 16) Extensibility
 - [x] Analyzer ABC and plugin discovery **[MVP]**

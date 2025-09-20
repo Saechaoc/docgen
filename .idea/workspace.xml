@@ -62,7 +62,7 @@
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts">
+  <component name="RunManager" selected="Python tests.Python tests in tests">
     <configuration name="Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
       <option name="ENV_FILES" value="" />
@@ -140,8 +140,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts" />
         <item itemvalue="Python tests.Python tests in tests" />
+        <item itemvalue="Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts" />
         <item itemvalue="Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" />
         <item itemvalue="Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request" />
         <item itemvalue="Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" />
