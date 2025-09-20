@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.docgen/manifest_cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/manifest_cache.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/git/diff.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/git/diff.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/git/test_diff.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/git/test_diff.py" afterDir="false" />
-    </list>
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
