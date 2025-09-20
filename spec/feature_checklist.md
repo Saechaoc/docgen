@@ -36,6 +36,7 @@
 - [x] Token budgeting & streaming section‑by‑section generation **[MVP]**
 - [ ] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
 - [ ] Style presets: concise vs comprehensive **[NEXT]**
+- [ ] Mermaid.js diagrams for architecture/flow sections where appropriate **[NEXT]**
 
 ## 6) Local LLM Runner
 - [x] Model Runner HTTP adapter (host/container defaults, env/API key overrides) **[MVP]**
