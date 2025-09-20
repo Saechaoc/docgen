@@ -57,3 +57,21 @@ def test_prompt_builder_render_sections_subset(tmp_path: Path) -> None:
     assert set(sections) == {"intro", "deployment"}
     assert "docgen" in sections["intro"].body
     assert sections["deployment"].body.strip()
+
+
+def test_prompt_builder_architecture_includes_file_counts(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+    analyzers = [LanguageAnalyzer(), BuildAnalyzer(), DependencyAnalyzer()]
+    signals = []
+    for analyzer in analyzers:
+        signals.extend(analyzer.analyze(manifest))
+
+    builder = PromptBuilder()
+    sections = builder.render_sections(manifest, signals, ["architecture"])
+
+    architecture = sections["architecture"].body
+    assert "files" in architecture

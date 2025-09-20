@@ -236,9 +236,14 @@ class PromptBuilder:
         if not entries:
             body = "Document the project structure here."
         else:
-            body = self._format_bullet_list(
-                [f"`{entry['path']}/` - {entry['description']}" for entry in entries]
-            )
+            lines: List[str] = []
+            for entry in entries:
+                count = entry.get("count", 0)
+                descriptor = "file" if count == 1 else "files"
+                lines.append(
+                    f"`{entry['path']}/` - {entry['description']} ({count} {descriptor})"
+                )
+            body = self._format_bullet_list(lines)
         return body, {"entries": entries}
 
     def _build_quickstart(

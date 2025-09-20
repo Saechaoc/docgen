@@ -1,5 +1,5 @@
 {% if metadata['entries'] %}
-{% for entry in metadata['entries'] %}- `{{ entry.path }}/` - {{ entry.description }}
+{% for entry in metadata['entries'] %}{% set descriptor = 'file' if entry.count == 1 else 'files' %}- `{{ entry.path }}{% if '/' not in entry.path %}/{% endif %}` - {{ entry.description }} ({{ entry.count }} {{ descriptor }})
 {% endfor %}
 {% else %}
 {{ body | trim | safe }}

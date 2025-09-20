@@ -31,25 +31,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor&quot;: &quot;Run&quot;,
-    &quot;Python tests.Python tests in tests.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo.executor": "Run",
+    "Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request.executor": "Run",
+    "Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing.executor": "Run",
+    "Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart.executor": "Run",
+    "Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme.executor": "Run",
+    "Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language.executor": "Run",
+    "Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor": "Run",
+    "Python tests.Python tests in tests.executor": "Run",
+    "Python.test.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "docgen/readme-update-20250920014916",
+    "ignore.virus.scanning.warn.message": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Python tests.Python tests in tests">
     <configuration name="Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
