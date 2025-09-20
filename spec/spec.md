@@ -73,7 +73,8 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * **Language analyzers** (detect idioms, entrypoints, frameworks: Spring Boot, FastAPI, Node/Express, React, Next.js, Go HTTP, Rust bin/lib).
 * **Build analyzers** (Maven/Gradle, setuptools/Poetry, npm/pnpm/yarn, Go, Cargo).
 * **Dependency analyzers** (extract top-level libs & notable transitive categories).
-* **Pattern analyzers** (monorepo layout, microservices, data stores, messaging, CI/CD, Docker/K8s).
+* **Entrypoint analyzers** (infer run commands for FastAPI, Django, Spring Boot, Node scripts).
+* **Pattern analyzers** (monorepo layout, CI/CD, containerization/K8s heuristics).
 * Each analyzer returns **Signals** (key facts) to the knowledge graph.
 
 ### 3.4 Knowledge Graph & Embeddings (RAG)
@@ -89,6 +90,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
   * Project intro, key features, architecture overview, quick start, configuration, build/test, deployment, troubleshooting, FAQ, roadmap, contribution, license, badges.
 * Dynamically injects repo signals and retrieved context per section.
 * Produces **LLM-ready structured prompts** (system + user messages) with token budgets and honours `readme.style` presets (`concise` trims list-heavy sections, `comprehensive` keeps full detail).
+* Injects detected entrypoints and infrastructure patterns into Quick Start guidance (e.g., `uvicorn ...`, `docker compose up`).
 
 ### 3.6 Local LLM Runner
 
@@ -313,6 +315,7 @@ docgen/
     language.py
     build.py
     dependencies.py
+    entrypoints.py
     patterns.py
   rag/
     embedder.py           # local embedding model

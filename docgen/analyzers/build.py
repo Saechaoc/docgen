@@ -8,6 +8,7 @@ from typing import Iterable, List, Optional
 
 from .base import Analyzer
 from ..models import RepoManifest, Signal
+from .utils import detect_node_package_manager
 
 
 class BuildAnalyzer(Analyzer):
@@ -79,11 +80,7 @@ class BuildAnalyzer(Analyzer):
         if "package.json" not in manifest_paths:
             return None
 
-        manager = "npm"
-        if "pnpm-lock.yaml" in manifest_paths:
-            manager = "pnpm"
-        elif "yarn.lock" in manifest_paths:
-            manager = "yarn"
+        manager = detect_node_package_manager(manifest_paths)
 
         if manager == "pnpm":
             commands = ["pnpm install", "pnpm test", "pnpm run build"]

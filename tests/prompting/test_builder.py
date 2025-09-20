@@ -122,6 +122,54 @@ def test_prompt_builder_filters_missing_commands(tmp_path: Path) -> None:
     assert all("requirements.txt" not in cmd for cmd in filtered)
 
 
+def test_quickstart_includes_entrypoint_and_pattern_commands(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+
+    entry_signal = Signal(
+        name="entrypoint.python.fastapi",
+        value="uvicorn app.main:app --reload",
+        source="entrypoints",
+        metadata={
+            "command": "uvicorn app.main:app --reload",
+            "label": "Run FastAPI application",
+            "priority": 10,
+        },
+    )
+
+    pattern_signal = Signal(
+        name="pattern.containerization",
+        value="docker",
+        source="patterns",
+        metadata={
+            "quickstart": ["docker compose up"],
+            "summary": "Docker artifacts detected",
+        },
+    )
+
+    build_signal = Signal(
+        name="build.python",
+        value="python",
+        source="build",
+        metadata={"commands": ["python -m pytest"]},
+    )
+
+    builder = PromptBuilder()
+    sections = builder.render_sections(
+        manifest,
+        signals=[entry_signal, pattern_signal, build_signal],
+        sections=["quickstart"],
+    )
+
+    quickstart = sections["quickstart"].body
+    assert "uvicorn app.main:app --reload" in quickstart
+    assert "docker compose up" in quickstart
+    assert "python -m pytest" in quickstart
+
+
 def test_prompt_builder_concise_style_limits_feature_list(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()

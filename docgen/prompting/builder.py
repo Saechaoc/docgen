@@ -117,7 +117,11 @@ class PromptBuilder:
         frameworks = self._extract_frameworks(grouped)
 
         build_signals = [sig for name, values in grouped.items() if name.startswith("build.") for sig in values]
+        entrypoint_signals = [sig for name, values in grouped.items() if name.startswith("entrypoint.") for sig in values]
+        pattern_signals = [sig for name, values in grouped.items() if name.startswith("pattern.") for sig in values]
         build_commands = self._collect_build_commands(build_signals)
+        entrypoint_commands = self._collect_entrypoints(entrypoint_signals)
+        pattern_commands = self._collect_pattern_commands(pattern_signals)
 
         dependency_signals = {
             "Python": self._first_signal(grouped, "dependencies.python"),
@@ -154,6 +158,9 @@ class PromptBuilder:
                     frameworks=frameworks,
                     build_commands=build_commands,
                     dependencies=dependencies,
+                    entrypoints=entrypoint_commands,
+                    patterns=pattern_signals,
+                    pattern_commands=pattern_commands,
                 )
             section_context = contexts.get(name, [])
             body = self._inject_context(name, body, section_context)
@@ -197,6 +204,9 @@ class PromptBuilder:
         frameworks: Dict[str, List[str]],
         dependencies: Dict[str, object],
         build_commands: Dict[str, List[str]],
+        entrypoints: List[Dict[str, object]],
+        patterns: Sequence[Signal],
+        pattern_commands: List[str],
     ) -> Tuple[str, Dict[str, object]]:
         items: List[str] = []
         if languages:
@@ -211,6 +221,16 @@ class PromptBuilder:
         if build_commands:
             tool_list = ", ".join(sorted(build_commands.keys()))
             items.append(f"Supported build tooling: {tool_list}")
+        if entrypoints:
+            labels = [ep.get("label") or ep.get("command") for ep in entrypoints]
+            if labels:
+                items.append(f"Entry points: {', '.join(labels[:3])}")
+        for pattern in patterns:
+            summary = pattern.metadata.get("summary") if pattern.metadata else None
+            if summary:
+                items.append(summary)
+        if pattern_commands:
+            items.append("Infrastructure commands available: " + ", ".join(pattern_commands[:2]))
         items.append("Ready for continuous README generation via docgen.")
         display_items = self._select_items(items, max_items=4)
         body = self._format_bullet_list(display_items)
@@ -258,17 +278,39 @@ class PromptBuilder:
         self,
         *,
         build_commands: Dict[str, List[str]],
+        entrypoints: List[Dict[str, object]],
+        pattern_commands: List[str],
         manifest: RepoManifest,
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
         commands = self._unique_commands(build_commands)
-        commands = self._validate_commands(commands, manifest)
-        if not commands:
+        entrypoint_cmds = [ep.get("command") for ep in entrypoints if ep.get("command")]
+        additional_commands = entrypoint_cmds + pattern_commands
+        ordered: List[str] = []
+        for candidate in additional_commands + commands:
+            if not candidate:
+                continue
+            if candidate not in ordered:
+                ordered.append(candidate)
+
+        validated = self._validate_commands(commands, manifest)
+        merged: List[str] = []
+        for cmd in ordered:
+            if cmd in commands:
+                if cmd in validated and cmd not in merged:
+                    merged.append(cmd)
+            else:
+                if cmd not in merged:
+                    merged.append(cmd)
+        if not merged:
             body = "Document how to set up and run the project locally."
         else:
-            command_block = "\n".join(commands)
+            display = merged
+            if self.style == "concise" and len(display) > 5:
+                display = display[:4] + [display[-1]]
+            command_block = "\n".join(display)
             body = f"Follow the steps below to get started:\n\n```bash\n{command_block}\n```"
-        return body, {"commands": commands}
+        return body, {"commands": merged, "entrypoints": entrypoints, "pattern_commands": pattern_commands}
 
     def _build_configuration(
         self,
@@ -520,6 +562,41 @@ class PromptBuilder:
                 for cmd in cmds:
                     if cmd not in commands[tool]:
                         commands[tool].append(cmd)
+        return commands
+
+    @staticmethod
+    def _collect_entrypoints(signals: Iterable[Signal]) -> List[Dict[str, object]]:
+        entries: List[Dict[str, object]] = []
+        for signal in signals:
+            metadata = signal.metadata
+            if not metadata:
+                continue
+            command = metadata.get("command")
+            if not command:
+                continue
+            entries.append(
+                {
+                    "command": command,
+                    "label": metadata.get("label", command),
+                    "priority": metadata.get("priority", 50),
+                    "framework": metadata.get("framework"),
+                }
+            )
+        entries.sort(key=lambda item: item.get("priority", 50))
+        return entries
+
+    @staticmethod
+    def _collect_pattern_commands(signals: Iterable[Signal]) -> List[str]:
+        commands: List[str] = []
+        for signal in signals:
+            metadata = signal.metadata
+            if not metadata:
+                continue
+            quickstart = metadata.get("quickstart")
+            if isinstance(quickstart, list):
+                for cmd in quickstart:
+                    if isinstance(cmd, str) and cmd not in commands:
+                        commands.append(cmd)
         return commands
 
     @staticmethod

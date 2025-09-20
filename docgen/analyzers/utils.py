@@ -7,7 +7,7 @@ import re
 import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, Iterable, List, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 # Python dependency helpers
 
@@ -93,6 +93,43 @@ def load_node_dependencies(root: Path) -> Dict[str, List[str]]:
         "dependencies": _extract("dependencies"),
         "devDependencies": _extract("devDependencies"),
     }
+
+
+def load_package_json(root: Path) -> Dict[str, object]:
+    """Return the parsed package.json contents or an empty dict."""
+    package_json = root / "package.json"
+    if not package_json.exists():
+        return {}
+    try:
+        data = json.loads(package_json.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+    if isinstance(data, dict):
+        return data
+    return {}
+
+
+def detect_node_package_manager(manifest_paths: Set[str]) -> str:
+    """Infer the preferred Node package manager based on lockfiles."""
+    if "pnpm-lock.yaml" in manifest_paths:
+        return "pnpm"
+    if "yarn.lock" in manifest_paths:
+        return "yarn"
+    if "package-lock.json" in manifest_paths:
+        return "npm"
+    return "npm"
+
+
+def build_node_script_command(script: str, manager: str) -> str:
+    manager = manager.lower()
+    if manager == "pnpm":
+        return f"pnpm {script}"
+    if manager == "yarn":
+        return f"yarn {script}"
+    # npm run <script>, except start which can be `npm start`
+    if script == "start":
+        return "npm start"
+    return f"npm run {script}"
 
 
 # Java dependency helpers

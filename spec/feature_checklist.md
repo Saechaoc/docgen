@@ -14,14 +14,14 @@
 - [x] Walk filesystem with ignore rules (`.gitignore`, `.docgen.yml`) **[MVP]**
 - [x] Build normalized manifest of files, roles (src/test/docs/config/infra) **[MVP]**
 - [x] Hash & cache file metadata to speed subsequent runs **[MVP]**
-- [ ] Entrypoint detection (e.g., `main()`, `@SpringBootApplication`, FastAPI app) **[NEXT]**
+- [x] Entrypoint detection (e.g., `main()`, `@SpringBootApplication`, FastAPI app) **[NEXT]**
 - [ ] Monorepo module detection **[NEXT]**
 
 ## 3) Analyzers (Plugin‑based)
 - [x] Language analyzers: Python, Java, Node.js (Tier‑1) **[MVP]**
 - [x] Build analyzers: Poetry/Setuptools, Maven/Gradle, npm/pnpm/yarn **[MVP]**
 - [x] Dependency analyzers from manifest files **[MVP]**
-- [ ] Pattern analyzers: Docker/K8s, CI config, monorepo layout **[NEXT]**
+- [x] Pattern analyzers: Docker/K8s, CI config, monorepo layout **[NEXT]**
 - [ ] Tree‑sitter powered symbol/entrypoint extraction (flagged) **[STRETCH]**
 
 ## 4) Knowledge Store (RAG)

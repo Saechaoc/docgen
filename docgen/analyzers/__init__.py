@@ -8,7 +8,9 @@ from typing import Callable, Iterable, List, Sequence, Set, Type
 from .base import Analyzer
 from .build import BuildAnalyzer
 from .dependencies import DependencyAnalyzer
+from .entrypoints import EntryPointAnalyzer
 from .language import LanguageAnalyzer
+from .patterns import PatternAnalyzer
 
 _ENTRY_POINT_GROUP = "docgen.analyzers"
 
@@ -16,6 +18,8 @@ _BUILTIN_FACTORIES: dict[str, Callable[[], Analyzer]] = {
     "language": LanguageAnalyzer,
     "build": BuildAnalyzer,
     "dependencies": DependencyAnalyzer,
+    "entrypoints": EntryPointAnalyzer,
+    "patterns": PatternAnalyzer,
 }
 
 
