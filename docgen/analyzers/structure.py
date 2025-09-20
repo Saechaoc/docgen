@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
+from dataclasses import dataclass
 from typing import Dict, Iterable, List, Sequence
 
 from .base import Analyzer
+from .endpoints.core import DetectorRegistry
+from .endpoints.detectors import ExpressDetector, FastAPIDetector, SpecDetector, SpringDetector
 from ..models import RepoManifest, Signal
 
-_FASTAPI_DECORATOR = re.compile(r"@(\w+)\.(get|post|put|delete|patch)\((['\"])([^'\"]+)\3")
-_EXPRESS_ROUTE = re.compile(r"(app|router)\.(get|post|put|delete|patch)\((['\"])([^'\"]+)\3")
 _PY_MODEL_CLASS = re.compile(r"class\s+(\w+)\(([^)]*)\):")
 
 
@@ -32,6 +32,13 @@ class _FileSummary:
 class StructureAnalyzer(Analyzer):
     """Derives architectural signals from source files and layout."""
 
+    _ENDPOINT_DETECTORS: Sequence = (
+        SpecDetector(),
+        FastAPIDetector(),
+        ExpressDetector(),
+        SpringDetector(),
+    )
+
     def supports(self, manifest: RepoManifest) -> bool:
         return bool(manifest.files)
 
@@ -48,12 +55,8 @@ class StructureAnalyzer(Analyzer):
                 )
             )
 
-        api_signals = self._detect_api_endpoints(manifest)
-        signals.extend(api_signals)
-
-        entity_signals = self._detect_entities(manifest)
-        signals.extend(entity_signals)
-
+        signals.extend(self._detect_api_endpoints(manifest))
+        signals.extend(self._detect_entities(manifest))
         return signals
 
     def _summarise_modules(self, manifest: RepoManifest) -> List[Dict[str, object]]:
@@ -80,69 +83,25 @@ class StructureAnalyzer(Analyzer):
         return result
 
     def _detect_api_endpoints(self, manifest: RepoManifest) -> List[Signal]:
-        root = Path(manifest.root)
-        api_signals: List[Signal] = []
-
-        for meta in manifest.files:
-            file_path = root / meta.path
-            if not file_path.exists() or file_path.is_dir():
-                continue
-            try:
-                text = file_path.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
-                continue
-
-            if meta.language == "Python":
-                api_signals.extend(self._extract_fastapi_endpoints(meta.path, text))
-            elif meta.language in {"JavaScript", "TypeScript"}:
-                api_signals.extend(self._extract_express_endpoints(meta.path, text))
-
-        return api_signals
-
-    def _extract_fastapi_endpoints(self, path: str, text: str) -> List[Signal]:
+        registry = DetectorRegistry(self._ENDPOINT_DETECTORS)
+        endpoints = registry.run(manifest)
         signals: List[Signal] = []
-        for match in _FASTAPI_DECORATOR.finditer(text):
-            router_name, method, _, route = match.groups()
-            function_name = self._find_next_function_name(text, match.end())
-            external_call = self._detect_external_call(text, match.end())
-            sequence = self._build_sequence("FastAPI endpoint", method.upper(), route, external_call)
+        for endpoint in endpoints:
+            role = f"{endpoint.framework} endpoint" if endpoint.framework else "Endpoint"
+            sequence = self._build_sequence(role, endpoint.method, endpoint.path)
             signals.append(
                 Signal(
                     name="architecture.api",
-                    value=f"{method.upper()} {route}",
+                    value=f"{endpoint.method} {endpoint.path}",
                     source="structure",
                     metadata={
-                        "framework": "FastAPI",
-                        "router": router_name,
-                        "method": method.upper(),
-                        "path": route,
-                        "handler": function_name,
-                        "file": path,
-                        "external_call": external_call,
-                        "sequence": sequence,
-                    },
-                )
-            )
-        return signals
-
-    def _extract_express_endpoints(self, path: str, text: str) -> List[Signal]:
-        signals: List[Signal] = []
-        for match in _EXPRESS_ROUTE.finditer(text):
-            router_name, method, _, route = match.groups()
-            external_call = self._detect_external_call(text, match.end())
-            sequence = self._build_sequence("Express route", method.upper(), route, external_call)
-            signals.append(
-                Signal(
-                    name="architecture.api",
-                    value=f"{method.upper()} {route}",
-                    source="structure",
-                    metadata={
-                        "framework": "Express",
-                        "router": router_name,
-                        "method": method.upper(),
-                        "path": route,
-                        "file": path,
-                        "external_call": external_call,
+                        "framework": endpoint.framework,
+                        "method": endpoint.method,
+                        "path": endpoint.path,
+                        "file": endpoint.file,
+                        "line": endpoint.line,
+                        "language": endpoint.language,
+                        "confidence": endpoint.confidence,
                         "sequence": sequence,
                     },
                 )
@@ -183,51 +142,21 @@ class StructureAnalyzer(Analyzer):
         return signals
 
     @staticmethod
-    def _find_next_function_name(text: str, position: int) -> str | None:
-        func_match = re.search(r"def\s+(\w+)\s*\(", text[position:])
-        if func_match:
-            return func_match.group(1)
-        return None
+    def _extract_class_fields(text: str, position: int) -> List[str]:
+        body = text[position:]
+        fields: List[str] = []
+        for match in re.finditer(r"^(\s{4}|\t)(\w+)\s*:\s*([^=\n]+)", body, flags=re.MULTILINE):
+            name = match.group(2)
+            annotation = match.group(3).strip()
+            fields.append(f"{name}: {annotation}")
+        return fields
 
     @staticmethod
-    def _detect_external_call(text: str, position: int) -> str | None:
-        snippet = text[position:]
-        if "requests." in snippet or "httpx." in snippet:
-            return "External HTTP call"
-        if "asyncio" in snippet and "gather" in snippet:
-            return "Async orchestration"
-        if "session." in snippet or "db." in snippet:
-            return "Database interaction"
-        return None
-
-    @staticmethod
-    def _build_sequence(role: str, method: str, path: str, external_call: str | None) -> List[Dict[str, str]]:
-        steps = [
-            {
-                "from": "Client",
-                "to": role,
-                "message": f"{method} {path}",
-            }
+    def _build_sequence(role: str, method: str, path: str) -> List[Dict[str, str]]:
+        return [
+            {"from": "Client", "to": role, "message": f"{method} {path}"},
+            {"from": role, "to": "Client", "message": "Response"},
         ]
-        if external_call:
-            target = 'External service' if 'HTTP' in external_call else 'Database'
-            steps.append({
-                'from': role,
-                'to': target,
-                'message': external_call,
-            })
-            steps.append({
-                'from': target,
-                'to': role,
-                'message': 'Response',
-            })
-        steps.append({
-            'from': role,
-            'to': 'Client',
-            'message': 'Response',
-        })
-        return steps
 
 
-__all__ = ['StructureAnalyzer']
-
+__all__ = ["StructureAnalyzer"]
