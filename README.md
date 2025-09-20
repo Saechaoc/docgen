@@ -2,6 +2,7 @@
 
 <!-- docgen:begin:toc -->
 ## Table of Contents
+- [Table of Contents](#table-of-contents)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
@@ -29,6 +30,7 @@ docgen is a Python project. This README was bootstrapped by ``docgen init`` to s
 
 <!-- docgen:begin:architecture -->
 - `AGENTS.md/` - Project documentation assets
+- `README.md/` - Project documentation assets
 - `docgen/` - Primary application and library code
 - `spec/` - Project documentation assets
 - `tests/` - Automated tests that guard behaviour
