@@ -25,6 +25,18 @@ def test_table_of_contents_builder_inserts_placeholder() -> None:
     assert "<!-- docgen:end:toc -->" in result
 
 
+def test_table_of_contents_builder_replaces_existing_block() -> None:
+    md = (
+        "# Project\n\n"
+        "<!-- docgen:begin:toc -->\n## Table of Contents\n- [Old](#old)\n"
+        "<!-- docgen:end:toc -->\n\n## Alpha\n"
+    )
+    result = TableOfContentsBuilder().build(md)
+    assert result.count("## Table of Contents") == 1
+    assert "- [Old](#old)" not in result
+    assert "- [Alpha](#alpha)" in result
+
+
 def test_marker_manager_wraps_and_replaces_sections() -> None:
     manager = MarkerManager()
     section = SectionContent(name="features", title="Features", body="- Item one")

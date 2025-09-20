@@ -20,11 +20,11 @@ class Publisher:
         files: Sequence[Path | str],
         *,
         message: str = "docs: bootstrap README via docgen init",
-    ) -> None:
+    ) -> bool:
         """Stage the provided files and create a commit if changes exist."""
         repo = Path(repo_path)
         if not (repo / ".git").exists():
-            return
+            return False
 
         relative_files = [self._to_relative(repo, Path(file)) for file in files]
         for rel in relative_files:
@@ -32,7 +32,7 @@ class Publisher:
 
         status = self._run(["git", "status", "--porcelain"], cwd=repo, capture_output=True)
         if not status.strip():
-            return
+            return False
 
         env = os.environ.copy()
         env.setdefault("GIT_AUTHOR_NAME", "docgen")
@@ -41,6 +41,65 @@ class Publisher:
         env.setdefault("GIT_COMMITTER_EMAIL", env["GIT_AUTHOR_EMAIL"])
 
         self._run(["git", "commit", "-m", message], cwd=repo, env=env)
+        return True
+
+    def publish_pr(
+        self,
+        repo_path: str,
+        files: Sequence[Path | str],
+        *,
+        branch_name: str,
+        base_branch: str | None = None,
+        title: str,
+        body: str,
+        push: bool = True,
+    ) -> bool:
+        """Create a branch, commit the files, and open a PR via the GitHub CLI."""
+        repo = Path(repo_path)
+        if not (repo / ".git").exists():
+            return False
+
+        checkout_cmd = ["git", "checkout", "-B", branch_name]
+        if base_branch:
+            checkout_cmd.append(base_branch)
+        try:
+            self._run(checkout_cmd, cwd=repo)
+        except Exception:
+            return False
+
+        committed = self.commit(
+            repo_path,
+            files,
+            message="docs: update README via docgen",
+        )
+        if not committed:
+            return False
+
+        if push:
+            try:
+                self._run(["git", "push", "-u", "origin", branch_name], cwd=repo)
+            except Exception:
+                return False
+
+        pr_args = [
+            "gh",
+            "pr",
+            "create",
+            "--title",
+            title,
+            "--body",
+            body,
+        ]
+        if base_branch:
+            pr_args.extend(["--base", base_branch])
+        pr_args.extend(["--head", branch_name])
+
+        try:
+            self._run(pr_args, cwd=repo)
+        except Exception:
+            return False
+
+        return True
 
     # ------------------------------------------------------------------
     # Helpers

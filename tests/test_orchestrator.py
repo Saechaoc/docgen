@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
+from docgen.git.diff import DiffResult
 from docgen.orchestrator import Orchestrator
+from docgen.prompting.builder import Section
+from docgen.repo_scanner import RepoScanner
 
 
 class RecordingPublisher:
@@ -14,9 +17,34 @@ class RecordingPublisher:
 
     def __init__(self) -> None:
         self.calls: list[tuple[str, list[Path], str]] = []
+        self.pr_calls: list[dict[str, object]] = []
 
     def commit(self, repo_path: str, files, message: str) -> None:  # pragma: no cover - simple recorder
         self.calls.append((repo_path, [Path(f) for f in files], message))
+
+    def publish_pr(
+        self,
+        repo_path: str,
+        files,
+        *,
+        branch_name: str,
+        base_branch: str | None = None,
+        title: str,
+        body: str,
+        push: bool = True,
+    ) -> bool:  # pragma: no cover - simple recorder
+        self.pr_calls.append(
+            {
+                "repo_path": repo_path,
+                "files": [Path(f) for f in files],
+                "branch_name": branch_name,
+                "base_branch": base_branch,
+                "title": title,
+                "body": body,
+                "push": push,
+            }
+        )
+        return True
 
 
 def _seed_sample_repo(root: Path) -> None:
@@ -104,3 +132,58 @@ publish:
     assert Path(repo_arg) == repo_root.resolve()
     assert Path(readme_path) in files_arg
     assert "docgen init" in message
+
+
+class _StubDiffAnalyzer:
+    def __init__(self, sections: list[str]) -> None:
+        self.sections = sections
+        self.calls: list[tuple[str, str]] = []
+
+    def compute(self, repo_path: str, diff_base: str) -> DiffResult:
+        self.calls.append((repo_path, diff_base))
+        return DiffResult(base=diff_base, changed_files=["requirements.txt"], sections=self.sections)
+
+
+class _StubPromptBuilder:
+    def build(self, *args, **kwargs):  # pragma: no cover - not used in tests
+        raise NotImplementedError
+
+    def render_sections(self, manifest, signals, sections):  # type: ignore[no-untyped-def]
+        return {
+            section: Section(
+                name=section,
+                title=section.replace("_", " ").title(),
+                body=f"UPDATED {section}",
+                metadata={},
+            )
+            for section in sections
+        }
+
+
+def test_run_update_patches_targeted_sections(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    init_orchestrator = Orchestrator()
+    init_orchestrator.run_init(str(repo_root))
+
+    diff_analyzer = _StubDiffAnalyzer(["build_and_test"])
+    publisher = RecordingPublisher()
+    update_orchestrator = Orchestrator(
+        scanner=RepoScanner(),
+        analyzers=[],
+        prompt_builder=_StubPromptBuilder(),
+        publisher=publisher,
+        diff_analyzer=diff_analyzer,
+    )
+
+    result = update_orchestrator.run_update(str(repo_root), "origin/main")
+
+    assert result == repo_root.resolve() / "README.md"
+    content = (repo_root / "README.md").read_text(encoding="utf-8")
+    assert "UPDATED build_and_test" in content
+    assert "UPDATED features" not in content
+    assert publisher.pr_calls, "Expected publish_pr to be invoked"
+    pr_call = publisher.pr_calls[0]
+    assert pr_call["branch_name"].startswith("docgen/readme-update")

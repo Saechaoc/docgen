@@ -80,12 +80,34 @@ class PromptBuilder:
         signals: Iterable[Signal],
         sections: Iterable[str] | None = None,
     ) -> str:
-        selected_sections = [s for s in (sections or _DEFAULT_SECTIONS) if s in _DEFAULT_SECTIONS]
+        selected_sections = self._normalise_section_order(sections)
+        if not selected_sections:
+            selected_sections = list(_DEFAULT_SECTIONS)
         grouped = self._group_signals(signals)
         project_name = Path(manifest.root).name or "Repository"
 
         intro_section, other_sections = self._build_sections(manifest, grouped, selected_sections)
         return self._render_readme(project_name, intro_section, other_sections)
+
+    def render_sections(
+        self,
+        manifest: RepoManifest,
+        signals: Iterable[Signal],
+        sections: Iterable[str],
+    ) -> Dict[str, Section]:
+        selected_sections = self._normalise_section_order(sections)
+        if not selected_sections:
+            return {}
+
+        grouped = self._group_signals(signals)
+        intro_section, other_sections = self._build_sections(manifest, grouped, selected_sections)
+
+        rendered: Dict[str, Section] = {}
+        if "intro" in selected_sections:
+            rendered["intro"] = intro_section
+        for section in other_sections:
+            rendered[section.name] = section
+        return rendered
 
     def _build_sections(
         self,
@@ -332,6 +354,13 @@ class PromptBuilder:
         else:
             body = "Add licensing information once the project selects a license."
         return body, {"files": license_paths}
+
+    @staticmethod
+    def _normalise_section_order(sections: Iterable[str] | None) -> List[str]:
+        if sections is None:
+            return []
+        requested = {section for section in sections if section in _DEFAULT_SECTIONS}
+        return [section for section in _DEFAULT_SECTIONS if section in requested]
 
     def _render_section(self, name: str, body: str, metadata: Dict[str, object]) -> str:
         if not self._env:

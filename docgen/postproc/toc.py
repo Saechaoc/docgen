@@ -15,6 +15,12 @@ class TableOfContentsBuilder:
         toc_block = self._build_block(markdown)
         if not toc_block:
             return markdown.replace(self.PLACEHOLDER, "", 1)
+        begin = "<!-- docgen:begin:toc -->"
+        end = "<!-- docgen:end:toc -->"
+        if begin in markdown and end in markdown:
+            pre, rest = markdown.split(begin, 1)
+            _, post = rest.split(end, 1)
+            return f"{pre}{toc_block}{post}"
         if self.PLACEHOLDER in markdown:
             return markdown.replace(self.PLACEHOLDER, toc_block, 1)
         return toc_block + "\n" + markdown

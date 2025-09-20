@@ -38,3 +38,22 @@ def test_prompt_builder_renders_marked_sections(tmp_path: Path) -> None:
     assert "<!-- docgen:begin:intro -->" in readme
     assert "<!-- docgen:begin:features -->" in readme
     assert "<!-- docgen:toc -->" in readme
+
+
+def test_prompt_builder_render_sections_subset(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+    analyzers = [LanguageAnalyzer(), BuildAnalyzer(), DependencyAnalyzer()]
+    signals = []
+    for analyzer in analyzers:
+        signals.extend(analyzer.analyze(manifest))
+
+    builder = PromptBuilder()
+    sections = builder.render_sections(manifest, signals, ["intro", "deployment"])
+
+    assert set(sections) == {"intro", "deployment"}
+    assert "docgen" in sections["intro"].body
+    assert sections["deployment"].body.strip()

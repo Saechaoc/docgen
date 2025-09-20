@@ -26,8 +26,21 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to the repository root (defaults to current directory).",
     )
 
-    # Placeholders for future commands to keep CLI stable.
-    subparsers.add_parser("update", help="Update README sections after changes.")
+    update_parser = subparsers.add_parser(
+        "update",
+        help="Update README sections after repository changes.",
+    )
+    update_parser.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Path to the repository root (defaults to current directory).",
+    )
+    update_parser.add_argument(
+        "--diff-base",
+        default="origin/main",
+        help="Commit or ref to compare against when computing diffs.",
+    )
     subparsers.add_parser(
         "regenerate", help="Force regeneration of README sections."
     )
@@ -52,7 +65,17 @@ def main(argv: list[str] | None = None) -> None:
         rel_path = _relativize(readme_path)
         print(f"README created at {rel_path}")
     elif args.command == "update":
-        parser.exit(1, "`docgen update` is not implemented yet. Use `docgen init` instead.\n")
+        try:
+            result = orchestrator.run_update(args.path, args.diff_base)
+        except FileNotFoundError as exc:
+            parser.exit(1, f"{exc}\n")
+        except RuntimeError as exc:
+            parser.exit(1, f"docgen update failed: {exc}\n")
+        if result is None:
+            print("README already up to date")
+        else:
+            rel_path = _relativize(result)
+            print(f"README updated at {rel_path}")
     elif args.command == "regenerate":
         parser.exit(
             1,
