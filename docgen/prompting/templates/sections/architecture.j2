@@ -1,5 +1,5 @@
-﻿{% if metadata['entries'] %}
-{% for entry in metadata['entries'] %}- `{{ entry.path }}/` – {{ entry.description }}
+{% if metadata['entries'] %}
+{% for entry in metadata['entries'] %}- `{{ entry.path }}/` - {{ entry.description }}
 {% endfor %}
 {% else %}
 {{ body | trim | safe }}

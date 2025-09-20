@@ -215,7 +215,7 @@ class PromptBuilder:
             body = "Document the project structure here."
         else:
             body = self._format_bullet_list(
-                [f"`{entry['path']}/` Ã¢â‚¬â€œ {entry['description']}" for entry in entries]
+                [f"`{entry['path']}/` - {entry['description']}" for entry in entries]
             )
         return body, {"entries": entries}
 
