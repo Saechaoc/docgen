@@ -6,6 +6,11 @@ _Observed frameworks:_
 {% for lang, fw in metadata['frameworks'].items() if fw %}- {{ lang }}: {{ ', '.join(fw) }}
 {% endfor %}
 {% endif %}
+{% if metadata.context %}
+> Context highlights:
+{% for snippet in metadata.context %}> {{ snippet }}
+{% endfor %}
+{% endif %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}

@@ -36,21 +36,23 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo.executor": "Run",
     "Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request.executor": "Run",
+    "Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts.executor": "Run",
     "Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing.executor": "Run",
     "Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart.executor": "Run",
     "Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme.executor": "Run",
     "Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language.executor": "Run",
     "Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor": "Run",
+    "Python tests.Python tests in test_builder.py.executor": "Run",
     "Python tests.Python tests in tests.executor": "Run",
     "Python.test.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "docgen/readme-update-20250920014916",
+    "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python tests.Python tests in tests">
+  <component name="RunManager" selected="Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts">
     <configuration name="Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
       <option name="ENV_FILES" value="" />
@@ -81,6 +83,21 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
+    <configuration name="Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
+      <module name="docgen" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;tests.rag.test_indexer.test_rag_indexer_builds_contexts&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
     <configuration name="Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
       <option name="ENV_FILES" value="" />
@@ -93,21 +110,6 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;tests.test_config.test_load_config_returns_defaults_when_missing&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration name="Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="docgen" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests.test_repo_scanner.test_scan_rejects_missing_directory&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -128,11 +130,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts" />
         <item itemvalue="Python tests.Python tests in tests" />
         <item itemvalue="Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" />
         <item itemvalue="Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request" />
         <item itemvalue="Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" />
-        <item itemvalue="Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory" />
       </list>
     </recent_temporary>
   </component>

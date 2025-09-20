@@ -75,3 +75,47 @@ def test_prompt_builder_architecture_includes_file_counts(tmp_path: Path) -> Non
 
     architecture = sections["architecture"].body
     assert "files" in architecture
+
+
+def test_prompt_builder_injects_context_highlights(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+    analyzers = [LanguageAnalyzer(), BuildAnalyzer(), DependencyAnalyzer()]
+    signals = []
+    for analyzer in analyzers:
+        signals.extend(analyzer.analyze(manifest))
+
+    builder = PromptBuilder()
+    contexts = {"architecture": ["Primary service routes requests."]}
+    sections = builder.render_sections(
+        manifest,
+        signals,
+        ["architecture"],
+        contexts=contexts,
+    )
+
+    body = sections["architecture"].body
+    assert "Context highlights" in body
+    assert "Primary service routes requests" in body
+
+
+def test_prompt_builder_filters_missing_commands(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+    # remove requirements file so the command becomes invalid
+    (repo / "requirements.txt").unlink()
+
+    manifest = RepoScanner().scan(str(repo))
+
+    commands = [
+        "pip install -r requirements.txt",
+        "python -m pytest",
+    ]
+
+    filtered = PromptBuilder._validate_commands(commands, manifest)
+    assert "python -m pytest" in filtered
+    assert all("requirements.txt" not in cmd for cmd in filtered)

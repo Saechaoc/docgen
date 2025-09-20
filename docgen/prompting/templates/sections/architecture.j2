@@ -1,6 +1,11 @@
 {% if metadata['entries'] %}
 {% for entry in metadata['entries'] %}{% set descriptor = 'file' if entry.count == 1 else 'files' %}- `{{ entry.path }}{% if '/' not in entry.path %}/{% endif %}` - {{ entry.description }} ({{ entry.count }} {{ descriptor }})
 {% endfor %}
+{% if metadata.context %}
+> Context highlights:
+{% for snippet in metadata.context %}> {{ snippet }}
+{% endfor %}
+{% endif %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}

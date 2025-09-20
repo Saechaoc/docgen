@@ -4,17 +4,18 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional
 
 from .analyzers import Analyzer, discover_analyzers
 from .config import ConfigError, DocGenConfig, load_config
 from .git.diff import DiffAnalyzer, DiffResult
 from .git.publisher import Publisher
-from .models import Signal
+from .models import RepoManifest, Signal
 from .postproc.lint import MarkdownLinter
 from .postproc.markers import MarkerManager
 from .postproc.toc import TableOfContentsBuilder
 from .prompting.builder import PromptBuilder
+from .rag.indexer import RAGIndexer
 from .repo_scanner import RepoScanner
 
 
@@ -29,6 +30,7 @@ class Orchestrator:
         publisher: Publisher | None = None,
         linter: MarkdownLinter | None = None,
         toc_builder: TableOfContentsBuilder | None = None,
+        rag_indexer: RAGIndexer | None = None,
         diff_analyzer: DiffAnalyzer | None = None,
         marker_manager: MarkerManager | None = None,
     ) -> None:
@@ -38,6 +40,7 @@ class Orchestrator:
         self.publisher = publisher
         self.linter = linter
         self.toc_builder = toc_builder
+        self.rag_indexer = rag_indexer or RAGIndexer()
         self.diff_analyzer = diff_analyzer or DiffAnalyzer()
         self.marker_manager = marker_manager or MarkerManager()
 
@@ -58,7 +61,9 @@ class Orchestrator:
         if config.templates_dir is not None:
             builder = PromptBuilder(config.templates_dir)
 
-        readme_content = builder.build(manifest, signals)
+        contexts = self._build_contexts(manifest, sections=None)
+
+        readme_content = builder.build(manifest, signals, contexts=contexts)
         linted = self._lint(readme_content)
         final_content = self._apply_toc(linted)
 
@@ -96,7 +101,14 @@ class Orchestrator:
         if config.templates_dir is not None:
             builder = PromptBuilder(config.templates_dir)
 
-        new_sections = builder.render_sections(manifest, signals, diff.sections)
+        contexts = self._build_contexts(manifest, sections=diff.sections)
+
+        new_sections = builder.render_sections(
+            manifest,
+            signals,
+            diff.sections,
+            contexts=contexts,
+        )
         if not new_sections:
             return None
 
@@ -155,6 +167,18 @@ class Orchestrator:
         if self._analyzer_overrides is not None:
             return list(self._analyzer_overrides)
         return list(discover_analyzers(enabled))
+
+    def _build_contexts(
+        self,
+        manifest: RepoManifest,
+        *,
+        sections: Iterable[str] | None,
+    ) -> Dict[str, List[str]]:
+        try:
+            index = self.rag_indexer.build(manifest, sections=list(sections) if sections else None)
+        except Exception:
+            return {}
+        return index.contexts
 
     def _publish_update(
         self,

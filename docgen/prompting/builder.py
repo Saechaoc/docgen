@@ -79,6 +79,7 @@ class PromptBuilder:
         manifest: RepoManifest,
         signals: Iterable[Signal],
         sections: Iterable[str] | None = None,
+        contexts: Dict[str, List[str]] | None = None,
     ) -> str:
         selected_sections = self._normalise_section_order(sections)
         if not selected_sections:
@@ -86,7 +87,12 @@ class PromptBuilder:
         grouped = self._group_signals(signals)
         project_name = Path(manifest.root).name or "Repository"
 
-        intro_section, other_sections = self._build_sections(manifest, grouped, selected_sections)
+        intro_section, other_sections = self._build_sections(
+            manifest,
+            grouped,
+            selected_sections,
+            contexts or {},
+        )
         return self._render_readme(project_name, intro_section, other_sections)
 
     def render_sections(
@@ -94,13 +100,19 @@ class PromptBuilder:
         manifest: RepoManifest,
         signals: Iterable[Signal],
         sections: Iterable[str],
+        contexts: Dict[str, List[str]] | None = None,
     ) -> Dict[str, Section]:
         selected_sections = self._normalise_section_order(sections)
         if not selected_sections:
             return {}
 
         grouped = self._group_signals(signals)
-        intro_section, other_sections = self._build_sections(manifest, grouped, selected_sections)
+        intro_section, other_sections = self._build_sections(
+            manifest,
+            grouped,
+            selected_sections,
+            contexts or {},
+        )
 
         rendered: Dict[str, Section] = {}
         if "intro" in selected_sections:
@@ -114,6 +126,7 @@ class PromptBuilder:
         manifest: RepoManifest,
         grouped: Dict[str, List[Signal]],
         selected_sections: Sequence[str],
+        contexts: Dict[str, List[str]],
     ) -> Tuple[Section, List[Section]]:
         language_signal = self._first_signal(grouped, "language.all")
         languages = list(language_signal.metadata.get("languages", [])) if language_signal else []
@@ -134,6 +147,9 @@ class PromptBuilder:
         }
 
         intro_body, intro_meta = self._build_intro(manifest, languages, frameworks)
+        intro_context = contexts.get("intro", [])
+        intro_body = self._inject_context("intro", intro_body, intro_context)
+        intro_meta["context"] = intro_context
         intro_rendered = self._render_section("intro", intro_body, intro_meta)
         intro_meta["token_estimate"] = self._estimate_tokens(intro_rendered)
         intro_section = Section(name="intro", title="Introduction", body=intro_rendered, metadata=intro_meta)
@@ -154,6 +170,9 @@ class PromptBuilder:
                     build_commands=build_commands,
                     dependencies=dependencies,
                 )
+            section_context = contexts.get(name, [])
+            body = self._inject_context(name, body, section_context)
+            meta["context"] = section_context
             rendered = self._render_section(name, body, meta)
             meta["token_estimate"] = self._estimate_tokens(rendered)
             sections.append(Section(name=name, title=title, body=rendered, metadata=meta))
@@ -250,9 +269,11 @@ class PromptBuilder:
         self,
         *,
         build_commands: Dict[str, List[str]],
+        manifest: RepoManifest,
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
         commands = self._unique_commands(build_commands)
+        commands = self._validate_commands(commands, manifest)
         if not commands:
             body = "Document how to set up and run the project locally."
         else:
@@ -282,6 +303,7 @@ class PromptBuilder:
         self,
         *,
         build_commands: Dict[str, List[str]],
+        manifest: RepoManifest,
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
         if not build_commands:
@@ -289,8 +311,11 @@ class PromptBuilder:
         else:
             lines = []
             for tool, commands in build_commands.items():
+                validated = self._validate_commands(commands, manifest)
+                if not validated:
+                    continue
                 lines.append(f"**{tool.capitalize()}**")
-                lines.extend(f"- `{cmd}`" for cmd in commands)
+                lines.extend(f"- `{cmd}`" for cmd in validated)
                 lines.append("")
             body = "\n".join(lines).strip()
         return body, {"tools": build_commands}
@@ -359,6 +384,50 @@ class PromptBuilder:
         else:
             body = "Add licensing information once the project selects a license."
         return body, {"files": license_paths}
+
+    @staticmethod
+    def _inject_context(name: str, body: str, contexts: List[str]) -> str:
+        if not contexts:
+            return body
+        highlights = [snippet.strip() for snippet in contexts if snippet.strip()]
+        if not highlights:
+            return body
+        lines = ["> Context highlights:"]
+        for snippet in highlights:
+            snippet_line = snippet.replace("\n", " ").strip()
+            lines.append(f"> {snippet_line}")
+        context_block = "\n".join(lines)
+        if body.strip():
+            return f"{body}\n\n{context_block}"
+        return context_block
+
+    @staticmethod
+    def _validate_commands(commands: Sequence[str], manifest: RepoManifest) -> List[str]:
+        validated: List[str] = []
+        available_paths = {file.path for file in manifest.files}
+        root = Path(manifest.root)
+        for command in commands:
+            if not command.strip():
+                continue
+            if _command_is_known(command):
+                validated.append(command)
+                continue
+            referenced_paths = _extract_paths_from_command(command)
+            if not referenced_paths:
+                validated.append(command)
+                continue
+            exists = False
+            for rel_path in referenced_paths:
+                normalised = Path(rel_path).as_posix()
+                if normalised in available_paths:
+                    exists = True
+                    break
+                if (root / rel_path).exists():
+                    exists = True
+                    break
+            if exists:
+                validated.append(command)
+        return validated
 
     @staticmethod
     def _normalise_section_order(sections: Iterable[str] | None) -> List[str]:
@@ -480,3 +549,40 @@ class PromptBuilder:
     @staticmethod
     def _format_bullet_list(items: Sequence[str]) -> str:
         return "\n".join(f"- {item}" for item in items)
+
+
+_KNOWN_COMMAND_PREFIXES = (
+    "python -m pytest",
+    "pytest",
+    "npm test",
+    "npm run",
+    "yarn",
+    "pnpm",
+    "mvn",
+    "gradle",
+    "./mvnw",
+    "./gradlew",
+    "docker compose",
+    "docker build",
+)
+
+
+def _command_is_known(command: str) -> bool:
+    lowered = command.lower().strip()
+    return any(lowered.startswith(prefix) for prefix in _KNOWN_COMMAND_PREFIXES)
+
+
+def _extract_paths_from_command(command: str) -> List[str]:
+    tokens = command.replace("=", " ").split()
+    candidates: List[str] = []
+    for token in tokens:
+        cleaned = token.strip().strip("'\"`")
+        if not cleaned or cleaned.startswith("-"):
+            continue
+        if cleaned in {"python", "pip", "npm", "yarn", "pnpm", "docker", "mvn", "gradle"}:
+            continue
+        if "/" in cleaned or cleaned.endswith((".txt", ".toml", ".yaml", ".yml", ".json", ".lock", ".cfg", ".ini")):
+            candidates.append(cleaned)
+        elif cleaned.startswith(".") and len(cleaned) > 1:
+            candidates.append(cleaned)
+    return candidates

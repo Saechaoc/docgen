@@ -148,7 +148,7 @@ class _StubPromptBuilder:
     def build(self, *args, **kwargs):  # pragma: no cover - not used in tests
         raise NotImplementedError
 
-    def render_sections(self, manifest, signals, sections):  # type: ignore[no-untyped-def]
+    def render_sections(self, manifest, signals, sections, contexts=None):  # type: ignore[no-untyped-def]
         return {
             section: Section(
                 name=section,
