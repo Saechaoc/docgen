@@ -50,9 +50,11 @@ class PromptBuilder:
         templates_dir: Path | None = None,
         *,
         style: str | None = None,
+        template_pack: str | None = None,
     ) -> None:
         self.templates_dir = templates_dir or Path(__file__).with_name("templates")
         self.style = (style or "comprehensive").lower()
+        self.template_pack = template_pack
         if self.style not in {"concise", "comprehensive"}:
             self.style = "comprehensive"
         self._env = self._create_env(self.templates_dir)
@@ -507,11 +509,22 @@ class PromptBuilder:
     def _create_env(self, templates_dir: Path | None) -> Environment | None:
         if Environment is None:
             return None
-        directories = [str(templates_dir)] if templates_dir else []
+        directories = []
+        if templates_dir:
+            directories.append(str(templates_dir))
         default_dir = Path(__file__).with_name("templates")
-        if str(default_dir) not in directories:
-            directories.append(str(default_dir))
-        loader = FileSystemLoader(directories)
+        if self.template_pack:
+            pack_dir = default_dir / self.template_pack
+            directories.append(str(pack_dir))
+        directories.append(str(default_dir))
+        # ensure uniqueness preserving order
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for directory in directories:
+            if directory not in seen:
+                ordered.append(directory)
+                seen.add(directory)
+        loader = FileSystemLoader(ordered)
         return Environment(loader=loader, autoescape=False, trim_blocks=True, lstrip_blocks=True)
 
     @staticmethod

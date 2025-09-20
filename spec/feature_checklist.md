@@ -7,7 +7,7 @@
 - [x] **docgen init** — Initialize README for repos without docs **[MVP]**
 - [ ] **docgen update** — Detect changes on commit/PR and patch affected sections **[MVP]**
 - [ ] **docgen regenerate** — Manual full/partial regeneration **[MVP]**
-- [ ] Dry‑run mode (`--dry-run`) to preview diffs without writing **[NEXT]**
+- [x] Dry‑run mode (`--dry-run`) to preview diffs without writing **[NEXT]**
 - [ ] Service mode (FastAPI) endpoints for CI/bots **[STRETCH]**
 
 ## 2) Repository Scanning & Indexing
@@ -34,7 +34,7 @@
 - [x] Jinja2 templates per section (intro, features, architecture, quickstart, config, build/test, deployment, troubleshooting, FAQ, license) **[MVP]**
 - [x] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
 - [x] Token budgeting & streaming section-by-section generation **[MVP]**
-- [ ] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
+- [x] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
 - [x] Style presets: concise vs comprehensive **[NEXT]**
 - [ ] Mermaid.js diagrams for architecture/flow sections where appropriate **[NEXT]**
 
@@ -46,8 +46,8 @@
 ## 7) Post‑Processing
 - [x] Markdown lint: heading hierarchy, code fences, line length **[MVP]**
 - [x] Auto ToC (≤ level 3) **[MVP]**
-- [ ] Badges (build, coverage, license) with safe defaults **[NEXT]**
-- [ ] Link validator (relative/absolute) **[NEXT]**
+- [x] Badges (build, coverage, license) with safe defaults **[NEXT]**
+- [x] Link validator (relative/absolute) **[NEXT]**
 - [x] Managed markers for idempotent patching (`<!-- docgen:begin:end -->`) **[MVP]**
 
 ## 8) Git Integration
@@ -64,7 +64,7 @@
 ## 10) CI Integration
 - [x] GitHub Actions example workflow **[MVP]**
 - [ ] GitLab CI and Bitbucket Pipelines samples **[NEXT]**
-- [ ] Labeling (`docs:auto`) and PR update behavior **[NEXT]**
+- [x] Labeling (`docs:auto`) and PR update behavior **[NEXT]**
 
 ## 11) Security & Privacy
 - [x] Local-only models; never exfiltrate code **[MVP]**
@@ -79,11 +79,11 @@
 ## 13) Quality Gates & Evaluation
 - [ ] Command validation (existence checks) **[MVP]**
 - [ ] No‑hallucination checks: reject facts not in signals/RAG **[MVP]**
-- [ ] README scorecard (coverage, buildability, link validity, diff alignment, lint) **[NEXT]**
+- [x] README scorecard (coverage, buildability, link validity, diff alignment, lint) **[NEXT]**
 
 ## 14) Performance & Caching
-- [ ] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
-- [ ] Incremental RAG refresh (changed files only) **[NEXT]**
+- [x] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
+- [x] Incremental RAG refresh (changed files only) **[NEXT]**
 
 ## 15) Error Handling & UX
 - [x] Fail-safe stub generation when evidence is insufficient **[MVP]**
@@ -92,7 +92,7 @@
 
 ## 16) Extensibility
 - [x] Analyzer ABC and plugin discovery **[MVP]**
-- [ ] Template packs (org‑style) **[NEXT]**
+- [x] Template packs (org‑style) **[NEXT]**
 
 ---
 

@@ -44,6 +44,32 @@ class EmbeddingStore:
         entries = self._store.get(section, [])
         return entries[:top_k]
 
+    def remove_path(self, path: str) -> None:
+        normalized = path.replace("\\", "/")
+        for entries in self._store.values():
+            entries[:] = [entry for entry in entries if entry.get("metadata", {}).get("path") != normalized]
+
+    def paths(self) -> Iterable[str]:
+        seen: set[str] = set()
+        for entries in self._store.values():
+            for entry in entries:
+                metadata = entry.get("metadata", {})
+                path = metadata.get("path")
+                if isinstance(path, str):
+                    seen.add(path)
+        return seen
+
+    def has_path_with_hash(self, path: str, file_hash: str | None) -> bool:
+        if not file_hash:
+            return False
+        normalized = path.replace("\\", "/")
+        for entries in self._store.values():
+            for entry in entries:
+                metadata = entry.get("metadata", {})
+                if metadata.get("path") == normalized and metadata.get("hash") == file_hash:
+                    return True
+        return False
+
     def persist(self) -> None:
         if self._path is None:
             return

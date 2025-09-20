@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 
 from docgen.git.diff import DiffResult
-from docgen.orchestrator import Orchestrator
+from docgen.orchestrator import Orchestrator, UpdateOutcome
 from docgen.prompting.builder import Section
 from docgen.repo_scanner import RepoScanner
 
@@ -32,6 +33,8 @@ class RecordingPublisher:
         title: str,
         body: str,
         push: bool = True,
+        labels=None,
+        update_existing: bool = False,
     ) -> bool:  # pragma: no cover - simple recorder
         self.pr_calls.append(
             {
@@ -42,6 +45,8 @@ class RecordingPublisher:
                 "title": title,
                 "body": body,
                 "push": push,
+                "labels": labels,
+                "update_existing": update_existing,
             }
         )
         return True
@@ -71,11 +76,17 @@ def test_run_init_creates_readme_with_quickstart(tmp_path: Path) -> None:
     content = readme_path.read_text(encoding="utf-8")
 
     assert f"# {repo_root.name}" in content
+    assert "<!-- docgen:begin:badges -->" in content
     assert "## Table of Contents" in content
     assert "## Quick Start" in content
     assert "pip install -r requirements.txt" in content
     assert "python -m pytest" in content
     assert "docker build" in content
+
+    scorecard_path = repo_root / ".docgen" / "scorecard.json"
+    assert scorecard_path.exists()
+    data = json.loads(scorecard_path.read_text(encoding="utf-8"))
+    assert "score" in data
 
 
 def test_run_init_refuses_to_overwrite_existing_readme(tmp_path: Path) -> None:
@@ -189,13 +200,19 @@ def test_run_update_patches_targeted_sections(tmp_path: Path) -> None:
 
     result = update_orchestrator.run_update(str(repo_root), "origin/main")
 
-    assert result == repo_root.resolve() / "README.md"
+    assert isinstance(result, UpdateOutcome)
+    assert result.path == repo_root.resolve() / "README.md"
+    assert not result.dry_run
+    assert "UPDATED build_and_test" in result.diff
     content = (repo_root / "README.md").read_text(encoding="utf-8")
     assert "UPDATED build_and_test" in content
     assert "UPDATED features" not in content
     assert publisher.pr_calls, "Expected publish_pr to be invoked"
     pr_call = publisher.pr_calls[0]
     assert pr_call["branch_name"].startswith("docgen/readme-update")
+
+    scorecard_path = repo_root / ".docgen" / "scorecard.json"
+    assert scorecard_path.exists()
 
 
 def test_run_init_falls_back_to_stub_on_prompt_failure(tmp_path: Path) -> None:
@@ -225,8 +242,10 @@ def test_run_update_uses_stub_when_builder_fails(tmp_path: Path) -> None:
         diff_analyzer=diff_analyzer,
     )
 
-    orchestrator.run_update(str(repo_root), "origin/main")
+    outcome = orchestrator.run_update(str(repo_root), "origin/main")
 
+    assert isinstance(outcome, UpdateOutcome)
+    assert not outcome.dry_run
     content = (repo_root / "README.md").read_text(encoding="utf-8")
     assert "docgen could not populate the Build & Test section automatically." in content
 
@@ -282,8 +301,33 @@ ci:
         diff_analyzer=diff_analyzer,
     )
 
-    result = orchestrator.run_update(str(repo_root), "origin/main")
+    outcome = orchestrator.run_update(str(repo_root), "origin/main")
 
-    assert result == repo_root.resolve() / "README.md"
+    assert isinstance(outcome, UpdateOutcome)
+    assert outcome.path == repo_root.resolve() / "README.md"
+    assert "UPDATED features" in outcome.diff
     content = (repo_root / "README.md").read_text(encoding="utf-8")
     assert "UPDATED features" in content
+
+
+def test_run_update_supports_dry_run(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    Orchestrator().run_init(str(repo_root))
+
+    diff_analyzer = _StubDiffAnalyzer(["features"], changed_files=["src/app.py"])
+    orchestrator = Orchestrator(
+        prompt_builder=_StubPromptBuilder(),
+        analyzers=[],
+        diff_analyzer=diff_analyzer,
+    )
+
+    outcome = orchestrator.run_update(str(repo_root), "origin/main", dry_run=True)
+
+    assert isinstance(outcome, UpdateOutcome)
+    assert outcome.dry_run is True
+    assert "UPDATED features" in outcome.diff
+    content = (repo_root / "README.md").read_text(encoding="utf-8")
+    assert "UPDATED features" not in content

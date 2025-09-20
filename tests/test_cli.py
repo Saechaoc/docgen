@@ -17,3 +17,10 @@ def test_cli_accepts_verbose_after_command() -> None:
     args = parser.parse_args(["update", "--verbose"])
     assert args.verbose is True
     assert args.command == "update"
+
+
+def test_cli_accepts_dry_run_flag() -> None:
+    parser = _build_parser()
+    args = parser.parse_args(["update", "--dry-run"])
+    assert args.command == "update"
+    assert args.dry_run is True

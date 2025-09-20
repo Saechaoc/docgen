@@ -22,6 +22,7 @@ def test_load_config_returns_defaults_when_missing(tmp_path: Path) -> None:
     assert config.ci.watched_globs == []
     assert config.exclude_paths == []
     assert config.templates_dir is None
+    assert config.template_pack is None
 
 
 def test_load_config_parses_expected_fields(tmp_path: Path) -> None:
@@ -39,9 +40,13 @@ llm:
 readme:
   style: "comprehensive"
   templates_dir: "docs/templates"
+  template_pack: "enterprise"
 publish:
   mode: "pr"
   branch_prefix: "docgen/"
+  labels:
+    - "docs:auto"
+  update_existing: true
 analyzers:
   enabled: [language, build, dependencies]
   exclude_paths:
@@ -70,6 +75,7 @@ ci:
 
     assert config.readme_style == "comprehensive"
     assert config.templates_dir == (tmp_path / "docs" / "templates")
+    assert config.template_pack == "enterprise"
 
     assert config.analyzers.enabled == ["language", "build", "dependencies"]
     assert config.analyzers.exclude_paths == [".git/", "node_modules/"]
@@ -77,6 +83,8 @@ ci:
     assert isinstance(config.publish, PublishConfig)
     assert config.publish.mode == "pr"
     assert config.publish.branch_prefix == "docgen/"
+    assert config.publish.labels == ["docs:auto"]
+    assert config.publish.update_existing is True
 
     assert isinstance(config.ci, CIConfig)
     assert config.ci.watched_globs == ["src/**", "Dockerfile"]

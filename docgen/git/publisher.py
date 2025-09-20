@@ -53,6 +53,8 @@ class Publisher:
         title: str,
         body: str,
         push: bool = True,
+        labels: Sequence[str] | None = None,
+        update_existing: bool = False,
     ) -> bool:
         """Create a branch, commit the files, and open a PR via the GitHub CLI."""
         repo = Path(repo_path)
@@ -81,23 +83,52 @@ class Publisher:
             except Exception:
                 return False
 
-        pr_args = [
-            "gh",
-            "pr",
-            "create",
-            "--title",
-            title,
-            "--body",
-            body,
-        ]
-        if base_branch:
-            pr_args.extend(["--base", base_branch])
-        pr_args.extend(["--head", branch_name])
+        existing_pr = False
+        if update_existing:
+            try:
+                self._run(
+                    ["gh", "pr", "view", branch_name, "--json", "number"],
+                    cwd=repo,
+                    capture_output=True,
+                )
+                existing_pr = True
+            except Exception:
+                existing_pr = False
 
         try:
-            self._run(pr_args, cwd=repo)
+            if existing_pr:
+                self._run(
+                    ["gh", "pr", "edit", branch_name, "--title", title, "--body", body],
+                    cwd=repo,
+                )
+            else:
+                pr_args = [
+                    "gh",
+                    "pr",
+                    "create",
+                    "--title",
+                    title,
+                    "--body",
+                    body,
+                ]
+                if base_branch:
+                    pr_args.extend(["--base", base_branch])
+                pr_args.extend(["--head", branch_name])
+                self._run(pr_args, cwd=repo)
         except Exception:
             return False
+
+        if labels:
+            for label in labels:
+                if not label:
+                    continue
+                try:
+                    self._run(
+                        ["gh", "pr", "edit", branch_name, "--add-label", label],
+                        cwd=repo,
+                    )
+                except Exception:
+                    return False
 
         return True
 

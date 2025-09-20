@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
+import difflib
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence
 
@@ -17,9 +19,21 @@ from .models import RepoManifest, Signal
 from .postproc.lint import MarkdownLinter
 from .postproc.markers import MarkerManager
 from .postproc.toc import TableOfContentsBuilder
+from .postproc.badges import BadgeManager
+from .postproc.links import LinkValidator
+from .postproc.scorecard import ReadmeScorecard
 from .prompting.builder import PromptBuilder
 from .rag.indexer import RAGIndexer
 from .repo_scanner import RepoScanner
+
+
+@dataclass
+class UpdateOutcome:
+    """Result of a README update operation."""
+
+    path: Path
+    diff: str
+    dry_run: bool
 
 
 class Orchestrator:
@@ -36,6 +50,9 @@ class Orchestrator:
         rag_indexer: RAGIndexer | None = None,
         diff_analyzer: DiffAnalyzer | None = None,
         marker_manager: MarkerManager | None = None,
+        badge_manager: BadgeManager | None = None,
+        link_validator: LinkValidator | None = None,
+        scorecard: ReadmeScorecard | None = None,
     ) -> None:
         self.scanner = scanner or RepoScanner()
         self._analyzer_overrides = list(analyzers) if analyzers is not None else None
@@ -46,6 +63,9 @@ class Orchestrator:
         self.rag_indexer = rag_indexer or RAGIndexer()
         self.diff_analyzer = diff_analyzer or DiffAnalyzer()
         self.marker_manager = marker_manager or MarkerManager()
+        self.badge_manager = badge_manager or BadgeManager()
+        self.link_validator = link_validator or LinkValidator()
+        self.scorecard = scorecard or ReadmeScorecard()
         self.logger = get_logger("orchestrator")
 
     def run_init(self, path: str) -> Path:
@@ -65,7 +85,7 @@ class Orchestrator:
                 self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
                 signals.extend(analyzer.analyze(manifest))
 
-        builder = self._resolve_prompt_builder(config)
+        builder = self._resolve_prompt_builder(config, repo_path)
 
         contexts = self._build_contexts(manifest, sections=None)
 
@@ -78,7 +98,9 @@ class Orchestrator:
             self.logger.warning("Prompt builder produced empty README; using stub content")
             readme_content = build_readme_stub(repo_path)
         linted = self._lint(readme_content)
-        final_content = self._apply_toc(linted)
+        final_content = self._apply_badges(self._apply_toc(linted))
+        link_issues = self._validate_links(final_content, repo_path)
+        self._record_scorecard(repo_path, final_content, link_issues)
 
         readme_path = Path(manifest.root) / "README.md"
         if readme_path.exists():
@@ -91,7 +113,13 @@ class Orchestrator:
         self._maybe_commit(repo_path, readme_path, config)
         return readme_path
 
-    def run_update(self, path: str, diff_base: str) -> Path | None:
+    def run_update(
+        self,
+        path: str,
+        diff_base: str,
+        *,
+        dry_run: bool = False,
+    ) -> UpdateOutcome | None:
         """Update README content after repository changes."""
         repo_path = Path(path).expanduser().resolve()
         readme_path = repo_path / "README.md"
@@ -126,7 +154,7 @@ class Orchestrator:
                 self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
                 signals.extend(analyzer.analyze(manifest))
 
-        builder = self._resolve_prompt_builder(config)
+        builder = self._resolve_prompt_builder(config, repo_path)
 
         contexts = self._build_contexts(manifest, sections=diff.sections)
 
@@ -175,15 +203,24 @@ class Orchestrator:
             return None
 
         linted = self._lint(updated)
-        final_content = self._apply_toc(linted)
+        final_content = self._apply_badges(self._apply_toc(linted))
         if final_content == original:
             self.logger.info("Post-processed README identical to existing version; skipping write")
             return None
 
+        link_issues = self._validate_links(final_content, repo_path)
+        diff_text = self._render_diff(original, final_content)
+
+        if dry_run:
+            self._record_scorecard(repo_path, final_content, link_issues, dry_run=True)
+            self.logger.info("Dry-run completed; README changes not written")
+            return UpdateOutcome(path=readme_path, diff=diff_text, dry_run=True)
+
         readme_path.write_text(final_content, encoding="utf-8")
         self.logger.info("README updated at %s", readme_path)
+        self._record_scorecard(repo_path, final_content, link_issues)
         self._publish_update(repo_path, readme_path, diff, config)
-        return readme_path
+        return UpdateOutcome(path=readme_path, diff=diff_text, dry_run=False)
 
     def run_regenerate(
         self,
@@ -260,6 +297,8 @@ class Orchestrator:
         title = self._build_pr_title(diff)
         body = self._build_pr_body(diff)
         self.logger.info("Publishing README update via PR on branch %s", branch_name)
+        labels = publish_cfg.labels if publish_cfg else []
+        update_existing = publish_cfg.update_existing if publish_cfg else False
         publisher.publish_pr(
             str(repo_path),
             [readme_path],
@@ -267,6 +306,8 @@ class Orchestrator:
             base_branch=diff.base,
             title=title,
             body=body,
+            labels=labels,
+            update_existing=update_existing,
         )
 
     def _log_exception(self, message: str, exc: Exception) -> None:
@@ -275,15 +316,75 @@ class Orchestrator:
         else:
             self.logger.error("%s: %s", message, exc)
 
-    def _resolve_prompt_builder(self, config: DocGenConfig) -> PromptBuilder:
+    def _resolve_prompt_builder(self, config: DocGenConfig, repo_path: Path) -> PromptBuilder:
         base = self.prompt_builder
         style = config.readme_style or getattr(base, "style", "comprehensive")
         templates_dir = config.templates_dir
-        if templates_dir is None and config.readme_style is None:
+        if templates_dir is None:
+            candidate = repo_path / "docs" / "templates"
+            if candidate.exists() and candidate.is_dir():
+                templates_dir = candidate
+        template_pack = config.template_pack
+        if (
+            templates_dir is None
+            and template_pack is None
+            and style == getattr(base, "style", "comprehensive")
+        ):
             return base
         if templates_dir is not None:
             self.logger.debug("Using custom templates from %s", templates_dir)
-        return PromptBuilder(templates_dir, style=style)
+        return PromptBuilder(templates_dir, style=style, template_pack=template_pack)
+
+    def _apply_badges(self, markdown: str) -> str:
+        try:
+            return self.badge_manager.apply(markdown)
+        except Exception as exc:  # pragma: no cover - defensive guard
+            self.logger.warning("Badge manager failed: %s", exc)
+            return markdown
+
+    def _validate_links(self, markdown: str, repo_path: Path) -> List[str]:
+        try:
+            issues = self.link_validator.validate(markdown, root=repo_path)
+        except Exception as exc:  # pragma: no cover - defensive guard
+            self.logger.warning("Link validation failed: %s", exc)
+            return []
+        for issue in issues:
+            self.logger.warning("Link issue: %s", issue)
+        return issues
+
+    def _record_scorecard(
+        self,
+        repo_path: Path,
+        markdown: str,
+        link_issues: List[str],
+        *,
+        dry_run: bool = False,
+    ) -> Dict[str, object] | None:
+        try:
+            result = self.scorecard.evaluate(markdown, link_issues=link_issues)
+        except Exception as exc:  # pragma: no cover - defensive guard
+            self.logger.warning("Scorecard evaluation failed: %s", exc)
+            return None
+        if dry_run:
+            self.logger.info("README score (dry-run): %s", result.get("score"))
+            return result
+        try:
+            self.scorecard.save(repo_path, result)
+        except Exception as exc:  # pragma: no cover - defensive guard
+            self.logger.warning("Failed to save scorecard: %s", exc)
+        else:
+            self.logger.info("README score: %s", result.get("score"))
+        return result
+
+    @staticmethod
+    def _render_diff(original: str, updated: str) -> str:
+        diff = difflib.unified_diff(
+            original.splitlines(keepends=True),
+            updated.splitlines(keepends=True),
+            fromfile="README.md (original)",
+            tofile="README.md (updated)",
+        )
+        return "".join(diff)
 
     @staticmethod
     def _has_watched_changes(paths: Sequence[str], globs: Sequence[str]) -> bool:

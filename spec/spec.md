@@ -58,6 +58,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Computes *change impact* from Git diff; decides whether to regenerate full README or patch sections.
 * Schedules tasks and caches intermediate results.
 * Emits structured logs (info by default, debug with `--verbose`), respects `.docgen.yml` `ci.watched_globs` to skip unrelated diffs, and substitutes fail-safe stubs when generation fails.
+* Supports dry-run previews (`docgen update --dry-run`) and records scorecards for each run under `.docgen/`.
 
 ### 3.2 Repo Scanner & Indexer
 
@@ -81,7 +82,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 
 * Graph of Repo entities: modules, packages, services, scripts, configs, tests, docs.
 * Lightweight embedding store (e.g., `faiss`/in-memory) of **chunks**: code comments, README fragments, `docs/`, `CHANGELOG`, issues (optional), commit messages.
-* Provides **context retrieval** for prompt building (top-k by section).
+* Provides **context retrieval** for prompt building (top-k by section) and persists embeddings under `.docgen/`, refreshing only the files whose hashes changed.
 
 ### 3.5 Prompt Builder
 
@@ -106,6 +107,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Enforces internal style guide and **README contract** (required sections).
 * Validates links (relative/absolute), code block languages, and line length.
 * Computes **diff-aware updates**: only modifies sections impacted by changes.
+* Adds build/coverage/license badges, validates local link targets, and persists a README scorecard for quality gating.
 
 ### 3.8 Doc Store (Artifacts & Versions)
 
@@ -117,6 +119,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Creates a branch (e.g., `docgen/readme-update-YYYYMMDD`) and a PR.
 * PR body explains detected changes and what sections were updated.
 * Can commit directly (configurable) on init for empty repos.
+* Applies labels (e.g., `docs:auto`) and updates existing PRs when configured.
 
 ---
 
@@ -185,6 +188,7 @@ llm:
 
 readme:
   style: "concise"            # or "comprehensive"
+  template_pack: "enterprise"  # optional bundle shipped with docgen
   required_sections:
     - intro
     - features
@@ -200,6 +204,9 @@ readme:
 publish:
   mode: "pr"                  # "commit" | "pr" | "dry-run"
   branch_prefix: "docgen/"
+  labels:
+    - "docs:auto"
+  update_existing: true        # refresh an existing PR instead of opening a new one
 
 analyzers:
   enabled:
@@ -226,6 +233,8 @@ ci:
     - "Dockerfile"
 ```
 
+> If no `readme.templates_dir` is provided, docgen automatically picks up `docs/templates/` bundles in the repository root and supports built-in template packs via `readme.template_pack`.
+
 ---
 
 ## 6) Workflows
@@ -249,6 +258,7 @@ ci:
 3. **Skip** if no changed file matches `.docgen.yml` `ci.watched_globs` (allows CI to avoid unnecessary runs).
 4. **RAG retrieval**: fetch top-k chunks relevant to each section.
 5. **Generate** → **Post-process** → **Open PR** with summary of deltas.
+6. Dry-run support: `docgen update --dry-run` computes diffs and scorecards without writing or publishing.
 
 ### 6.3 Regenerate (Manual)
 

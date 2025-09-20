@@ -35,6 +35,8 @@ class PublishConfig:
 
     mode: Optional[str] = None
     branch_prefix: Optional[str] = None
+    labels: List[str] = field(default_factory=list)
+    update_existing: bool = False
 
 
 @dataclass
@@ -64,6 +66,7 @@ class DocGenConfig:
     ci: CIConfig = field(default_factory=CIConfig)
     exclude_paths: List[str] = field(default_factory=list)
     templates_dir: Optional[Path] = None
+    template_pack: Optional[str] = None
 
 
 def load_config(config_path: Path) -> DocGenConfig:
@@ -106,6 +109,7 @@ def load_config(config_path: Path) -> DocGenConfig:
     readme_data = _as_dict(data.get("readme"))
     style = _as_str(readme_data.get("style")) if readme_data else None
     templates_dir_str = _as_str(readme_data.get("templates_dir")) if readme_data else None
+    template_pack = _as_str(readme_data.get("template_pack")) if readme_data else None
     templates_dir = root / templates_dir_str if templates_dir_str else None
 
     analyzer_data = _as_dict(data.get("analyzers"))
@@ -120,8 +124,10 @@ def load_config(config_path: Path) -> DocGenConfig:
         publish = PublishConfig(
             mode=_as_str(publish_data.get("mode")),
             branch_prefix=_as_str(publish_data.get("branch_prefix")),
+            labels=_as_str_list(publish_data.get("labels")),
+            update_existing=_as_bool(publish_data.get("update_existing")) or False,
         )
-        if not any((publish.mode, publish.branch_prefix)):
+        if not any((publish.mode, publish.branch_prefix, publish.labels, publish.update_existing)):
             publish = None
 
     ci_data = _as_dict(data.get("ci"))
@@ -140,6 +146,7 @@ def load_config(config_path: Path) -> DocGenConfig:
         ci=ci,
         exclude_paths=exclude_paths,
         templates_dir=templates_dir,
+        template_pack=template_pack,
     )
 
 
@@ -335,6 +342,18 @@ def _as_int(value: Any) -> Optional[int]:
             return int(value)
         except ValueError:
             return None
+    return None
+
+
+def _as_bool(value: Any) -> Optional[bool]:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "yes", "1"}:
+            return True
+        if lowered in {"false", "no", "0"}:
+            return False
     return None
 
 

@@ -64,6 +64,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default="origin/main",
         help="Commit or ref to compare against when computing diffs.",
     )
+    update_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview README changes without writing or publishing.",
+    )
     regenerate_parser = subparsers.add_parser(
         "regenerate",
         help="Force regeneration of README sections.",
@@ -93,18 +98,27 @@ def main(argv: list[str] | None = None) -> None:
         print(f"README created at {rel_path}")
     elif args.command == "update":
         try:
-            result = orchestrator.run_update(args.path, args.diff_base)
+            result = orchestrator.run_update(args.path, args.diff_base, dry_run=bool(getattr(args, "dry_run", False)))
         except FileNotFoundError as exc:
             parser.exit(1, f"{exc}\n")
         except RuntimeError as exc:
             parser.exit(1, f"docgen update failed: {exc}\nRun with --verbose for more details.\n")
         except Exception as exc:  # pragma: no cover - defensive guard
             parser.exit(1, f"docgen update failed: {exc}\nRun with --verbose for more details.\n")
+        dry_run = bool(getattr(args, "dry_run", False))
         if result is None:
-            print("README already up to date")
+            message = "README already up to date"
+            if dry_run:
+                message += " (dry-run)"
+            print(message)
         else:
-            rel_path = _relativize(result)
-            print(f"README updated at {rel_path}")
+            if dry_run:
+                print("README changes (dry-run):")
+                diff = result.diff or "(no diff)"
+                print(diff)
+            else:
+                rel_path = _relativize(result.path)
+                print(f"README updated at {rel_path}")
     elif args.command == "regenerate":
         parser.exit(
             1,

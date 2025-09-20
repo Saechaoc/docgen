@@ -4,16 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment=" - Introduced configuration-aware prompt styling so readme.style toggles between concise and comprehensive output; list-heavy sections now trim appropriately and expose metadata for templates (docgen/prompting/builder.py:200,&#10;  tests/prompting/test_builder.py:115).&#10;  - Taught the orchestrator to honour .docgen.yml ci.watched_globs, short-circuiting updates when no watched files changed, and ensured prompt builders inherit per-run style/ template overrides without reusing stale instances&#10;  (docgen/orchestrator.py:68, tests/test_orchestrator.py:214).&#10;  - Added a GitHub Actions reference workflow plus documentation for self-hosted runners, covering installation, diff-base resolution, and optional committing of README changes (docs/ci/docgen-update.yml:1, docs/ci/github-&#10;  actions.md:1).&#10;  - Updated the spec and feature checklist to reflect the new CI integration, style presets, and watched-glob behaviour (spec/spec.md:55, spec/feature_checklist.md:69).">
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="phase 6 complete">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/build.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/build.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/patterns.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/patterns.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/cli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/git/publisher.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/git/publisher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/postproc/links.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/links.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/rag/indexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/indexer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/rag/store.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/store.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/spec/feature_checklist.md" beforeDir="false" afterPath="$PROJECT_DIR$/spec/feature_checklist.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/spec/spec.md" beforeDir="false" afterPath="$PROJECT_DIR$/spec/spec.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/prompting/test_builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/prompting/test_builder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/git/test_publisher.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/git/test_publisher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/postproc/test_postproc.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/postproc/test_postproc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_cli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_orchestrator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -180,12 +187,21 @@
       <option name="project" value="LOCAL" />
       <updated>1758340820531</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="phase 6 complete">
+      <option name="closed" value="true" />
+      <created>1758342870110</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1758342870110</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Update feature_checklist.md" />
     <MESSAGE value=" - Introduced configuration-aware prompt styling so readme.style toggles between concise and comprehensive output; list-heavy sections now trim appropriately and expose metadata for templates (docgen/prompting/builder.py:200,&#10;  tests/prompting/test_builder.py:115).&#10;  - Taught the orchestrator to honour .docgen.yml ci.watched_globs, short-circuiting updates when no watched files changed, and ensured prompt builders inherit per-run style/ template overrides without reusing stale instances&#10;  (docgen/orchestrator.py:68, tests/test_orchestrator.py:214).&#10;  - Added a GitHub Actions reference workflow plus documentation for self-hosted runners, covering installation, diff-base resolution, and optional committing of README changes (docs/ci/docgen-update.yml:1, docs/ci/github-&#10;  actions.md:1).&#10;  - Updated the spec and feature checklist to reflect the new CI integration, style presets, and watched-glob behaviour (spec/spec.md:55, spec/feature_checklist.md:69)." />
-    <option name="LAST_COMMIT_MESSAGE" value=" - Introduced configuration-aware prompt styling so readme.style toggles between concise and comprehensive output; list-heavy sections now trim appropriately and expose metadata for templates (docgen/prompting/builder.py:200,&#10;  tests/prompting/test_builder.py:115).&#10;  - Taught the orchestrator to honour .docgen.yml ci.watched_globs, short-circuiting updates when no watched files changed, and ensured prompt builders inherit per-run style/ template overrides without reusing stale instances&#10;  (docgen/orchestrator.py:68, tests/test_orchestrator.py:214).&#10;  - Added a GitHub Actions reference workflow plus documentation for self-hosted runners, covering installation, diff-base resolution, and optional committing of README changes (docs/ci/docgen-update.yml:1, docs/ci/github-&#10;  actions.md:1).&#10;  - Updated the spec and feature checklist to reflect the new CI integration, style presets, and watched-glob behaviour (spec/spec.md:55, spec/feature_checklist.md:69)." />
+    <MESSAGE value="phase 6 complete" />
+    <option name="LAST_COMMIT_MESSAGE" value="phase 6 complete" />
   </component>
 </project>
