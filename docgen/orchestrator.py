@@ -71,6 +71,8 @@ class Orchestrator:
         self.scorecard = scorecard or ReadmeScorecard()
         self.logger = get_logger("orchestrator")
         self._llm_runner = llm_runner
+        self._llm_runner_is_external = llm_runner is not None
+        self._llm_runner_signature: tuple[object | None, ...] | None = None
 
     def run_init(self, path: str) -> Path:
         """Initialize README generation for a repository."""
@@ -413,11 +415,29 @@ class Orchestrator:
         )
 
     def _resolve_llm_runner(self, config: DocGenConfig) -> LLMRunner | None:
-        if self._llm_runner is not None:
+        if self._llm_runner_is_external and self._llm_runner is not None:
             return self._llm_runner
+
         llm_cfg = config.llm
         if llm_cfg is None:
+            self._llm_runner = None
+            self._llm_runner_signature = None
+            self._llm_runner_is_external = False
             return None
+
+        signature = (
+            llm_cfg.runner,
+            llm_cfg.model,
+            llm_cfg.base_url,
+            llm_cfg.temperature,
+            llm_cfg.max_tokens,
+            llm_cfg.api_key,
+            llm_cfg.request_timeout,
+        )
+
+        if self._llm_runner_signature == signature and self._llm_runner is not None:
+            return self._llm_runner
+
         kwargs: Dict[str, object] = {}
         if llm_cfg.runner:
             kwargs["executable"] = llm_cfg.runner
@@ -439,6 +459,8 @@ class Orchestrator:
             self.logger.warning("Failed to initialise LLM runner: %s", exc)
             return None
         self._llm_runner = runner
+        self._llm_runner_signature = signature
+        self._llm_runner_is_external = False
         return runner
 
     def _generate_sections_with_llm(

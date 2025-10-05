@@ -184,6 +184,63 @@ def test_run_init_uses_llm_runner_streaming(tmp_path: Path) -> None:
     assert all(call["max_tokens"] is None for call in runner.calls)
 
 
+def test_llm_runner_config_changes_are_respected(tmp_path: Path, monkeypatch) -> None:
+    stub_instances: list[object] = []
+
+    class StubRunner:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+            self.calls: list[tuple[str, str | None, int | None]] = []
+            stub_instances.append(self)
+
+        def run(self, prompt: str, *, system: str | None = None, max_tokens: int | None = None) -> str:
+            self.calls.append((prompt, system, max_tokens))
+            return "Generated section"
+
+    monkeypatch.setattr("docgen.orchestrator.LLMRunner", StubRunner)
+
+    orchestrator = Orchestrator()
+
+    repo1 = tmp_path / "repo1"
+    repo1.mkdir()
+    _seed_sample_repo(repo1)
+    (repo1 / ".docgen.yml").write_text(
+        """
+llm:
+  runner: ollama
+""",
+        encoding="utf-8",
+    )
+
+    orchestrator.run_init(str(repo1))
+    assert len(stub_instances) == 1
+    first_runner = stub_instances[0]
+    first_call_count = len(first_runner.calls)
+
+    repo2 = tmp_path / "repo2"
+    repo2.mkdir()
+    _seed_sample_repo(repo2)
+
+    orchestrator.run_init(str(repo2))
+    assert len(stub_instances) == 1
+    assert len(first_runner.calls) == first_call_count
+
+    repo3 = tmp_path / "repo3"
+    repo3.mkdir()
+    _seed_sample_repo(repo3)
+    (repo3 / ".docgen.yml").write_text(
+        """
+llm:
+  runner: updated-runner
+""",
+        encoding="utf-8",
+    )
+
+    orchestrator.run_init(str(repo3))
+    assert len(stub_instances) == 2
+    assert stub_instances[1].kwargs.get("executable") == "updated-runner"
+
+
 class _StubDiffAnalyzer:
     def __init__(self, sections: list[str], changed_files: list[str] | None = None) -> None:
         self.sections = sections
