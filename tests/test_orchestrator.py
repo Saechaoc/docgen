@@ -9,7 +9,8 @@ import pytest
 
 from docgen.git.diff import DiffResult
 from docgen.orchestrator import Orchestrator, UpdateOutcome
-from docgen.prompting.builder import Section
+from docgen.prompting.builder import PromptBuilder, Section
+from docgen.prompting.constants import DEFAULT_SECTIONS
 from docgen.repo_scanner import RepoScanner
 
 
@@ -50,6 +51,28 @@ class RecordingPublisher:
             }
         )
         return True
+
+
+class RecordingLLMRunner:
+    """Simple runner that captures prompts for assertions."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, object]] = []
+
+    def run(self, prompt: str, *, system: str | None = None, max_tokens: int | None = None) -> str:
+        self.calls.append({
+            "prompt": prompt,
+            "system": system,
+            "max_tokens": max_tokens,
+        })
+        section_title = ""
+        for line in prompt.splitlines():
+            if line.startswith("Section: "):
+                section_title = line.split("Section: ", 1)[1]
+                break
+        if not section_title:
+            section_title = f"Section {len(self.calls)}"
+        return f"{section_title} generated content"
 
 
 def _seed_sample_repo(root: Path) -> None:
@@ -145,6 +168,22 @@ publish:
     assert "docgen init" in message
 
 
+def test_run_init_uses_llm_runner_streaming(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    runner = RecordingLLMRunner()
+    orchestrator = Orchestrator(llm_runner=runner)
+    readme_path = orchestrator.run_init(str(repo_root))
+
+    content = readme_path.read_text(encoding="utf-8")
+    assert "generated content" in content
+    assert len(runner.calls) == len(DEFAULT_SECTIONS)
+    assert all(call["system"] == PromptBuilder.SYSTEM_PROMPT for call in runner.calls)
+    assert all(call["max_tokens"] is None for call in runner.calls)
+
+
 class _StubDiffAnalyzer:
     def __init__(self, sections: list[str], changed_files: list[str] | None = None) -> None:
         self.sections = sections
@@ -160,7 +199,7 @@ class _StubPromptBuilder:
     def build(self, *args, **kwargs):  # pragma: no cover - not used in tests
         raise NotImplementedError
 
-    def render_sections(self, manifest, signals, sections, contexts=None):  # type: ignore[no-untyped-def]
+    def render_sections(self, manifest, signals, sections, contexts=None, **_kwargs):  # type: ignore[no-untyped-def]
         return {
             section: Section(
                 name=section,

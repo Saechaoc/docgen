@@ -4,20 +4,6 @@
 
 ---
 
-## Story S-031 — Guardrailed Prompt Execution & Token Budgeting
-- **Status:** ☐ Not started
-- **Story Text:** Implement the guardrailed system prompt pipeline, ensure prompts always include the mandated "no speculation" guard, and add token budgeting plus section-by-section streaming support in the orchestrator.
-- **Dependencies already completed:** S-005 (Prompt Builder baseline), S-011 (RAG contexts)
-- **Constraints:**
-  - System prompt must match wording in `spec/spec.md` and be enforced for both full README builds and incremental updates.
-  - Streaming must respect template order and flush sections without breaking managed markers.
-  - Budgeting logic should expose configurable per-section limits via configuration with safe defaults.
-- **Non-Goals:** Changing template copy or adding new sections.
-- **Acceptance Criteria:**
-  - Prompt builder injects the guardrailed system prompt for every LLM invocation with unit tests verifying the message payload.
-  - Token budgeting API estimates prompt length and truncates context snippets when limits are exceeded.
-  - Orchestrator streams section rendering while preserving existing post-processing behavior; regression tests cover init and update flows.
-
 ## Story S-032 — No-Hallucination Validation
 - **Status:** ☐ Not started
 - **Story Text:** Introduce a validation layer that rejects README content containing facts not backed by analyzer signals or RAG context, surfacing actionable errors to users.

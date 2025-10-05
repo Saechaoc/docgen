@@ -22,7 +22,9 @@ from .postproc.toc import TableOfContentsBuilder
 from .postproc.badges import BadgeManager
 from .postproc.links import LinkValidator
 from .postproc.scorecard import ReadmeScorecard
-from .prompting.builder import PromptBuilder
+from .llm.runner import LLMRunner
+from .prompting.builder import PromptBuilder, Section
+from .prompting.constants import DEFAULT_SECTIONS, SECTION_TITLES
 from .rag.indexer import RAGIndexer
 from .repo_scanner import RepoScanner
 
@@ -53,6 +55,7 @@ class Orchestrator:
         badge_manager: BadgeManager | None = None,
         link_validator: LinkValidator | None = None,
         scorecard: ReadmeScorecard | None = None,
+        llm_runner: LLMRunner | None = None,
     ) -> None:
         self.scanner = scanner or RepoScanner()
         self._analyzer_overrides = list(analyzers) if analyzers is not None else None
@@ -67,6 +70,7 @@ class Orchestrator:
         self.link_validator = link_validator or LinkValidator()
         self.scorecard = scorecard or ReadmeScorecard()
         self.logger = get_logger("orchestrator")
+        self._llm_runner = llm_runner
 
     def run_init(self, path: str) -> Path:
         """Initialize README generation for a repository."""
@@ -88,9 +92,35 @@ class Orchestrator:
         builder = self._resolve_prompt_builder(config, repo_path)
 
         contexts = self._build_contexts(manifest, sections=None)
+        token_budgets = self._build_token_budget_map(config)
+        runner = self._resolve_llm_runner(config)
+
+        section_order = list(DEFAULT_SECTIONS)
 
         try:
-            readme_content = builder.build(manifest, signals, contexts=contexts)
+            if runner:
+                sections_map = self._generate_sections_with_llm(
+                    builder,
+                    runner,
+                    manifest,
+                    signals,
+                    section_order,
+                    contexts,
+                    token_budgets,
+                )
+                readme_content = self._render_readme_from_sections(
+                    builder,
+                    manifest,
+                    sections_map,
+                    section_order,
+                )
+            else:
+                readme_content = builder.build(
+                    manifest,
+                    signals,
+                    contexts=contexts,
+                    token_budgets=token_budgets,
+                )
         except Exception as exc:  # pragma: no cover - defensive guard
             self._log_exception("Prompt builder failed during init", exc)
             readme_content = build_readme_stub(repo_path, reason=str(exc))
@@ -157,14 +187,28 @@ class Orchestrator:
         builder = self._resolve_prompt_builder(config, repo_path)
 
         contexts = self._build_contexts(manifest, sections=diff.sections)
+        token_budgets = self._build_token_budget_map(config)
+        runner = self._resolve_llm_runner(config)
 
         try:
-            new_sections = builder.render_sections(
-                manifest,
-                signals,
-                diff.sections,
-                contexts=contexts,
-            )
+            if runner:
+                new_sections = self._generate_sections_with_llm(
+                    builder,
+                    runner,
+                    manifest,
+                    signals,
+                    diff.sections,
+                    contexts,
+                    token_budgets,
+                )
+            else:
+                new_sections = builder.render_sections(
+                    manifest,
+                    signals,
+                    diff.sections,
+                    contexts=contexts,
+                    token_budgets=token_budgets,
+                )
         except Exception as exc:  # pragma: no cover - defensive guard
             self._log_exception("Prompt builder failed during update", exc)
             project_name = repo_path.name or "Repository"
@@ -273,6 +317,14 @@ class Orchestrator:
             return {}
         return index.contexts
 
+    def _build_token_budget_map(self, config: DocGenConfig) -> Dict[str, int]:
+        budgets: Dict[str, int] = {}
+        if config.token_budget_default is not None:
+            budgets["default"] = config.token_budget_default
+        if config.token_budget_overrides:
+            budgets.update(config.token_budget_overrides)
+        return budgets
+
     def _publish_update(
         self,
         repo_path: Path,
@@ -318,22 +370,138 @@ class Orchestrator:
 
     def _resolve_prompt_builder(self, config: DocGenConfig, repo_path: Path) -> PromptBuilder:
         base = self.prompt_builder
+        if not isinstance(base, PromptBuilder):
+            return base
+
         style = config.readme_style or getattr(base, "style", "comprehensive")
         templates_dir = config.templates_dir
         if templates_dir is None:
             candidate = repo_path / "docs" / "templates"
             if candidate.exists() and candidate.is_dir():
                 templates_dir = candidate
-        template_pack = config.template_pack
+
+        template_pack = config.template_pack or getattr(base, "template_pack", None)
+        token_budget_default = (
+            config.token_budget_default
+            if config.token_budget_default is not None
+            else getattr(base, "_token_budget_default", None)
+        )
+        token_budget_overrides = (
+            config.token_budget_overrides
+            if config.token_budget_overrides
+            else getattr(base, "_token_budget_overrides", {})
+        )
+
         if (
-            templates_dir is None
-            and template_pack is None
-            and style == getattr(base, "style", "comprehensive")
+            style == getattr(base, "style", "comprehensive")
+            and templates_dir is None
+            and template_pack == getattr(base, "template_pack", None)
+            and token_budget_default == getattr(base, "_token_budget_default", None)
+            and token_budget_overrides == getattr(base, "_token_budget_overrides", {})
         ):
             return base
+
         if templates_dir is not None:
             self.logger.debug("Using custom templates from %s", templates_dir)
-        return PromptBuilder(templates_dir, style=style, template_pack=template_pack)
+
+        return PromptBuilder(
+            templates_dir,
+            style=style,
+            template_pack=template_pack,
+            token_budget_default=token_budget_default,
+            token_budget_overrides=token_budget_overrides,
+        )
+
+    def _resolve_llm_runner(self, config: DocGenConfig) -> LLMRunner | None:
+        if self._llm_runner is not None:
+            return self._llm_runner
+        llm_cfg = config.llm
+        if llm_cfg is None:
+            return None
+        kwargs: Dict[str, object] = {}
+        if llm_cfg.runner:
+            kwargs["executable"] = llm_cfg.runner
+        if llm_cfg.model:
+            kwargs["model"] = llm_cfg.model
+        if llm_cfg.base_url is not None:
+            kwargs["base_url"] = llm_cfg.base_url
+        if llm_cfg.temperature is not None:
+            kwargs["temperature"] = llm_cfg.temperature
+        if llm_cfg.max_tokens is not None:
+            kwargs["max_tokens"] = llm_cfg.max_tokens
+        if llm_cfg.api_key is not None:
+            kwargs["api_key"] = llm_cfg.api_key
+        if llm_cfg.request_timeout is not None:
+            kwargs["request_timeout"] = llm_cfg.request_timeout
+        try:
+            runner = LLMRunner(**kwargs)  # type: ignore[arg-type]
+        except Exception as exc:  # pragma: no cover - defensive guard
+            self.logger.warning("Failed to initialise LLM runner: %s", exc)
+            return None
+        self._llm_runner = runner
+        return runner
+
+    def _generate_sections_with_llm(
+        self,
+        builder: PromptBuilder,
+        runner: LLMRunner,
+        manifest: RepoManifest,
+        signals: Iterable[Signal],
+        section_names: Sequence[str],
+        contexts: Dict[str, List[str]],
+        token_budgets: Dict[str, int] | None,
+    ) -> Dict[str, Section]:
+        requests = builder.build_prompt_requests(
+            manifest,
+            signals,
+            sections=section_names,
+            contexts=contexts,
+            token_budgets=token_budgets,
+        )
+
+        generated: Dict[str, Section] = {}
+        for name in section_names:
+            request = requests.get(name)
+            if request is None:
+                continue
+            system_prompt = next((m.content for m in request.messages if m.role == "system"), None)
+            user_messages = [m.content for m in request.messages if m.role == "user"]
+            prompt_text = "\n\n".join(user_messages)
+            self.logger.info("Generating README section via LLM: %s", name)
+            response = runner.run(prompt_text, system=system_prompt, max_tokens=request.max_tokens)
+            title = SECTION_TITLES.get(name, name.replace("_", " ").title())
+            metadata = dict(request.metadata)
+            metadata["llm"] = True
+            metadata["token_budget"] = request.max_tokens
+            generated[name] = Section(
+                name=name,
+                title=title,
+                body=response.strip(),
+                metadata=metadata,
+            )
+        return generated
+
+    def _render_readme_from_sections(
+        self,
+        builder: PromptBuilder,
+        manifest: RepoManifest,
+        sections: Dict[str, Section],
+        order: Sequence[str],
+    ) -> str:
+        project_name = Path(manifest.root).name or "Repository"
+        intro = sections.get("intro")
+        if intro is None:
+            self.logger.warning("LLM runner did not produce an intro section; using stub content")
+            stub = build_section_stubs(["intro"], project_name=project_name)
+            intro = stub["intro"]
+        ordered_sections: List[Section] = []
+        for name in order:
+            if name == "intro":
+                continue
+            section = sections.get(name)
+            if section is not None:
+                ordered_sections.append(section)
+        return builder._render_readme(project_name, intro, ordered_sections)
 
     def _apply_badges(self, markdown: str) -> str:
         try:

@@ -75,14 +75,21 @@ class LLMRunner:
         else:
             self._runner = self._http_runner if self.base_url else self._cli_runner
 
-    def run(self, prompt: str, *, system: str | None = None) -> str:
+    def run(
+        self,
+        prompt: str,
+        *,
+        system: str | None = None,
+        max_tokens: int | None = None,
+    ) -> str:
         """Send the prompt to the configured local model and return the response text."""
+        resolved_max_tokens = max_tokens if max_tokens is not None else self.max_tokens
         request = LLMRequest(
             prompt=prompt,
             system=system,
             model=self.model,
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            max_tokens=resolved_max_tokens,
             executable=self.executable,
             base_url=self.base_url,
             api_key=self.api_key,

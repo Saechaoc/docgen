@@ -49,6 +49,19 @@ def test_llm_runner_constructs_request() -> None:
     }
 
 
+def test_llm_runner_allows_per_call_max_tokens() -> None:
+    captured = {}
+
+    def fake_runner(request):
+        captured["max_tokens"] = request.max_tokens
+        return "ok"
+
+    runner = LLMRunner(max_tokens=200, runner=fake_runner)
+    runner.run("Hello", max_tokens=32)
+
+    assert captured["max_tokens"] == 32
+
+
 def test_llm_runner_http_posts_payload(monkeypatch) -> None:
     captured = {}
 

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import json
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
@@ -37,6 +38,24 @@ class Section:
     metadata: Dict[str, object]
 
 
+@dataclass(frozen=True)
+class PromptMessage:
+    """Represents a single chat message for LLM prompting."""
+
+    role: str
+    content: str
+
+
+@dataclass
+class PromptRequest:
+    """Encapsulates an LLM prompt request for a README section."""
+
+    section: str
+    messages: List[PromptMessage]
+    max_tokens: int | None
+    metadata: Dict[str, object] = field(default_factory=dict)
+
+
 class PromptBuilder:
     """Assembles section-aware prompts from templates and signals."""
 
@@ -51,6 +70,8 @@ class PromptBuilder:
         *,
         style: str | None = None,
         template_pack: str | None = None,
+        token_budget_default: int | None = None,
+        token_budget_overrides: Dict[str, int] | None = None,
     ) -> None:
         self.templates_dir = templates_dir or Path(__file__).with_name("templates")
         self.style = (style or "comprehensive").lower()
@@ -59,6 +80,8 @@ class PromptBuilder:
             self.style = "comprehensive"
         self._env = self._create_env(self.templates_dir)
         self._toc_placeholder = TableOfContentsBuilder.PLACEHOLDER
+        self._token_budget_default = token_budget_default
+        self._token_budget_overrides = token_budget_overrides or {}
 
     def build(
         self,
@@ -66,6 +89,8 @@ class PromptBuilder:
         signals: Iterable[Signal],
         sections: Iterable[str] | None = None,
         contexts: Dict[str, List[str]] | None = None,
+        *,
+        token_budgets: Dict[str, int] | None = None,
     ) -> str:
         selected_sections = self._normalise_section_order(sections)
         if not selected_sections:
@@ -78,6 +103,7 @@ class PromptBuilder:
             grouped,
             selected_sections,
             contexts or {},
+            token_budgets=token_budgets,
         )
         return self._render_readme(project_name, intro_section, other_sections)
 
@@ -87,6 +113,8 @@ class PromptBuilder:
         signals: Iterable[Signal],
         sections: Iterable[str],
         contexts: Dict[str, List[str]] | None = None,
+        *,
+        token_budgets: Dict[str, int] | None = None,
     ) -> Dict[str, Section]:
         selected_sections = self._normalise_section_order(sections)
         if not selected_sections:
@@ -98,6 +126,7 @@ class PromptBuilder:
             grouped,
             selected_sections,
             contexts or {},
+            token_budgets=token_budgets,
         )
 
         rendered: Dict[str, Section] = {}
@@ -107,12 +136,68 @@ class PromptBuilder:
             rendered[section.name] = section
         return rendered
 
+    def build_prompt_requests(
+        self,
+        manifest: RepoManifest,
+        signals: Iterable[Signal],
+        sections: Iterable[str] | None = None,
+        contexts: Dict[str, List[str]] | None = None,
+        *,
+        token_budgets: Dict[str, int] | None = None,
+    ) -> Dict[str, PromptRequest]:
+        selected_sections = self._normalise_section_order(sections)
+        if not selected_sections:
+            selected_sections = list(DEFAULT_SECTIONS)
+
+        grouped = self._group_signals(signals)
+        intro_section, other_sections = self._build_sections(
+            manifest,
+            grouped,
+            selected_sections,
+            contexts or {},
+            token_budgets=token_budgets,
+        )
+
+        sections_by_name: Dict[str, Section] = {intro_section.name: intro_section}
+        sections_by_name.update({section.name: section for section in other_sections})
+        project_name = Path(manifest.root).name or "Repository"
+
+        requests: Dict[str, PromptRequest] = {}
+        for name in selected_sections:
+            section = sections_by_name.get(name)
+            if section is None:
+                continue
+            budget = self._resolve_budget(name, token_budgets)
+            user_prompt = self._build_user_prompt(project_name, section)
+            metadata = {
+                "style": self.style,
+                "context_count": len(section.metadata.get("context", [])),
+            }
+            if "context_truncated" in section.metadata:
+                metadata["context_truncated"] = section.metadata["context_truncated"]
+            if "context_budget" in section.metadata:
+                metadata["context_budget"] = section.metadata["context_budget"]
+            messages = [
+                PromptMessage(role="system", content=self.SYSTEM_PROMPT),
+                PromptMessage(role="user", content=user_prompt),
+            ]
+            requests[name] = PromptRequest(
+                section=name,
+                messages=messages,
+                max_tokens=budget,
+                metadata=metadata,
+            )
+
+        return requests
+
     def _build_sections(
         self,
         manifest: RepoManifest,
         grouped: Dict[str, List[Signal]],
         selected_sections: Sequence[str],
         contexts: Dict[str, List[str]],
+        *,
+        token_budgets: Dict[str, int] | None,
     ) -> Tuple[Section, List[Section]]:
         language_signal = self._first_signal(grouped, "language.all")
         languages = list(language_signal.metadata.get("languages", [])) if language_signal else []
@@ -140,9 +225,16 @@ class PromptBuilder:
         }
 
         intro_body, intro_meta = self._build_intro(manifest, languages, frameworks)
-        intro_context = contexts.get("intro", [])
+        intro_context_input = list(contexts.get("intro", []))
+        intro_context, intro_truncated, intro_budget = self._prepare_context(
+            "intro", intro_context_input, token_budgets
+        )
         intro_body = self._inject_context("intro", intro_body, intro_context)
         intro_meta["context"] = intro_context
+        if intro_budget is not None:
+            intro_meta["context_budget"] = intro_budget
+        if intro_truncated:
+            intro_meta["context_truncated"] = intro_truncated
         intro_rendered = self._render_section("intro", intro_body, intro_meta)
         intro_meta["token_estimate"] = self._estimate_tokens(intro_rendered)
         intro_meta["style"] = self.style
@@ -170,9 +262,16 @@ class PromptBuilder:
                     apis=api_signals,
                     entities=entity_signals,
                 )
-            section_context = contexts.get(name, [])
+            section_context_input = list(contexts.get(name, []))
+            section_context, truncated, budget = self._prepare_context(
+                name, section_context_input, token_budgets
+            )
             body = self._inject_context(name, body, section_context)
             meta["context"] = section_context
+            if budget is not None:
+                meta["context_budget"] = budget
+            if truncated:
+                meta["context_truncated"] = truncated
             rendered = self._render_section(name, body, meta)
             meta["token_estimate"] = self._estimate_tokens(rendered)
             meta["style"] = self.style
@@ -464,6 +563,42 @@ class PromptBuilder:
             body = "Add licensing information once the project selects a license."
         return body, {"files": license_paths}
 
+    def _prepare_context(
+        self,
+        section: str,
+        snippets: List[str],
+        token_budgets: Dict[str, int] | None,
+    ) -> Tuple[List[str], int, int | None]:
+        budget = self._resolve_budget(section, token_budgets)
+        if budget is None or budget <= 0:
+            return [snippet for snippet in snippets if snippet.strip()], 0, budget
+
+        trimmed: List[str] = []
+        total_tokens = 0
+        truncated = 0
+        for snippet in snippets:
+            content = snippet.strip()
+            if not content:
+                continue
+            tokens = self._estimate_tokens(content)
+            if tokens <= 0:
+                continue
+            if total_tokens + tokens > budget:
+                truncated += 1
+                continue
+            trimmed.append(content)
+            total_tokens += tokens
+        return trimmed, truncated, budget
+
+    def _resolve_budget(self, section: str, overrides: Dict[str, int] | None) -> int | None:
+        if overrides and section in overrides:
+            return overrides[section]
+        if section in self._token_budget_overrides:
+            return self._token_budget_overrides[section]
+        if overrides and "default" in overrides:
+            return overrides["default"]
+        return self._token_budget_default
+
     @staticmethod
     def _inject_context(name: str, body: str, contexts: List[str]) -> str:
         if not contexts:
@@ -548,6 +683,35 @@ class PromptBuilder:
             ).strip()
             + "\n"
         )
+
+    def _build_user_prompt(self, project_name: str, section: Section) -> str:
+        metadata_copy = dict(section.metadata)
+        contexts = metadata_copy.pop("context", [])
+        truncated = metadata_copy.get("context_truncated")
+        metadata_json = json.dumps(metadata_copy, indent=2, sort_keys=True)
+
+        lines = [
+            f"Project: {project_name}",
+            f"Section: {section.title}",
+            "Write the markdown body for this section using only repository-derived facts.",
+            "Adhere to the established formatting and keep instructions concise.",
+            "Signals and metadata (JSON):",
+            metadata_json,
+        ]
+
+        if contexts:
+            lines.append("Context snippets:")
+            for snippet in contexts:
+                cleaned = snippet.replace("\n", " ").strip()
+                lines.append(f"- {cleaned}")
+        else:
+            lines.append("Context snippets: (none)")
+
+        if truncated:
+            lines.append(f"(Additional context snippets were omitted due to token budget limits: {truncated})")
+
+        lines.append("Return only the markdown content for this section, without extra commentary.")
+        return "\n".join(lines)
 
     def _create_env(self, templates_dir: Path | None) -> Environment | None:
         if Environment is None:

@@ -122,6 +122,55 @@ def test_prompt_builder_filters_missing_commands(tmp_path: Path) -> None:
     assert all("requirements.txt" not in cmd for cmd in filtered)
 
 
+def test_build_prompt_requests_includes_guardrail(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+    analyzers = [LanguageAnalyzer(), BuildAnalyzer(), DependencyAnalyzer()]
+    signals: list[Signal] = []
+    for analyzer in analyzers:
+        signals.extend(analyzer.analyze(manifest))
+
+    builder = PromptBuilder()
+    requests = builder.build_prompt_requests(manifest, signals, sections=["intro"])
+
+    intro_request = requests["intro"]
+    assert intro_request.messages[0].role == "system"
+    assert intro_request.messages[0].content == PromptBuilder.SYSTEM_PROMPT
+    assert intro_request.messages[1].role == "user"
+    assert "Project:" in intro_request.messages[1].content
+
+
+def test_build_prompt_requests_applies_token_budget(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _seed_repo(repo)
+
+    manifest = RepoScanner().scan(str(repo))
+    builder = PromptBuilder()
+    contexts = {
+        "intro": [
+            "Primary service handles routing between modules.",
+            "Secondary snippet that should be truncated by the budget because it is much longer than the limit and contains numerous descriptive phrases.",
+        ]
+    }
+
+    requests = builder.build_prompt_requests(
+        manifest,
+        signals=[],
+        sections=["intro"],
+        contexts=contexts,
+        token_budgets={"default": 30},
+    )
+
+    prompt_text = requests["intro"].messages[1].content
+    assert "Primary service handles routing" in prompt_text
+    assert "Secondary snippet" not in prompt_text
+    assert requests["intro"].metadata["context_truncated"] == 1
+
+
 def test_quickstart_includes_entrypoint_and_pattern_commands(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()

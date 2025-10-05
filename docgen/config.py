@@ -67,6 +67,8 @@ class DocGenConfig:
     exclude_paths: List[str] = field(default_factory=list)
     templates_dir: Optional[Path] = None
     template_pack: Optional[str] = None
+    token_budget_default: Optional[int] = None
+    token_budget_overrides: Dict[str, int] = field(default_factory=dict)
 
 
 def load_config(config_path: Path) -> DocGenConfig:
@@ -110,6 +112,14 @@ def load_config(config_path: Path) -> DocGenConfig:
     style = _as_str(readme_data.get("style")) if readme_data else None
     templates_dir_str = _as_str(readme_data.get("templates_dir")) if readme_data else None
     template_pack = _as_str(readme_data.get("template_pack")) if readme_data else None
+    token_budget_default: Optional[int] = None
+    token_budget_overrides: Dict[str, int] = {}
+    if readme_data:
+        budget_data = readme_data.get("token_budget")
+        (
+            token_budget_default,
+            token_budget_overrides,
+        ) = _parse_token_budget(budget_data)
     templates_dir = root / templates_dir_str if templates_dir_str else None
 
     analyzer_data = _as_dict(data.get("analyzers"))
@@ -147,6 +157,8 @@ def load_config(config_path: Path) -> DocGenConfig:
         exclude_paths=exclude_paths,
         templates_dir=templates_dir,
         template_pack=template_pack,
+        token_budget_default=token_budget_default,
+        token_budget_overrides=token_budget_overrides,
     )
 
 
@@ -366,3 +378,25 @@ def _as_str_list(value: Any) -> List[str]:
         result = [str(item) for item in value if isinstance(item, (str, int, float, bool))]
         return result
     return []
+
+
+def _parse_token_budget(value: Any) -> tuple[Optional[int], Dict[str, int]]:
+    """Return token budget defaults and overrides parsed from configuration."""
+    if value is None:
+        return None, {}
+    if isinstance(value, (int, str)):
+        numeric = _as_int(value)
+        return numeric, {}
+    if isinstance(value, dict):
+        default = None
+        overrides: Dict[str, int] = {}
+        if "default" in value:
+            default = _as_int(value.get("default"))
+        for key, raw in value.items():
+            if key == "default":
+                continue
+            numeric = _as_int(raw)
+            if numeric is not None:
+                overrides[key] = numeric
+        return default, overrides
+    return None, {}
