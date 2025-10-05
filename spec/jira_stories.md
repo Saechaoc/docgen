@@ -5,7 +5,7 @@
 ---
 
 ## Story S-032 — No-Hallucination Validation
-- **Status:** ☐ Not started
+- **Status:** ◐ In progress (design ready)
 - **Story Text:** Introduce a validation layer that rejects README content containing facts not backed by analyzer signals or RAG context, surfacing actionable errors to users.
 - **Dependencies already completed:** S-031 (guardrailed execution), S-011 (RAG contexts)
 - **Constraints:**
@@ -17,6 +17,22 @@
   - Validator cross-references generated claims against available signals/context; disallowed content triggers a failure path with stub fallback.
   - Unit tests cover acceptance of grounded content and rejection of injected hallucinations.
   - CLI surfaces concise error messages and `--verbose` logs list offending sections and missing evidence.
+- **Implementation Plan:**
+  - Create a dedicated `docgen.validators` package with a lightweight `ValidationIssue` dataclass, a `Validator` protocol, and a `NoHallucinationValidator` concrete implementation. The orchestrator registers validators after section rendering and executes them before post-processing or IO.
+  - Add a shared `EvidenceIndex` builder that normalizes analyzer signals (names, kinds, key attributes) and retrieved RAG chunks (path, heading, snippet). Persist the normalized evidence in the run context so validators and verbose logging receive the same data.
+  - Extend the prompt builder to annotate each section render with `SectionEvidence` metadata describing which signals and chunk IDs were injected. This metadata is stored alongside the rendered markdown to avoid re-parsing prompts.
+  - Implement lexical matching heuristics: split rendered sections into sentences, ignore boilerplate phrases, and require each remaining sentence that introduces facts (numbers, detected entities, verbs with direct objects) to have at least one overlapping n-gram (len ≥3) with the normalized evidence. Flag unmatched sentences as hallucinations.
+  - When hallucinations are detected, short-circuit the pipeline, emit fail-safe stubs for the offending sections (reuse existing stub generator), and bubble a `ValidationError` back to the CLI with actionable hints.
+- **`.docgen.yml` & CLI Updates:**
+  - Introduce a `validation` map with a `no_hallucination` boolean (default `true`). Respect repo-level overrides while allowing `DOCGEN_VALIDATION_NO_HALLUCINATION=false` to disable the check in CI emergencies.
+  - Add a `--skip-validation` flag for `docgen init|update|regenerate` that flips the toggle for the current execution only and is surfaced in the run summary to encourage re-enabling.
+- **Logging & UX:**
+  - CLI errors show one-line summaries per section (`quickstart: references docker compose without supporting analyzer signal`). `--verbose` prints the offending sentence, the missing tokens, and a short list of nearby evidence.
+  - Persist a `validation.json` report under `.docgen/` capturing the validator status, issues, and selected evidence for forensic review.
+- **Testing Strategy:**
+  - Unit tests cover positive/negative cases for the `NoHallucinationValidator`, including edge cases such as citations using synonyms or pluralization, bullet lists, and code blocks.
+  - Integration tests run the full CLI on synthetic repos stored in `tests/data/validation/` to confirm grounded READMEs pass and tampered outputs fail fast with stub replacements.
+  - Add regression fixtures asserting that disabling validation via config/CLI leaves runs untouched and that verbose logging enumerates flagged sentences.
 
 ## Story S-033 — Analyzer Artifact Persistence
 - **Status:** ☐ Not started
