@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="Move git ignore">
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="Update feature order">
+      <change afterPath="$PROJECT_DIR$/spec/prompt_template.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/structure.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/structure.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/analyzers/test_structure.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/analyzers/test_structure.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +23,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "Saechaoc"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Saechaoc/docgen.git",
+    "accountId": "d45ed314-e8a3-4c29-a0ad-2d10ee8329cc"
+  }
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -53,7 +64,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "task/endpoint__abstraction",
+    "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
@@ -203,7 +214,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758381589964</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Update feature checklist">
+      <option name="closed" value="true" />
+      <created>1759703388091</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1759703388091</updated>
+    </task>
+    <task id="LOCAL-00007" summary="Update feature order">
+      <option name="closed" value="true" />
+      <created>1759703619968</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1759703619968</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -212,6 +239,8 @@
     <MESSAGE value="phase 6 complete" />
     <MESSAGE value="- Enhanced the pipeline to understand project execution paths and infrastructure cues: new entrypoint and pattern analyzers emit run commands/quick‑start hints, the prompt builder weaves them into Features/Quick Start, and the&#10;  RAG index now caches embeddings incrementally instead of rebuilding from scratch (docgen/analyzers/entrypoints.py, docgen/analyzers/patterns.py, docgen/prompting/builder.py, docgen/rag/indexer.py, docgen/rag/store.py, related&#10;  tests).&#10;  - Hardened post-processing and quality gates with badge insertion, local link validation, and README scorecards persisted under .docgen/scorecard.json; updated publisher/config/CLI plumbing adds dry-run support, PR labelling/&#10;  updating, and richer template overrides (docs/templates + packs) (docgen/postproc/badges.py, docgen/postproc/links.py, docgen/postproc/scorecard.py, docgen/orchestrator.py, docgen/cli.py, docgen/git/publisher.py, docgen/&#10;  config.py, docs/ci/github-actions.md).&#10;  - Documented and marked off Phases 7 &amp; 8 in the spec/checklist while expanding coverage with new analyzer, postproc, CLI, publisher, and config tests (spec/spec.md, spec/feature_checklist.md, tests/analyzers/&#10;  test_entrypoints.py, tests/analyzers/test_patterns.py, tests/postproc/test_postproc.py, tests/test_cli.py, tests/test_config.py, tests/test_orchestrator.py, tests/git/test_publisher.py)." />
     <MESSAGE value="Move git ignore" />
-    <option name="LAST_COMMIT_MESSAGE" value="Move git ignore" />
+    <MESSAGE value="Update feature checklist" />
+    <MESSAGE value="Update feature order" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update feature order" />
   </component>
 </project>
