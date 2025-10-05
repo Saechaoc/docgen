@@ -25,15 +25,15 @@
 - [ ] Tree‑sitter powered symbol/entrypoint extraction (flagged) **[STRETCH]**
 
 ## 4) Knowledge Store (RAG)
-- [ ] Local embedding model + chunking strategy **[MVP]**
-- [ ] Index `README`, `/docs`, top N source headers & comments **[MVP]**
-- [ ] Section‑scoped retrieval (top‑k per section) **[MVP]**
+- [x] Local embedding model + chunking strategy **[MVP]**
+- [x] Index `README`, `/docs`, top N source headers & comments **[MVP]**
+- [x] Section‑scoped retrieval (top‑k per section) **[MVP]**
 - [ ] Lightweight knowledge graph of modules/services/signals **[NEXT]**
 
 ## 5) Prompting & Templates
 - [x] Jinja2 templates per section (intro, features, architecture, quickstart, config, build/test, deployment, troubleshooting, FAQ, license) **[MVP]**
-- [x] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
-- [x] Token budgeting & streaming section-by-section generation **[MVP]**
+- [ ] Guardrailed system prompt (“no speculation; cite repo facts only”) **[MVP]**
+- [ ] Token budgeting & streaming section-by-section generation **[MVP]**
 - [x] Template override mechanism (`docs/templates/*.j2`) **[NEXT]**
 - [x] Style presets: concise vs comprehensive **[NEXT]**
 - [x] Mermaid.js diagrams for architecture/flow sections where appropriate **[NEXT]**
@@ -54,7 +54,7 @@
 - [x] Diff detection (map changed files → impacted sections) **[MVP]**
 - [x] Branch + PR creation with summary of README deltas **[MVP]**
 - [x] Commit mode for init or small changes (configurable) **[NEXT]**
-- [ ] Prevent loops on README‑only changes **[MVP]**
+- [x] Prevent loops on README‑only changes **[MVP]**
 
 ## 9) Configuration
 - [x] Parse `.docgen.yml` (LLM, readme style, analyzers, publish) **[MVP]**
@@ -72,22 +72,22 @@
 - [ ] Optional simple secret scanner gate **[NEXT]**
 
 ## 12) Multi‑Language & Project Types
-- [ ] Tier‑1: Python (Poetry/Setuptools), Java (Maven/Gradle/Spring Boot), Node.js (npm/pnpm/Express/Next) **[MVP]**
+- [x] Tier‑1: Python (Poetry/Setuptools), Java (Maven/Gradle/Spring Boot), Node.js (npm/pnpm/Express/Next) **[MVP]**
 - [ ] Tier‑2: Go, Rust, Ruby, PHP **[STRETCH]**
 - [x] Framework‑aware quickstart commands per build system **[MVP]**
 
 ## 13) Quality Gates & Evaluation
-- [ ] Command validation (existence checks) **[MVP]**
+- [x] Command validation (existence checks) **[MVP]**
 - [ ] No‑hallucination checks: reject facts not in signals/RAG **[MVP]**
 - [x] README scorecard (coverage, buildability, link validity, diff alignment, lint) **[NEXT]**
 
 ## 14) Performance & Caching
-- [x] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
+- [ ] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
 - [x] Incremental RAG refresh (changed files only) **[NEXT]**
 
 ## 15) Error Handling & UX
 - [x] Fail-safe stub generation when evidence is insufficient **[MVP]**
-- [ ] Clear run logs + PR body with rationale (“sections updated because…”) **[MVP]**
+- [x] Clear run logs + PR body with rationale (“sections updated because…”) **[MVP]**
 - [x] Helpful CLI errors and `--verbose` flag (works pre/post subcommand) **[MVP]**
 
 ## 16) Extensibility
