@@ -346,6 +346,29 @@ def test_run_update_uses_stub_when_builder_fails(tmp_path: Path) -> None:
     assert "docgen could not populate the Build & Test section automatically." in content
 
 
+def test_run_update_with_llm_runner_and_custom_builder_falls_back(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    Orchestrator().run_init(str(repo_root))
+
+    diff_analyzer = _StubDiffAnalyzer(["build_and_test"])
+    runner = RecordingLLMRunner()
+    orchestrator = Orchestrator(
+        prompt_builder=_StubPromptBuilder(),
+        analyzers=[],
+        diff_analyzer=diff_analyzer,
+        llm_runner=runner,
+    )
+
+    outcome = orchestrator.run_update(str(repo_root), "origin/main")
+
+    assert isinstance(outcome, UpdateOutcome)
+    assert "UPDATED build_and_test" in outcome.diff
+    assert not runner.calls, "Expected LLM runner not to be invoked for custom builders"
+
+
 def test_run_update_skips_when_no_watched_globs_match(tmp_path: Path) -> None:
     repo_root = tmp_path / "sample"
     repo_root.mkdir()

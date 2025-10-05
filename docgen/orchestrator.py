@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import difflib
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence, cast
 
 from .analyzers import Analyzer, discover_analyzers
 from .config import ConfigError, DocGenConfig, load_config
@@ -100,9 +100,10 @@ class Orchestrator:
         section_order = list(DEFAULT_SECTIONS)
 
         try:
-            if runner:
+            can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
+            if can_stream:
                 sections_map = self._generate_sections_with_llm(
-                    builder,
+                    cast(PromptBuilder, builder),
                     runner,
                     manifest,
                     signals,
@@ -117,6 +118,11 @@ class Orchestrator:
                     section_order,
                 )
             else:
+                if runner and not can_stream:
+                    self.logger.debug(
+                        "LLM runner enabled but prompt builder %s lacks build_prompt_requests; falling back to template rendering",
+                        builder.__class__.__name__,
+                    )
                 readme_content = builder.build(
                     manifest,
                     signals,
@@ -193,9 +199,10 @@ class Orchestrator:
         runner = self._resolve_llm_runner(config)
 
         try:
-            if runner:
+            can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
+            if can_stream:
                 new_sections = self._generate_sections_with_llm(
-                    builder,
+                    cast(PromptBuilder, builder),
                     runner,
                     manifest,
                     signals,
@@ -204,6 +211,11 @@ class Orchestrator:
                     token_budgets,
                 )
             else:
+                if runner and not can_stream:
+                    self.logger.debug(
+                        "LLM runner enabled but prompt builder %s lacks build_prompt_requests; using render_sections",
+                        builder.__class__.__name__,
+                    )
                 new_sections = builder.render_sections(
                     manifest,
                     signals,
