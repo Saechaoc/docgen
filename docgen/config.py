@@ -55,6 +55,13 @@ class CIConfig:
 
 
 @dataclass
+class ValidationConfig:
+    """Validation related settings."""
+
+    no_hallucination: bool = True
+
+
+@dataclass
 class DocGenConfig:
     """Represents the high-level settings defined in .docgen.yml."""
 
@@ -69,6 +76,7 @@ class DocGenConfig:
     template_pack: Optional[str] = None
     token_budget_default: Optional[int] = None
     token_budget_overrides: Dict[str, int] = field(default_factory=dict)
+    validation: ValidationConfig = field(default_factory=ValidationConfig)
 
 
 def load_config(config_path: Path) -> DocGenConfig:
@@ -145,6 +153,13 @@ def load_config(config_path: Path) -> DocGenConfig:
     if ci_data:
         ci.watched_globs = _as_str_list(ci_data.get("watched_globs"))
 
+    validation_data = _as_dict(data.get("validation"))
+    validation = ValidationConfig()
+    if validation_data:
+        no_hallucination = _as_bool(validation_data.get("no_hallucination"))
+        if no_hallucination is not None:
+            validation.no_hallucination = no_hallucination
+
     exclude_paths = _as_str_list(data.get("exclude_paths"))
 
     return DocGenConfig(
@@ -159,6 +174,7 @@ def load_config(config_path: Path) -> DocGenConfig:
         template_pack=template_pack,
         token_budget_default=token_budget_default,
         token_budget_overrides=token_budget_overrides,
+        validation=validation,
     )
 
 

@@ -28,6 +28,14 @@ def _add_verbose_option(
     )
 
 
+def _add_skip_validation_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--skip-validation",
+        action="store_true",
+        help="Skip README validation guards for this run (not recommended).",
+    )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="docgen",
@@ -41,6 +49,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Initialize a README for a repository that lacks one.",
     )
     _add_verbose_option(init_parser, suppress_default=True)
+    _add_skip_validation_option(init_parser)
     init_parser.add_argument(
         "path",
         nargs="?",
@@ -53,6 +62,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Update README sections after repository changes.",
     )
     _add_verbose_option(update_parser, suppress_default=True)
+    _add_skip_validation_option(update_parser)
     update_parser.add_argument(
         "path",
         nargs="?",
@@ -74,6 +84,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Force regeneration of README sections.",
     )
     _add_verbose_option(regenerate_parser, suppress_default=True)
+    _add_skip_validation_option(regenerate_parser)
 
     return parser
 
@@ -89,7 +100,10 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.command == "init":
         try:
-            readme_path = orchestrator.run_init(args.path)
+            readme_path = orchestrator.run_init(
+                args.path,
+                skip_validation=bool(getattr(args, "skip_validation", False)),
+            )
         except FileExistsError as exc:
             parser.exit(1, f"{exc}\n")
         except Exception as exc:  # pragma: no cover - defensive guard
@@ -98,7 +112,12 @@ def main(argv: list[str] | None = None) -> None:
         print(f"README created at {rel_path}")
     elif args.command == "update":
         try:
-            result = orchestrator.run_update(args.path, args.diff_base, dry_run=bool(getattr(args, "dry_run", False)))
+            result = orchestrator.run_update(
+                args.path,
+                args.diff_base,
+                dry_run=bool(getattr(args, "dry_run", False)),
+                skip_validation=bool(getattr(args, "skip_validation", False)),
+            )
         except FileNotFoundError as exc:
             parser.exit(1, f"{exc}\n")
         except RuntimeError as exc:

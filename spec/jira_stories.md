@@ -5,7 +5,7 @@
 ---
 
 ## Story S-032 — No-Hallucination Validation
-- **Status:** ◐ In progress (design ready)
+- **Status:** ✔ Done
 - **Story Text:** Introduce a validation layer that rejects README content containing facts not backed by analyzer signals or RAG context, surfacing actionable errors to users.
 - **Dependencies already completed:** S-031 (guardrailed execution), S-011 (RAG contexts)
 - **Constraints:**

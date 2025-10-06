@@ -23,6 +23,7 @@ def test_load_config_returns_defaults_when_missing(tmp_path: Path) -> None:
     assert config.exclude_paths == []
     assert config.templates_dir is None
     assert config.template_pack is None
+    assert config.validation.no_hallucination is True
 
 
 def test_load_config_parses_expected_fields(tmp_path: Path) -> None:
@@ -58,6 +59,8 @@ ci:
   watched_globs:
     - "src/**"
     - "Dockerfile"
+validation:
+  no_hallucination: false
 """,
         encoding="utf-8",
     )
@@ -90,6 +93,7 @@ ci:
     assert config.ci.watched_globs == ["src/**", "Dockerfile"]
 
     assert config.exclude_paths == ["sandbox/"]
+    assert config.validation.no_hallucination is False
 
 
 def test_load_config_fallback_parser_handles_lists(tmp_path: Path, monkeypatch) -> None:

@@ -24,3 +24,10 @@ def test_cli_accepts_dry_run_flag() -> None:
     args = parser.parse_args(["update", "--dry-run"])
     assert args.command == "update"
     assert args.dry_run is True
+
+
+def test_cli_accepts_skip_validation_flag() -> None:
+    parser = _build_parser()
+    args = parser.parse_args(["init", "--skip-validation"])
+    assert args.command == "init"
+    assert args.skip_validation is True

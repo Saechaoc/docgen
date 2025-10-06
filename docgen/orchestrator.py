@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 from dataclasses import dataclass
 from datetime import datetime
 import difflib
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, cast
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, cast
 
 from .analyzers import Analyzer, discover_analyzers
 from .config import ConfigError, DocGenConfig, load_config
@@ -27,6 +29,14 @@ from .prompting.builder import PromptBuilder, Section
 from .prompting.constants import DEFAULT_SECTIONS, SECTION_TITLES
 from .rag.indexer import RAGIndexer
 from .repo_scanner import RepoScanner
+from .validators import (
+    NoHallucinationValidator,
+    ValidationContext,
+    ValidationError,
+    ValidationIssue,
+    Validator,
+    build_evidence_index,
+)
 
 
 @dataclass
@@ -56,6 +66,7 @@ class Orchestrator:
         link_validator: LinkValidator | None = None,
         scorecard: ReadmeScorecard | None = None,
         llm_runner: LLMRunner | None = None,
+        validators: Optional[Iterable[Validator]] = None,
     ) -> None:
         self.scanner = scanner or RepoScanner()
         self._analyzer_overrides = list(analyzers) if analyzers is not None else None
@@ -73,8 +84,10 @@ class Orchestrator:
         self._llm_runner = llm_runner
         self._llm_runner_is_external = llm_runner is not None
         self._llm_runner_signature: tuple[object | None, ...] | None = None
+        self._validator_overrides = list(validators) if validators is not None else None
+        self._validator_cache: Optional[List[Validator]] = None
 
-    def run_init(self, path: str) -> Path:
+    def run_init(self, path: str, *, skip_validation: bool = False) -> Path:
         """Initialize README generation for a repository."""
         repo_path = Path(path).expanduser().resolve()
         self.logger.info("Starting init run for %s", repo_path)
@@ -98,6 +111,9 @@ class Orchestrator:
         runner = self._resolve_llm_runner(config)
 
         section_order = list(DEFAULT_SECTIONS)
+        project_name = repo_path.name or "Repository"
+        sections_map: Dict[str, Section] = {}
+        builder_failed = False
 
         try:
             can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
@@ -111,27 +127,56 @@ class Orchestrator:
                     contexts,
                     token_budgets,
                 )
-                readme_content = self._render_readme_from_sections(
-                    builder,
-                    manifest,
-                    sections_map,
-                    section_order,
-                )
             else:
                 if runner and not can_stream:
                     self.logger.debug(
                         "LLM runner enabled but prompt builder %s lacks build_prompt_requests; falling back to template rendering",
                         builder.__class__.__name__,
                     )
-                readme_content = builder.build(
+                sections_map = builder.render_sections(
                     manifest,
                     signals,
+                    section_order,
                     contexts=contexts,
                     token_budgets=token_budgets,
                 )
         except Exception as exc:  # pragma: no cover - defensive guard
+            builder_failed = True
             self._log_exception("Prompt builder failed during init", exc)
-            readme_content = build_readme_stub(repo_path, reason=str(exc))
+            sections_map = build_section_stubs(section_order, project_name=project_name, reason=str(exc))
+
+        if not sections_map:
+            self.logger.warning("Prompt builder returned no sections; using stub content")
+            sections_map = build_section_stubs(section_order, project_name=project_name)
+        else:
+            sections_map = self._fill_missing_sections(
+                sections_map,
+                required=section_order,
+                project_name=project_name,
+            )
+
+        effective_skip = skip_validation or builder_failed
+        skip_label = "flag" if skip_validation else None
+        if builder_failed and not skip_validation:
+            skip_label = "fallback"
+
+        validated_sections = self._run_validators_if_enabled(
+            repo_path,
+            manifest,
+            signals,
+            sections_map,
+            config,
+            skip_validation=effective_skip,
+            request_sections=section_order,
+            skip_reason=skip_label,
+        )
+
+        readme_content = self._render_readme_from_sections(
+            builder,
+            manifest,
+            validated_sections,
+            section_order,
+        )
         if not readme_content.strip():
             self.logger.warning("Prompt builder produced empty README; using stub content")
             readme_content = build_readme_stub(repo_path)
@@ -157,6 +202,7 @@ class Orchestrator:
         diff_base: str,
         *,
         dry_run: bool = False,
+        skip_validation: bool = False,
     ) -> UpdateOutcome | None:
         """Update README content after repository changes."""
         repo_path = Path(path).expanduser().resolve()
@@ -198,10 +244,14 @@ class Orchestrator:
         token_budgets = self._build_token_budget_map(config)
         runner = self._resolve_llm_runner(config)
 
+        project_name = repo_path.name or "Repository"
+        sections_map: Dict[str, Section] = {}
+        builder_failed = False
+
         try:
             can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
             if can_stream:
-                new_sections = self._generate_sections_with_llm(
+                sections_map = self._generate_sections_with_llm(
                     cast(PromptBuilder, builder),
                     runner,
                     manifest,
@@ -216,7 +266,7 @@ class Orchestrator:
                         "LLM runner enabled but prompt builder %s lacks build_prompt_requests; using render_sections",
                         builder.__class__.__name__,
                     )
-                new_sections = builder.render_sections(
+                sections_map = builder.render_sections(
                     manifest,
                     signals,
                     diff.sections,
@@ -224,34 +274,42 @@ class Orchestrator:
                     token_budgets=token_budgets,
                 )
         except Exception as exc:  # pragma: no cover - defensive guard
+            builder_failed = True
             self._log_exception("Prompt builder failed during update", exc)
-            project_name = repo_path.name or "Repository"
-            new_sections = build_section_stubs(diff.sections, project_name=project_name, reason=str(exc))
-        if not new_sections:
+            sections_map = build_section_stubs(diff.sections, project_name=project_name, reason=str(exc))
+
+        if not sections_map:
             self.logger.warning("Prompt builder returned no sections for update; using stub content")
-            project_name = repo_path.name or "Repository"
-            new_sections = build_section_stubs(diff.sections, project_name=project_name)
-            if not new_sections:
+            sections_map = build_section_stubs(diff.sections, project_name=project_name)
+            if not sections_map:
                 return None
         else:
-            missing = [
-                name
-                for name in diff.sections
-                if not (new_sections.get(name).body.strip() if new_sections.get(name) else "")
-            ]
-            if missing:
-                self.logger.warning(
-                    "Prompt builder produced empty sections (%s); using stub content",
-                    ", ".join(missing),
-                )
-                project_name = repo_path.name or "Repository"
-                stub_sections = build_section_stubs(missing, project_name=project_name)
-                new_sections.update(stub_sections)
+            sections_map = self._fill_missing_sections(
+                sections_map,
+                required=diff.sections,
+                project_name=project_name,
+            )
+
+        effective_skip = skip_validation or builder_failed
+        skip_label = "flag" if skip_validation else None
+        if builder_failed and not skip_validation:
+            skip_label = "fallback"
+
+        validated_sections = self._run_validators_if_enabled(
+            repo_path,
+            manifest,
+            signals,
+            sections_map,
+            config,
+            skip_validation=effective_skip,
+            request_sections=diff.sections,
+            skip_reason=skip_label,
+        )
 
         original = readme_path.read_text(encoding="utf-8")
         updated = original
         for section_name in diff.sections:
-            section = new_sections.get(section_name)
+            section = validated_sections.get(section_name)
             if section is None:
                 continue
             updated = self.marker_manager.replace(updated, section_name, section.body)
@@ -338,6 +396,228 @@ class Orchestrator:
         if config.token_budget_overrides:
             budgets.update(config.token_budget_overrides)
         return budgets
+
+    def _fill_missing_sections(
+        self,
+        sections: Dict[str, Section],
+        *,
+        required: Sequence[str],
+        project_name: str,
+        reason: str | None = None,
+    ) -> Dict[str, Section]:
+        missing = [
+            name
+            for name in required
+            if name not in sections
+            or not sections[name]
+            or not sections[name].body.strip()
+        ]
+        if missing:
+            self.logger.warning(
+                "Prompt builder produced empty sections (%s); using stub content",
+                ", ".join(missing),
+            )
+            stub_sections = build_section_stubs(missing, project_name=project_name, reason=reason)
+            sections.update(stub_sections)
+        return sections
+
+    def _run_validators_if_enabled(
+        self,
+        repo_path: Path,
+        manifest: RepoManifest,
+        signals: Sequence[Signal],
+        sections: Dict[str, Section],
+        config: DocGenConfig,
+        *,
+        skip_validation: bool,
+        request_sections: Sequence[str],
+        skip_reason: Optional[str],
+    ) -> Dict[str, Section]:
+        validators = self._resolve_validators()
+        mode, enabled = self._validation_enabled(config)
+        issues: List[ValidationIssue] = []
+
+        if skip_validation:
+            reason = skip_reason or "override"
+            self.logger.info("Skipping README validation for this run (%s).", reason)
+            self._write_validation_report(
+                repo_path,
+                status="skipped",
+                mode=mode,
+                validators=validators,
+                issues=issues,
+                sections=sections,
+                request_sections=request_sections,
+                skip_reason=reason,
+            )
+            return sections
+
+        if not enabled:
+            source = "environment" if mode == "env" else "configuration"
+            self.logger.info("README validation disabled via %s settings.", source)
+            self._write_validation_report(
+                repo_path,
+                status="disabled",
+                mode=mode,
+                validators=validators,
+                issues=issues,
+                sections=sections,
+                request_sections=request_sections,
+                skip_reason=mode,
+            )
+            return sections
+
+        if not validators:
+            self.logger.debug("No validators configured; skipping validation stage")
+            self._write_validation_report(
+                repo_path,
+                status="disabled",
+                mode=mode,
+                validators=validators,
+                issues=issues,
+                sections=sections,
+                request_sections=request_sections,
+                skip_reason="empty",
+            )
+            return sections
+
+        evidence = build_evidence_index(signals, sections)
+        context = ValidationContext(
+            manifest=manifest,
+            signals=signals,
+            sections=sections,
+            evidence=evidence,
+        )
+
+        for validator in validators:
+            issues.extend(validator.validate(context))
+
+        if issues:
+            offending_sections = sorted({issue.section for issue in issues})
+            for issue in issues:
+                self.logger.error("Validation failure in section '%s': %s", issue.section, issue.detail)
+                if self.logger.isEnabledFor(logging.DEBUG):
+                    self.logger.debug("Sentence: %s", issue.sentence)
+            stub_sections = build_section_stubs(
+                offending_sections,
+                project_name=repo_path.name or "Repository",
+                reason="validation failed",
+            )
+            sections.update(stub_sections)
+            self._write_validation_report(
+                repo_path,
+                status="failed",
+                mode=mode,
+                validators=validators,
+                issues=issues,
+                sections=sections,
+                request_sections=request_sections,
+                skip_reason=None,
+            )
+            raise ValidationError(
+                "README validation failed; rerun with --verbose for offending sentences",
+                issues,
+            )
+
+        self.logger.debug("Validation passed for %d section(s)", len(sections))
+        self._write_validation_report(
+            repo_path,
+            status="passed",
+            mode=mode,
+            validators=validators,
+            issues=issues,
+            sections=sections,
+            request_sections=request_sections,
+            skip_reason=None,
+        )
+        return sections
+
+    def _resolve_validators(self) -> List[Validator]:
+        if self._validator_overrides is not None:
+            return list(self._validator_overrides)
+        if self._validator_cache is None:
+            self._validator_cache = [NoHallucinationValidator()]
+        return list(self._validator_cache)
+
+    def _validation_enabled(self, config: DocGenConfig) -> tuple[str, bool]:
+        env_value = os.getenv("DOCGEN_VALIDATION_NO_HALLUCINATION")
+        env_bool = self._parse_env_bool(env_value) if env_value is not None else None
+        if env_bool is not None:
+            return ("env", env_bool)
+        enabled = getattr(config.validation, "no_hallucination", True)
+        return ("config", bool(enabled))
+
+    @staticmethod
+    def _parse_env_bool(value: Optional[str]) -> Optional[bool]:
+        if value is None:
+            return None
+        lowered = value.strip().lower()
+        if lowered in {"1", "true", "yes", "on"}:
+            return True
+        if lowered in {"0", "false", "no", "off"}:
+            return False
+        return None
+
+    def _write_validation_report(
+        self,
+        repo_path: Path,
+        *,
+        status: str,
+        mode: str,
+        validators: Sequence[Validator],
+        issues: Sequence[ValidationIssue],
+        sections: Mapping[str, Section],
+        request_sections: Sequence[str],
+        skip_reason: Optional[str],
+    ) -> None:
+        report_dir = repo_path / ".docgen"
+        try:
+            report_dir.mkdir(parents=True, exist_ok=True)
+        except Exception:  # pragma: no cover - filesystem guard
+            self.logger.debug("Unable to create validation report directory", exc_info=True)
+            return
+        report_path = report_dir / "validation.json"
+        evidence_summary: Dict[str, Dict[str, int]] = {}
+        for name, section in sections.items():
+            metadata = section.metadata if isinstance(section.metadata, dict) else {}
+            context_values = metadata.get("context") if isinstance(metadata, dict) else []
+            if isinstance(context_values, Sequence) and not isinstance(context_values, (str, bytes)):
+                context_count = len(context_values)
+            else:
+                context_count = 0
+            evidence_meta = metadata.get("evidence") if isinstance(metadata, dict) else {}
+            signal_count = 0
+            if isinstance(evidence_meta, Mapping):
+                signals_field = evidence_meta.get("signals")
+                if isinstance(signals_field, Sequence) and not isinstance(signals_field, (str, bytes)):
+                    signal_count = len(list(signals_field))
+            evidence_summary[name] = {
+                "context_chunks": context_count,
+                "signal_count": signal_count,
+            }
+        payload = {
+            "status": status,
+            "mode": mode,
+            "skip_reason": skip_reason,
+            "validators": [validator.name for validator in validators],
+            "issue_count": len(issues),
+            "issues": [
+                {
+                    "section": issue.section,
+                    "sentence": issue.sentence,
+                    "missing_terms": issue.missing_terms,
+                    "detail": issue.detail,
+                }
+                for issue in issues
+            ],
+            "requested_sections": list(request_sections),
+            "evidence_summary": evidence_summary,
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+        }
+        try:
+            report_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        except Exception:  # pragma: no cover - filesystem guard
+            self.logger.debug("Unable to write validation report", exc_info=True)
 
     def _publish_update(
         self,
@@ -535,7 +815,10 @@ class Orchestrator:
             section = sections.get(name)
             if section is not None:
                 ordered_sections.append(section)
-        return builder._render_readme(project_name, intro, ordered_sections)
+        if hasattr(builder, "_render_readme"):
+            return builder._render_readme(project_name, intro, ordered_sections)  # type: ignore[attr-defined]
+        fallback_builder = PromptBuilder()
+        return fallback_builder._render_readme(project_name, intro, ordered_sections)
 
     def _apply_badges(self, markdown: str) -> str:
         try:

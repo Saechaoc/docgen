@@ -112,13 +112,21 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Persists a README scorecard (`.docgen/scorecard.json`) capturing coverage, quick start health, and link results.
 * Adds build/coverage/license badges with safe defaults and reports link warnings during post-processing.
 
-### 3.8 Doc Store (Artifacts & Versions)
+### 3.8 Validation Layer
+
+* Runs after section rendering and before linting/publishing to ensure generated claims are grounded.
+* Normalizes analyzer signals, section metadata, and retrieved context into an **Evidence Index** used for token overlap checks.
+* Default `NoHallucinationValidator` rejects sentences lacking supporting evidence, replaces offending sections with fail-safe stubs, and raises actionable errors.
+* Writes `.docgen/validation.json` capturing validator status, issues, and evidence summaries for auditability.
+* Respects `.docgen.yml` `validation.no_hallucination` toggle, `DOCGEN_VALIDATION_NO_HALLUCINATION` environment override, and CLI `--skip-validation` flag for one-off bypasses.
+
+### 3.9 Doc Store (Artifacts & Versions)
 
 * Keeps generated drafts, logs, prompts, inputs/outputs, and diffs under `.docgen/` per repo.
 * Supports rollback and regression testing via “golden” READMEs.
 * Stores embedding cache (`embeddings.json`) and scorecards so subsequent runs are incremental.
 
-### 3.9 Git Publisher
+### 3.10 Git Publisher
 
 * Creates a branch (e.g., `docgen/readme-update-YYYYMMDD`) and a PR.
 * PR body explains detected changes and what sections were updated.
@@ -204,6 +212,9 @@ readme:
     - troubleshooting
     - faq
     - license
+
+validation:
+  no_hallucination: true  # set to false or use DOCGEN_VALIDATION_NO_HALLUCINATION=0 to disable
 
 publish:
   mode: "pr"                  # "commit" | "pr" | "dry-run"

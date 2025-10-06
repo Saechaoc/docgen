@@ -169,14 +169,19 @@ class PromptBuilder:
                 continue
             budget = self._resolve_budget(name, token_budgets)
             user_prompt = self._build_user_prompt(project_name, section)
-            metadata = {
-                "style": self.style,
-                "context_count": len(section.metadata.get("context", [])),
-            }
-            if "context_truncated" in section.metadata:
-                metadata["context_truncated"] = section.metadata["context_truncated"]
-            if "context_budget" in section.metadata:
-                metadata["context_budget"] = section.metadata["context_budget"]
+            base_metadata = dict(section.metadata)
+            context_values = base_metadata.get("context", []) if isinstance(base_metadata, dict) else []
+            if isinstance(context_values, Sequence) and not isinstance(context_values, (str, bytes)):
+                context_count = len(context_values)
+            else:
+                context_count = 0
+            metadata = dict(base_metadata)
+            metadata["style"] = self.style
+            metadata["context_count"] = context_count
+            if "context_truncated" in base_metadata:
+                metadata["context_truncated"] = base_metadata["context_truncated"]
+            if "context_budget" in base_metadata:
+                metadata["context_budget"] = base_metadata["context_budget"]
             messages = [
                 PromptMessage(role="system", content=self.SYSTEM_PROMPT),
                 PromptMessage(role="user", content=user_prompt),
@@ -231,6 +236,11 @@ class PromptBuilder:
         )
         intro_body = self._inject_context("intro", intro_body, intro_context)
         intro_meta["context"] = intro_context
+        intro_meta["evidence"] = self._build_section_evidence(
+            intro_meta.get("evidence"),
+            grouped_keys=list(grouped.keys()),
+            context_count=len(intro_context),
+        )
         if intro_budget is not None:
             intro_meta["context_budget"] = intro_budget
         if intro_truncated:
@@ -268,6 +278,11 @@ class PromptBuilder:
             )
             body = self._inject_context(name, body, section_context)
             meta["context"] = section_context
+            meta["evidence"] = self._build_section_evidence(
+                meta.get("evidence"),
+                grouped_keys=list(grouped.keys()),
+                context_count=len(section_context),
+            )
             if budget is not None:
                 meta["context_budget"] = budget
             if truncated:
@@ -873,6 +888,18 @@ class PromptBuilder:
         if not cleaned:
             return 0
         return max(1, len(cleaned) // 4)
+
+    @staticmethod
+    def _build_section_evidence(
+        existing: object,
+        *,
+        grouped_keys: Sequence[object],
+        context_count: int,
+    ) -> Dict[str, object]:
+        evidence = dict(existing) if isinstance(existing, dict) else {}
+        evidence["signals"] = sorted({str(key) for key in grouped_keys})
+        evidence["context_chunks"] = int(context_count)
+        return evidence
 
     def _select_items(
         self,

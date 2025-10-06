@@ -78,7 +78,7 @@
 
 ## 13) Quality Gates & Evaluation
 - [x] Command validation (existence checks) **[MVP]**
-- [ ] No‑hallucination checks: reject facts not in signals/RAG **[MVP]**
+- [x] No-hallucination checks: reject facts not in signals/RAG **[MVP]**
 - [x] README scorecard (coverage, buildability, link validity, diff alignment, lint) **[NEXT]**
 
 ## 14) Performance & Caching
