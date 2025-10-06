@@ -1,16 +1,56 @@
-{% if metadata['entries'] %}
-{% for entry in metadata['entries'] %}{% set name = entry.name if entry.name is defined else entry.path %}{% if not name %}{% set name = 'module' %}{% endif %}{% set count = entry.count if entry.count is defined else entry.files %}{% set roles = entry.description if entry.description is defined else (', '.join(entry.roles) if entry.roles is defined else 'Project files') %}{% set descriptor = 'file' if count == 1 else 'files' %}- `{{ name }}{% if name and '/' not in name %}/{% endif %}` - {{ roles }} ({{ count }} {{ descriptor }})
+{% if metadata.flow_summary %}
+### High-Level Flow
+
+{{ metadata.flow_summary }}
+{% endif %}
+
+{% if metadata.entries %}
+### Component Responsibilities
+
+| Module | Roles | Files |
+| --- | --- | --- |
+{% for entry in metadata.entries %}{% set roles = entry.roles if entry.roles is defined else entry.description %}{% if roles is undefined %}{% set roles = 'Project files' %}{% endif %}| {{ entry.name if entry.name is defined else entry.path }} | {% if roles is string %}{{ roles }}{% elif roles is iterable %}{{ roles|join(', ') }}{% else %}{{ roles }}{% endif %} | {{ entry.files if entry.files is defined else entry.count if entry.count is defined else 0 }} |
 {% endfor %}
+{% endif %}
+
+{% if metadata.artifacts %}
+### Artifacts and Data Stores
+
+{% for artifact in metadata.artifacts %}- {{ artifact.path }} - {{ artifact.description }}
+{% endfor %}
+{% endif %}
+
+{% if metadata.init_sequence %}
+### Pipeline Sequence (docgen init)
+
+`mermaid
+{{ metadata.init_sequence }}
+`
+{% endif %}
+
+{% if metadata.update_sequence %}
+### Patch Sequence (docgen update)
+
+`mermaid
+{{ metadata.update_sequence }}
+`
+{% endif %}
+
 {% if metadata.diagram %}
-```mermaid
+### API Signal Extraction
+
+`mermaid
 {{ metadata.diagram }}
-```
+`
 {% endif %}
-{% if metadata.context %}
-> Context highlights:
-{% for snippet in metadata.context %}> {{ snippet }}
+
+{% if metadata.entities %}
+### Detected Entities
+
+{% for entity in metadata.entities %}- {{ entity.name }}{% if entity.bases %} ({{ entity.bases|join(', ') }}){% endif %}{% if entity.file %} - {{ entity.file }}{% endif %}
 {% endfor %}
 {% endif %}
-{% else %}
+
+{% if not (metadata.flow_summary or metadata.entries or metadata.init_sequence or metadata.update_sequence or metadata.diagram or metadata.artifacts or metadata.entities) %}
 {{ body | trim | safe }}
 {% endif %}

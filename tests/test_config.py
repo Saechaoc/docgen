@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from docgen.config import AnalyzerConfig, CIConfig, DocGenConfig, LLMConfig, PublishConfig, load_config
+from docgen.config import CIConfig, DocGenConfig, LLMConfig, PublishConfig, load_config
 
 
 def test_load_config_returns_defaults_when_missing(tmp_path: Path) -> None:

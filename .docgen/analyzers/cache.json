@@ -1,0 +1,429 @@
+{
+  "entries": {
+    "docgen.analyzers.build.BuildAnalyzer": {
+      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "signals": [
+        {
+          "metadata": {
+            "commands": [
+              "# Document build steps here."
+            ]
+          },
+          "name": "build.generic",
+          "source": "build",
+          "value": "generic"
+        }
+      ],
+      "signature": "docgen.analyzers.build.BuildAnalyzer:1:448f7c4b2d0dbb2ccb324a315150ac88664b99866a9c00a03bce4e0f024cf9d5",
+      "updated_at": "2025-10-06T04:58:41.460199Z"
+    },
+    "docgen.analyzers.entrypoints.EntryPointAnalyzer": {
+      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "signals": [
+        {
+          "metadata": {
+            "command": "uvicorn docgen.service.app:app --reload",
+            "framework": "FastAPI",
+            "label": "Run FastAPI application",
+            "priority": 10
+          },
+          "name": "entrypoint.python.fastapi",
+          "source": "entrypoints",
+          "value": "uvicorn docgen.service.app:app --reload"
+        },
+        {
+          "metadata": {
+            "command": "uvicorn tests.analyzers.test_entrypoints:napp --reload",
+            "framework": "FastAPI",
+            "label": "Run FastAPI application",
+            "priority": 10
+          },
+          "name": "entrypoint.python.fastapi",
+          "source": "entrypoints",
+          "value": "uvicorn tests.analyzers.test_entrypoints:napp --reload"
+        },
+        {
+          "metadata": {
+            "command": "uvicorn tests.analyzers.test_structure:app --reload",
+            "framework": "FastAPI",
+            "label": "Run FastAPI application",
+            "priority": 10
+          },
+          "name": "entrypoint.python.fastapi",
+          "source": "entrypoints",
+          "value": "uvicorn tests.analyzers.test_structure:app --reload"
+        },
+        {
+          "metadata": {
+            "command": "python docgen/cli.py",
+            "label": "Run cli.py",
+            "priority": 60
+          },
+          "name": "entrypoint.python.cli",
+          "source": "entrypoints",
+          "value": "python docgen/cli.py"
+        },
+        {
+          "metadata": {
+            "command": "uvicorn docgen.service.app:app --reload",
+            "framework": "FastAPI",
+            "label": "Run FastAPI application",
+            "priority": 10
+          },
+          "name": "entrypoint.primary",
+          "source": "entrypoints",
+          "value": "uvicorn docgen.service.app:app --reload"
+        }
+      ],
+      "signature": "docgen.analyzers.entrypoints.EntryPointAnalyzer:1:27ad09aab41c550b001de116e26117b8e1510a1d565b2866ac9f9c6052465c17",
+      "updated_at": "2025-10-06T04:58:41.498473Z"
+    },
+    "docgen.analyzers.language.LanguageAnalyzer": {
+      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "signals": [
+        {
+          "metadata": {
+            "counts": {
+              "Python": 73,
+              "YAML": 1
+            }
+          },
+          "name": "language.primary",
+          "source": "language",
+          "value": "Python"
+        },
+        {
+          "metadata": {
+            "counts": {
+              "Python": 73,
+              "YAML": 1
+            },
+            "languages": [
+              "Python",
+              "YAML"
+            ]
+          },
+          "name": "language.all",
+          "source": "language",
+          "value": "Python, YAML"
+        }
+      ],
+      "signature": "docgen.analyzers.language.LanguageAnalyzer:1:31d318b5ee03b0152f8c4ad4a427a84cf3a12f6de34239a60a91f5f45a52b15d",
+      "updated_at": "2025-10-06T04:58:41.457199Z"
+    },
+    "docgen.analyzers.patterns.PatternAnalyzer": {
+      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "signals": [],
+      "signature": "docgen.analyzers.patterns.PatternAnalyzer:1:eed996582fe4516c3d752b3fb0e511bd4f2e6b5160d3581644758a6e1339b213",
+      "updated_at": "2025-10-06T04:58:41.500474Z"
+    },
+    "docgen.analyzers.structure.StructureAnalyzer": {
+      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "signals": [
+        {
+          "metadata": {
+            "modules": [
+              {
+                "files": 1,
+                "languages": [],
+                "name": ".gitignore",
+                "roles": [
+                  "src"
+                ]
+              },
+              {
+                "files": 15,
+                "languages": [],
+                "name": ".ruff_cache",
+                "roles": [
+                  "src"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "AGENTS.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "README_before.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 61,
+                "languages": [
+                  "Python"
+                ],
+                "name": "docgen",
+                "roles": [
+                  "src"
+                ]
+              },
+              {
+                "files": 2,
+                "languages": [
+                  "YAML"
+                ],
+                "name": "docs",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 5,
+                "languages": [],
+                "name": "spec",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 24,
+                "languages": [
+                  "Python"
+                ],
+                "name": "tests",
+                "roles": [
+                  "test"
+                ]
+              }
+            ]
+          },
+          "name": "architecture.modules",
+          "source": "structure",
+          "value": "modules"
+        },
+        {
+          "metadata": {
+            "confidence": 0.95,
+            "file": "docgen/service/app.py",
+            "framework": "FastAPI",
+            "language": "Python",
+            "line": 72,
+            "method": "GET",
+            "path": "/health",
+            "sequence": [
+              {
+                "from": "Client",
+                "message": "GET /health",
+                "to": "FastAPI endpoint"
+              },
+              {
+                "from": "FastAPI endpoint",
+                "message": "Response",
+                "to": "Client"
+              }
+            ]
+          },
+          "name": "architecture.api",
+          "source": "structure",
+          "value": "GET /health"
+        },
+        {
+          "metadata": {
+            "confidence": 0.95,
+            "file": "docgen/service/app.py",
+            "framework": "FastAPI",
+            "language": "Python",
+            "line": 76,
+            "method": "POST",
+            "path": "/init",
+            "sequence": [
+              {
+                "from": "Client",
+                "message": "POST /init",
+                "to": "FastAPI endpoint"
+              },
+              {
+                "from": "FastAPI endpoint",
+                "message": "Response",
+                "to": "Client"
+              }
+            ]
+          },
+          "name": "architecture.api",
+          "source": "structure",
+          "value": "POST /init"
+        },
+        {
+          "metadata": {
+            "confidence": 0.95,
+            "file": "docgen/service/app.py",
+            "framework": "FastAPI",
+            "language": "Python",
+            "line": 92,
+            "method": "POST",
+            "path": "/update",
+            "sequence": [
+              {
+                "from": "Client",
+                "message": "POST /update",
+                "to": "FastAPI endpoint"
+              },
+              {
+                "from": "FastAPI endpoint",
+                "message": "Response",
+                "to": "Client"
+              }
+            ]
+          },
+          "name": "architecture.api",
+          "source": "structure",
+          "value": "POST /update"
+        },
+        {
+          "metadata": {
+            "confidence": 0.95,
+            "file": "tests/analyzers/test_structure.py",
+            "framework": "FastAPI",
+            "language": "Python",
+            "line": 19,
+            "method": "GET",
+            "path": "/users/{id}",
+            "sequence": [
+              {
+                "from": "Client",
+                "message": "GET /users/{id}",
+                "to": "FastAPI endpoint"
+              },
+              {
+                "from": "FastAPI endpoint",
+                "message": "Response",
+                "to": "Client"
+              }
+            ]
+          },
+          "name": "architecture.api",
+          "source": "structure",
+          "value": "GET /users/{id}"
+        },
+        {
+          "metadata": {
+            "bases": [
+              "BaseModel"
+            ],
+            "fields": [
+              "path: str",
+              "skip_validation: bool",
+              "readme_path: str",
+              "path: str",
+              "diff_base: str",
+              "dry_run: bool",
+              "skip_validation: bool",
+              "status: str",
+              "readme_path: Optional[str]",
+              "diff: Optional[str]",
+              "dry_run: Optional[bool]",
+              "status: str",
+              "orchestrator_factory: Callable[[], Orchestrator]",
+              "try: import uvicorn"
+            ],
+            "file": "docgen/service/app.py",
+            "name": "InitRequest"
+          },
+          "name": "architecture.entity",
+          "source": "structure",
+          "value": "InitRequest"
+        },
+        {
+          "metadata": {
+            "bases": [
+              "BaseModel"
+            ],
+            "fields": [
+              "readme_path: str",
+              "path: str",
+              "diff_base: str",
+              "dry_run: bool",
+              "skip_validation: bool",
+              "status: str",
+              "readme_path: Optional[str]",
+              "diff: Optional[str]",
+              "dry_run: Optional[bool]",
+              "status: str",
+              "orchestrator_factory: Callable[[], Orchestrator]",
+              "try: import uvicorn"
+            ],
+            "file": "docgen/service/app.py",
+            "name": "InitResponse"
+          },
+          "name": "architecture.entity",
+          "source": "structure",
+          "value": "InitResponse"
+        },
+        {
+          "metadata": {
+            "bases": [
+              "BaseModel"
+            ],
+            "fields": [
+              "path: str",
+              "diff_base: str",
+              "dry_run: bool",
+              "skip_validation: bool",
+              "status: str",
+              "readme_path: Optional[str]",
+              "diff: Optional[str]",
+              "dry_run: Optional[bool]",
+              "status: str",
+              "orchestrator_factory: Callable[[], Orchestrator]",
+              "try: import uvicorn"
+            ],
+            "file": "docgen/service/app.py",
+            "name": "UpdateRequest"
+          },
+          "name": "architecture.entity",
+          "source": "structure",
+          "value": "UpdateRequest"
+        },
+        {
+          "metadata": {
+            "bases": [
+              "BaseModel"
+            ],
+            "fields": [
+              "status: str",
+              "readme_path: Optional[str]",
+              "diff: Optional[str]",
+              "dry_run: Optional[bool]",
+              "status: str",
+              "orchestrator_factory: Callable[[], Orchestrator]",
+              "try: import uvicorn"
+            ],
+            "file": "docgen/service/app.py",
+            "name": "UpdateResponse"
+          },
+          "name": "architecture.entity",
+          "source": "structure",
+          "value": "UpdateResponse"
+        },
+        {
+          "metadata": {
+            "bases": [
+              "BaseModel"
+            ],
+            "fields": [
+              "status: str",
+              "orchestrator_factory: Callable[[], Orchestrator]",
+              "try: import uvicorn"
+            ],
+            "file": "docgen/service/app.py",
+            "name": "HealthResponse"
+          },
+          "name": "architecture.entity",
+          "source": "structure",
+          "value": "HealthResponse"
+        }
+      ],
+      "signature": "docgen.analyzers.structure.StructureAnalyzer:1:dd654245f615dd81961e91856387f0c6fd1a7a1ac81b11c9f157f4a4a723e917",
+      "updated_at": "2025-10-06T04:58:41.528748Z"
+    }
+  },
+  "version": 1
+}

@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, cast
 
 from .analyzers import Analyzer, discover_analyzers
-from .config import ConfigError, DocGenConfig, load_config
+from .config import ConfigError, DocGenConfig, LLMConfig, load_config
 from .failsafe import build_readme_stub, build_section_stubs
 from .git.diff import DiffAnalyzer, DiffResult, _pattern_matches as diff_pattern_matches
 from .git.publisher import Publisher
@@ -790,12 +790,9 @@ class Orchestrator:
         if self._llm_runner_is_external and self._llm_runner is not None:
             return self._llm_runner
 
-        llm_cfg = config.llm
-        if llm_cfg is None:
-            self._llm_runner = None
-            self._llm_runner_signature = None
-            self._llm_runner_is_external = False
-            return None
+        llm_cfg = config.llm or LLMConfig()
+        if config.llm is None:
+            self.logger.debug("No LLM configuration supplied; using default local runner settings.")
 
         signature = (
             llm_cfg.runner,

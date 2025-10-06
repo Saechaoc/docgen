@@ -51,8 +51,9 @@ class RAGIndexer:
         store.persist()
 
         for section in target_sections:
-            snippets = [entry["text"] for entry in store.query(section, top_k=3)]
-            contexts[section] = [snippet.strip() for snippet in snippets if snippet.strip()]
+            entries = store.query(section, top_k=2)
+            snippets = [_trim_snippet(entry["text"]) for entry in entries]
+            contexts[section] = [snippet for snippet in snippets if snippet]
 
         return RAGIndex(contexts=contexts, store_path=store_path)
 
@@ -160,6 +161,15 @@ class RAGIndexer:
         for tag in tags:
             sections.extend(TAG_SECTIONS.get(tag, []))
         return list(dict.fromkeys(sections))
+
+
+def _trim_snippet(text: str, *, max_chars: int = 400) -> str:
+    cleaned = " ".join(text.strip().split())
+    if not cleaned:
+        return ""
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[:max_chars].rstrip() + "..."
 
 
 def _read_text(path: Path) -> str:

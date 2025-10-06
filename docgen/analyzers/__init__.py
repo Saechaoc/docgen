@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from importlib import metadata
-from typing import Callable, Iterable, List, Sequence, Set, Type
+from typing import Callable, Iterable, List, Sequence, Set
 
 from .base import Analyzer
 from .build import BuildAnalyzer

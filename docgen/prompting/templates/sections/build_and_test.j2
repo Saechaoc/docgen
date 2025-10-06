@@ -1,15 +1,10 @@
 {% if metadata['tools'] %}
 {% for tool, commands in metadata['tools'].items() %}
 **{{ tool.capitalize() }}**
-{% for cmd in commands %}- `{{ cmd }}`
+{% for cmd in commands %}- {{ cmd }}
 {% endfor %}
 
 {% endfor %}
-{% if metadata.context %}
-> Context highlights:
-{% for snippet in metadata.context %}> {{ snippet }}
-{% endfor %}
-{% endif %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}

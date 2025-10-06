@@ -7,7 +7,7 @@ import re
 import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Set
 
 # Python dependency helpers
 

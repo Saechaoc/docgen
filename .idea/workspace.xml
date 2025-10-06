@@ -5,8 +5,29 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="Update feature order">
-      <change afterPath="$PROJECT_DIR$/spec/prompt_template.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/embeddings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/embeddings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/manifest_cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/manifest_cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/scorecard.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/scorecard.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/analyzers/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/postproc/links.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/links.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/architecture.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/architecture.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/build_and_test.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/build_and_test.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/configuration.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/configuration.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/deployment.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/deployment.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/features.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/features.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/intro.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/intro.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/quickstart.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/quickstart.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/rag/embedder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/embedder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/rag/indexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/indexer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/validators/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/validators/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/analyzers/test_discovery.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/analyzers/test_discovery.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/rag/test_indexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/rag/test_indexer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,18 +44,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "Saechaoc"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Saechaoc&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Saechaoc/docgen.git",
-    "accountId": "d45ed314-e8a3-4c29-a0ad-2d10ee8329cc"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Saechaoc/docgen.git&quot;,
+    &quot;accountId&quot;: &quot;d45ed314-e8a3-4c29-a0ad-2d10ee8329cc&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -64,7 +85,7 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "task/improvements",
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>

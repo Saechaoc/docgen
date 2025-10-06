@@ -41,8 +41,7 @@ def test_rag_indexer_refreshes_contexts(tmp_path: Path) -> None:
     indexer = RAGIndexer(top_source_files=5)
 
     manifest = scanner.scan(str(repo))
-    first_index = indexer.build(manifest)
-    first_intro_snippet = " ".join(first_index.contexts["intro"])
+    indexer.build(manifest)
 
     (repo / "README.md").write_text("# Sample\nUpdated description for second run.\n", encoding="utf-8")
 

@@ -1,0 +1,65 @@
+{
+  "evidence_summary": {
+    "architecture": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "build_and_test": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "configuration": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "deployment": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "faq": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "features": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "intro": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "license": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "quickstart": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "troubleshooting": {
+      "context_chunks": 0,
+      "signal_count": 0
+    }
+  },
+  "generated_at": "2025-10-06T04:58:43.781728Z",
+  "issue_count": 0,
+  "issues": [],
+  "mode": "config",
+  "requested_sections": [
+    "intro",
+    "features",
+    "architecture",
+    "quickstart",
+    "configuration",
+    "build_and_test",
+    "deployment",
+    "troubleshooting",
+    "faq",
+    "license"
+  ],
+  "skip_reason": "fallback",
+  "status": "skipped",
+  "validators": [
+    "no_hallucination"
+  ]
+}
