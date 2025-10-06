@@ -13,7 +13,6 @@ class BadgeManager:
         "<!-- docgen:begin:badges -->\n"
         "![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)\n"
         "![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)\n"
-        "![License](https://img.shields.io/badge/license-tbd-lightgrey.svg)\n"
         "<!-- docgen:end:badges -->"
     )
 

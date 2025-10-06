@@ -326,9 +326,9 @@
       "size": 61
     },
     "docgen/postproc/badges.py": {
-      "hash": "1bdd4ba484815967bbb496960307a2159bbb2cc08b2109688abc27e855791bb8",
-      "mtime_ns": 1759784643328392600,
-      "size": 2238
+      "hash": "9c6e3a29306245c8577733f6616e73de1b73781f4cd0a25d1fb6ce07763b07bd",
+      "mtime_ns": 1759792736631009800,
+      "size": 2159
     },
     "docgen/postproc/links.py": {
       "hash": "14a41f2fbb3c69171d18d44e03f24e854ccb888502f19855ae696b5021232a78",
@@ -366,9 +366,9 @@
       "size": 77774
     },
     "docgen/prompting/constants.py": {
-      "hash": "8ab3f05410a00a741d7187cb68f71f2ea9f96ab1c79087f1d952f9ef26a990c7",
-      "mtime_ns": 1759723741507621000,
-      "size": 754
+      "hash": "6f7725087393cf088e8ba9432393819eb43b5920b8c0e8f8a7a6ac9a1e0aeef0",
+      "mtime_ns": 1759792732742311400,
+      "size": 696
     },
     "docgen/prompting/templates/readme.j2": {
       "hash": "a0641433b60178ba1d2f03e96aa0962304ea610997af7375e471e06a10e6b1f4",

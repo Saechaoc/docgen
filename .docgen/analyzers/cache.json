@@ -1,7 +1,7 @@
 {
   "entries": {
     "docgen.analyzers.build.BuildAnalyzer": {
-      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
+      "fingerprint": "e6fd8caf966ff15b5ccdae9d73ed3a11361883b946c6f418fc5a6cc3010fc598",
       "signals": [
         {
           "metadata": {
@@ -21,10 +21,10 @@
         }
       ],
       "signature": "docgen.analyzers.build.BuildAnalyzer:1:c9f718bfcc46e71066b2f9d3d3ec245ca893e81586b271065982fc493f02e0a0",
-      "updated_at": "2025-10-06T22:52:22.911818Z"
+      "updated_at": "2025-10-06T23:19:23.907810Z"
     },
     "docgen.analyzers.dependencies.DependencyAnalyzer": {
-      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
+      "fingerprint": "e6fd8caf966ff15b5ccdae9d73ed3a11361883b946c6f418fc5a6cc3010fc598",
       "signals": [
         {
           "metadata": {
@@ -43,10 +43,10 @@
         }
       ],
       "signature": "docgen.analyzers.dependencies.DependencyAnalyzer:1:9bd86c7404a55116ba4cfc801036ce687a4f5123fcc8d660bac4875711acf750",
-      "updated_at": "2025-10-06T22:52:22.913886Z"
+      "updated_at": "2025-10-06T23:19:23.911341Z"
     },
     "docgen.analyzers.entrypoints.EntryPointAnalyzer": {
-      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
+      "fingerprint": "e6fd8caf966ff15b5ccdae9d73ed3a11361883b946c6f418fc5a6cc3010fc598",
       "signals": [
         {
           "metadata": {
@@ -114,10 +114,10 @@
         }
       ],
       "signature": "docgen.analyzers.entrypoints.EntryPointAnalyzer:1:0118ba01631216b513ed55ae0cf61b6d8290a15284554362f3ff11f289900395",
-      "updated_at": "2025-10-06T22:52:22.962164Z"
+      "updated_at": "2025-10-06T23:19:23.955048Z"
     },
     "docgen.analyzers.language.LanguageAnalyzer": {
-      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
+      "fingerprint": "e6fd8caf966ff15b5ccdae9d73ed3a11361883b946c6f418fc5a6cc3010fc598",
       "signals": [
         {
           "metadata": {
@@ -150,16 +150,16 @@
         }
       ],
       "signature": "docgen.analyzers.language.LanguageAnalyzer:1:ed4f1af0c3c4ad31b43f2abce19900b2d934c967d2da67b190605cefd4495355",
-      "updated_at": "2025-10-06T22:52:22.909199Z"
+      "updated_at": "2025-10-06T23:19:23.905810Z"
     },
     "docgen.analyzers.patterns.PatternAnalyzer": {
-      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
+      "fingerprint": "e6fd8caf966ff15b5ccdae9d73ed3a11361883b946c6f418fc5a6cc3010fc598",
       "signals": [],
       "signature": "docgen.analyzers.patterns.PatternAnalyzer:1:355a22a6b481a8ef07a97bbd2222b39264a08e361d6beca39f68aa1be3ca0c7c",
-      "updated_at": "2025-10-06T22:52:22.964790Z"
+      "updated_at": "2025-10-06T23:19:23.959060Z"
     },
     "docgen.analyzers.structure.StructureAnalyzer": {
-      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
+      "fingerprint": "e6fd8caf966ff15b5ccdae9d73ed3a11361883b946c6f418fc5a6cc3010fc598",
       "signals": [
         {
           "metadata": {
@@ -512,7 +512,7 @@
         }
       ],
       "signature": "docgen.analyzers.structure.StructureAnalyzer:1:ee88d61d9785688e5a432b60d0cc7ae4adcf6013127c6cf6520f912b9cb70e3e",
-      "updated_at": "2025-10-06T22:52:22.991919Z"
+      "updated_at": "2025-10-06T23:19:23.987192Z"
     }
   },
   "version": 1

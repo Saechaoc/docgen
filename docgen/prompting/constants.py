@@ -12,7 +12,6 @@ DEFAULT_SECTIONS: tuple[str, ...] = (
     "deployment",
     "troubleshooting",
     "faq",
-    "license",
 )
 
 SECTION_TITLES: dict[str, str] = {
@@ -25,7 +24,6 @@ SECTION_TITLES: dict[str, str] = {
     "deployment": "Deployment",
     "troubleshooting": "Troubleshooting",
     "faq": "FAQ",
-    "license": "License",
 }
 
 

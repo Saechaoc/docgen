@@ -2,7 +2,6 @@
 <!-- docgen:begin:badges -->
 ![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)
 ![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)
-![License](https://img.shields.io/badge/license-tbd-lightgrey.svg)
 <!-- docgen:end:badges -->
 
 <!-- docgen:begin:toc -->
@@ -24,7 +23,6 @@
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
-- [License](#license)
 <!-- docgen:end:toc -->
 
 <!-- docgen:begin:intro -->
@@ -225,6 +223,7 @@ source .venv/bin/activate
 python -m pip install -e .[dev]
 ```
 - Exposes the CLI, analyzer plugins, and formatting toolchain without repeated reinstalls.
+- Alternatively, use `python -m pip install -r requirements/dev.txt` if editable extras are restricted in your environment.
 
 4. Generate the initial README
 ```bash
@@ -241,7 +240,19 @@ python -m docgen.cli update --diff-base origin/main
 6. Iterate with verbose diagnostics
 - Append `--verbose` to surface analyzer, retrieval, and post-processing logs during development.
 
-7. Run project commands discovered by analyzers
+7. Build a container image (optional)
+```bash
+docker build -t docgen .
+```
+- Append `--build-arg INSTALL_DEV=true` to include formatting and test tooling inside the image.
+
+8. Execute docgen inside Docker (optional)
+```bash
+docker run --rm -it -v ${PWD}:/workspace -w /workspace docgen python -m docgen.cli init .
+```
+- Replace `${PWD}` with the absolute repository path when using PowerShell or Command Prompt.
+
+9. Run project commands discovered by analyzers
 ```bash
 python -m venv .venv
 python -m pip install -e .
@@ -356,9 +367,3 @@ A: Generated with `docgen init` and updated via `docgen update`.
 **Q: Where do I report issues?**
 A: File an issue or start a discussion in this repository.
 <!-- docgen:end:faq -->
-
-## License
-
-<!-- docgen:begin:license -->
-Add licensing information once the project selects a license.
-<!-- docgen:end:license -->
