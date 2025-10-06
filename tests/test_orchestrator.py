@@ -74,7 +74,7 @@ class RecordingLLMRunner:
                 break
         if not section_title:
             section_title = f"Section {len(self.calls)}"
-        return f"{section_title} generated content"
+        return f"{section_title} generated content covering Python, fastapi, and pytest."
 
 
 def _seed_sample_repo(root: Path) -> None:
@@ -181,10 +181,51 @@ def test_run_init_uses_llm_runner_streaming(tmp_path: Path) -> None:
 
     content = readme_path.read_text(encoding="utf-8")
     assert "generated content" in content
-    assert len(runner.calls) == 1
-    assert "Section: Introduction" in runner.calls[0]["prompt"]
+    expected_titles = {
+        "Section: Introduction",
+        "Section: Features",
+        "Section: Architecture",
+        "Section: Deployment",
+    }
+    observed_titles = {
+        line.strip()
+        for call in runner.calls
+        for line in call["prompt"].splitlines()
+        if line.startswith("Section: ")
+    }
+    assert expected_titles.issubset(observed_titles)
+    assert len(runner.calls) == len(expected_titles)
     assert all(call["system"] == PromptBuilder.SYSTEM_PROMPT for call in runner.calls)
     assert all(call["max_tokens"] is None for call in runner.calls)
+
+
+def test_generation_mode_strict_with_override_limits_llm(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+    (repo_root / ".docgen.yml").write_text(
+        """
+generation:
+  mode: strict
+  sections:
+    architecture: true
+""",
+        encoding="utf-8",
+    )
+
+    runner = RecordingLLMRunner()
+    orchestrator = Orchestrator(llm_runner=runner)
+    readme_path = orchestrator.run_init(str(repo_root))
+
+    observed_titles = {
+        line.strip()
+        for call in runner.calls
+        for line in call["prompt"].splitlines()
+        if line.startswith("Section: ")
+    }
+    assert observed_titles == {"Section: Architecture"}
+    content = readme_path.read_text(encoding="utf-8")
+    assert "Architecture generated content" in content
 
 
 def test_llm_runner_config_changes_are_respected(tmp_path: Path, monkeypatch) -> None:
