@@ -14,7 +14,9 @@ def get_logger(name: str | None = None) -> logging.Logger:
     return logging.getLogger(full_name)
 
 
-def configure_logging(*, verbose: bool = False, log_file: Path | None = None) -> logging.Logger:
+def configure_logging(
+    *, verbose: bool = False, log_file: Path | None = None
+) -> logging.Logger:
     """Configure root logger for docgen with console output and optional file sink."""
     level = logging.DEBUG if verbose else logging.INFO
     logger = logging.getLogger(_LOGGER_NAME)

@@ -1,0 +1,62 @@
+{
+  "allow_inferred": true,
+  "evidence_summary": {
+    "architecture": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "build_and_test": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "configuration": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "deployment": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "faq": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "features": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "intro": {
+      "context_chunks": 2,
+      "signal_count": 11
+    },
+    "quickstart": {
+      "context_chunks": 0,
+      "signal_count": 11
+    },
+    "troubleshooting": {
+      "context_chunks": 2,
+      "signal_count": 11
+    }
+  },
+  "generated_at": "2025-10-06T23:21:07.862447Z",
+  "issue_count": 0,
+  "issues": [],
+  "mode": "balanced",
+  "mode_source": "config",
+  "requested_sections": [
+    "intro",
+    "features",
+    "architecture",
+    "quickstart",
+    "configuration",
+    "build_and_test",
+    "deployment",
+    "troubleshooting",
+    "faq"
+  ],
+  "skip_reason": null,
+  "status": "passed",
+  "validators": [
+    "no_hallucination"
+  ]
+}

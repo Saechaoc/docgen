@@ -4,6 +4,17 @@ from __future__ import annotations
 
 from typing import List
 
+_UNICODE_PUNCT = str.maketrans(
+    {
+        ord("–"): "-",
+        ord("—"): "-",
+        ord("“"): '"',
+        ord("”"): '"',
+        ord("‘"): "'",
+        ord("’"): "'",
+    }
+)
+
 
 class MarkdownLinter:
     """Validates headings, code fences, and other formatting rules."""
@@ -24,6 +35,7 @@ class MarkdownLinter:
                 continue
 
             if not in_code:
+                stripped = stripped.translate(_UNICODE_PUNCT)
                 if stripped.startswith("#") and cleaned and cleaned[-1] != "":
                     cleaned.append("")
                 if not stripped:

@@ -1,8 +1,7 @@
 # docgen
 <!-- docgen:begin:badges -->
-[![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)](#)
-[![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)](#)
-[![License](https://img.shields.io/badge/license-tbd-lightgrey.svg)](#)
+![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)
+![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)
 <!-- docgen:end:badges -->
 
 <!-- docgen:begin:toc -->
@@ -11,56 +10,61 @@
 - [Architecture](#architecture)
   - [High-Level Flow](#high-level-flow)
   - [Component Responsibilities](#component-responsibilities)
+  - [Repository Layout Snapshot](#repository-layout-snapshot)
   - [Artifacts and Data Stores](#artifacts-and-data-stores)
   - [Pipeline Sequence (`docgen init`)](#pipeline-sequence-docgen-init)
   - [Patch Sequence (`docgen update`)](#patch-sequence-docgen-update)
   - [API Signal Extraction](#api-signal-extraction)
+  - [Detected Entities](#detected-entities)
+  - [Context Highlights](#context-highlights)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-- [Build & Test](#build-test)
+- [Build & Test](#build--test)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
-- [License](#license)
 <!-- docgen:end:toc -->
 
 <!-- docgen:begin:intro -->
-docgen is a local-first README generator for polyglot repositories. It scans every tracked file, publishes analyzer signals, retrieves grounded context, and guides a local LLM through templated sections to produce or update documentation. This overview reflects a complete pass across `docgen/`, `tests/`, `spec/`, and `docs/` so contributors understand every abstraction before running `docgen init`.
+docgen is a local-first README generator for polyglot repositories built primarily with Python, YAML, and TOML. It scans every tracked file, emits analyzer signals, retrieves grounded context, and drives a local LLM through templated sections to keep documentation accurate. The overview below captures the full pipeline so contributors understand the moving pieces before running `docgen init`. Refer to `spec/spec.md` for detailed architecture contracts and responsibilities.
 <!-- docgen:end:intro -->
 
 ## Features
 
 <!-- docgen:begin:features -->
-- **Repository manifest & caching** - `docgen/repo_scanner.py` walks the tree, respects `.gitignore`/`.docgen.yml`, hashes files, and persists `manifest_cache.json` for incremental runs.
-- **Analyzer plugin system** - `docgen/analyzers/*` discover language, build, dependency, entrypoint, pattern, and structure signals that describe frameworks, commands, APIs, entities, and repository topology.
-- **Template-driven prompting** - `docgen/prompting/builder.py` merges signals with Jinja templates, validates commands, applies style presets, and injects retrieved context per section.
-- **Lightweight RAG index** - `docgen/rag/indexer.py`, `embedder.py`, and `store.py` embed README/docs/source excerpts into `.docgen/embeddings.json` for section-scoped retrieval.
-- **Local LLM enforcement** - `docgen/llm/runner.py` targets loopback Model Runner or Ollama, blocks remote hosts, and exposes configurable temperature/token limits.
-- **Post-processing contract** - `docgen/postproc/*` add badges, rebuild the ToC, lint markdown, validate links, manage markers, and compute scorecards saved to `.docgen/scorecard.json`.
-- **Git-aware publishing** - `docgen/git/diff.py` maps changed files to sections while `docgen/git/publisher.py` commits or opens PRs with generated README deltas via the GitHub CLI.
-- **Resilient CLI UX** - `docgen/cli.py` and `docgen/failsafe.py` provide verbose logging hooks, dry-run preview support, and fallback stubs when the LLM pipeline cannot complete.
+- **Repository manifest & caching** - `docgen/repo_scanner.py` walks the tree, respects ignore rules, and persists hashes for incremental runs.
+- **Analyzer plugin system** - `docgen/analyzers/*` emit language, build, dependency, entrypoint, and structure signals for downstream prompting.
+- **Template-driven prompting** - `docgen/prompting/builder.py` merges signals with Jinja templates and enforces markdown style presets.
+- **Lightweight RAG index** - `docgen/rag/indexer.py` embeds repo snippets into `.docgen/embeddings.json` for section-scoped retrieval.
+- **Local LLM enforcement** - `docgen/llm/runner.py` targets loopback runtimes (Model Runner, Ollama, llama.cpp) with token and temperature guards.
+- **Post-processing contract** - `docgen/postproc/*` rebuild badges, ToC, lint markdown, validate links, and compute scorecards.
+- **Git-aware publishing** - `docgen/git/publisher.py` and `docgen/git/diff.py` map repo changes to sections and push commits or PRs.
+- **Resilient CLI UX** - `docgen/cli.py` exposes `init`/`update` commands with verbose logging, dry-run previews, and validation toggles.
+- Primary stack: Python, YAML, TOML
+- Supported build tooling: python
+- Ready for continuous README generation via docgen.
 <!-- docgen:end:features -->
 
 ## Architecture
 
 <!-- docgen:begin:architecture -->
+
 ### High-Level Flow
 
-The orchestrator (`docgen/orchestrator.py`) coordinates the end-to-end pipeline described in `spec/spec.md`, composing scanners, analyzers, prompting, RAG, post-processing, and publishing services.
+The orchestrator (`docgen/orchestrator.py`) coordinates RepoScanner, analyzer plugins, the retrieval indexer, PromptBuilder, the local LLM runner, and post-processing publishers to keep README updates grounded in repository state. Contracts and component expectations live in `spec/spec.md`; keep the spec and README in sync when responsibilities change.
 
 ```mermaid
 flowchart LR
     CLI["CLI (docgen init/update)"]
     Orc["Orchestrator"]
-    Scan["RepoScanner\n(manifest)"]
-    Ana["Analyzers\n(language/build/etc)"]
-    RAG["RAGIndexer\n(embeddings)"]
-    Prompt["PromptBuilder\n(Jinja templates)"]
-    LLM["LLMRunner\n(local model)"]
-    Post["Post-Processing\n(lint, ToC, badges, links, scorecard)"]
-    Git["Publisher\n(commit/PR)"]
-    Output["README.md + .docgen artifacts"]
-
+    Scan["RepoScanner"]
+    Ana["Analyzer plugins"]
+    RAG["RAGIndexer"]
+    Prompt["PromptBuilder"]
+    LLM["Local LLM Runner"]
+    Post["Post-processing"]
+    Pub["Publisher"]
+    Out["README.md + scorecards"]
     CLI --> Orc
     Orc --> Scan
     Orc --> Ana
@@ -70,33 +74,44 @@ flowchart LR
     LLM --> Prompt
     Prompt --> Orc
     Orc --> Post
-    Post --> Output
-    Post --> Git
+    Post --> Pub
+    Post --> Out
 ```
 
 ### Component Responsibilities
 
 | Layer | Key modules | Purpose |
 | --- | --- | --- |
-| CLI & Logging | `docgen/cli.py`, `docgen/logging.py` | Parses subcommands, wires `--verbose`, and configures namespaced loggers. |
-| Configuration | `docgen/config.py` | Parses `.docgen.yml` into `DocGenConfig`, `LLMConfig`, `PublishConfig`, `AnalyzerConfig`, and `CIConfig`, with a handwritten YAML fallback. |
-| Repository scanning | `docgen/repo_scanner.py` | Builds `RepoManifest` of `FileMeta` entries, enforces ignore rules, infers file roles, and caches hashes in `.docgen/manifest_cache.json`. |
-| Analyzer plugins | `docgen/analyzers/*` | Emit `Signal` objects for languages, frameworks, build tools, dependencies, entrypoints, structural modules, API routes, entities, patterns, and monorepo hints. |
-| Prompting | `docgen/prompting/builder.py`, `templates/` | Groups signals, retrieves context, renders section templates, performs command validation, and estimates token budgets. |
-| Retrieval (RAG) | `docgen/rag/indexer.py`, `embedder.py`, `store.py`, `constants.py` | Chunks README/docs/source files, computes bag-of-words embeddings, persists context per section, and prunes stale vectors. |
-| LLM runtime | `docgen/llm/runner.py` | Chooses HTTP or CLI execution, builds OpenAI-compatible payloads, restricts to loopback hosts, and normalizes responses. |
-| Post-processing | `docgen/postproc/*` | Manages markers, regenerates ToC, applies badges, lints markdown, validates links, and records README quality metrics. |
-| Git integration | `docgen/git/diff.py`, `docgen/git/publisher.py` | Maps file diffs to affected sections, handles staged changes, and pushes commits or PRs with optional labels. |
-| Safety nets | `docgen/failsafe.py` | Generates placeholder sections or full README stubs when prompting fails. |
-| Reference material | `spec/spec.md`, `spec/feature_order.md`, `spec/feature_checklist.md`, `docs/ci/*`, `AGENTS.md` | Capture architectural contracts, delivery roadmap, feature status, CI playbooks, and agent guidance. |
-| Tests | `tests/` mirroring runtime modules | Pytest suite covering CLI, orchestrator, analyzers, prompting, git workflows, LLM runner stubs, and post-processing helpers. |
+| CLI & logging | docgen/cli.py, docgen/logging.py, docgen/failsafe.py | Parses `init`/`update` commands, wires verbose logging, and falls back to stub sections when prompting fails. |
+| Configuration | docgen/config.py | Loads `.docgen.yml`, enforces loopback-only LLM endpoints, and exposes analyzer/publishing toggles. |
+| Repository scanning | docgen/repo_scanner.py, .docgen/manifest_cache.json | Builds `RepoManifest` entries, classifies file roles, and caches hashes for incremental runs. |
+| Analyzer plugins | docgen/analyzers/__init__.py, docgen/analyzers/utils.py | Emit language, dependency, entrypoint, architecture, and pattern signals consumed downstream. |
+| Prompting | docgen/prompting/builder.py, docgen/prompting/templates/readme.j2 | Shapes section prompts, estimates token budgets, validates commands, and renders markdown scaffolds. |
+| Retrieval (RAG) | docgen/rag/indexer.py, docgen/rag/store.py, docgen/rag/embedder.py | Chunks docs/source into embeddings stored under `.docgen/embeddings.json` for section-scoped context. |
+| LLM runtime | docgen/llm/runner.py, docgen/llm/llamacpp.py | Calls local model runners (Model Runner, Ollama, llama.cpp) with strict token and temperature limits. |
+| Post-processing & publishing | docgen/postproc/toc.py, docgen/postproc/markers.py, docgen/postproc/badges.py, docgen/postproc/links.py, docgen/git/publisher.py, docgen/git/diff.py, docgen/postproc/scorecard.py | Rebuilds the ToC, repairs markers, validates links, computes scorecards, and pushes commits or PRs. |
+| Service API | docgen/service/app.py | Exposes health, init, and update endpoints for external orchestration or hosted runners. |
+
+### Repository Layout Snapshot
+
+| Path | Roles | File count |
+| --- | --- | --- |
+| AGENTS.md | docs | 1 |
+| docgen | src | 61 |
+| docgen.egg-info | src | 5 |
+| docs | docs | 2 |
+| pyproject.toml | src | 1 |
+| spec | docs | 5 |
+| tests | test | 24 |
 
 ### Artifacts and Data Stores
 
-- `.docgen/manifest_cache.json` - cache of file sizes, mtimes, and hashes for fast re-scans.
-- `.docgen/embeddings.json` - persisted embedding vectors keyed by section/tag via `EmbeddingStore`.
-- `.docgen/scorecard.json` - output of `ReadmeScorecard.evaluate`, tracking coverage, link health, and quick-start quality.
-- Git metadata - branches/commits/PRs created by `Publisher` with summaries from `DiffAnalyzer`.
+- `.docgen/manifest_cache.json` - Cache of file hashes for incremental repo scans.
+- `.docgen/embeddings.json` - Lightweight embedding store supporting section-scoped retrieval.
+- `.docgen/scorecard.json` - Scorecard output capturing lint, link, and coverage metrics.
+- `.docgen/validation.json` - Validation trace covering hallucination checks and sentence-level issues.
+- `.docgen/analyzers/cache.json` - Analyzer cache that enables incremental signal execution.
+
 ### Pipeline Sequence (`docgen init`)
 
 ```mermaid
@@ -111,23 +126,21 @@ sequenceDiagram
     participant LLM as LLMRunner
     participant Post as Post-processing
     participant FS as Filesystem
-
     Dev->>CLI: docgen init .
     CLI->>Orc: run_init(path)
     Orc->>Scan: scan()
-    Scan-->>Orc: RepoManifest(FileMeta[])
+    Scan-->>Orc: RepoManifest
     Orc->>Ana: analyze(manifest)
     Ana-->>Orc: Signal[]
     Orc->>RAG: build(manifest)
     RAG-->>Orc: contexts per section
-    Orc->>Prompt: build(manifest, signals, contexts)
-    Prompt->>LLM: invoke(system, prompt)
-    LLM-->>Prompt: section markdown
-    Prompt-->>Orc: full README draft
-    Orc->>Post: lint -> toc -> badges -> links -> scorecard
-    Post-->>Orc: final markdown + quality report
+    Orc->>Prompt: build(...)
+    Prompt->>LLM: invoke prompts
+    LLM-->>Prompt: section drafts
+    Prompt-->>Orc: README draft
+    Orc->>Post: lint + toc + badges + links + scorecard
+    Post-->>Orc: polished markdown
     Orc->>FS: write README.md
-    Orc->>Git: optional commit (publish mode "commit")
 ```
 
 ### Patch Sequence (`docgen update`)
@@ -144,12 +157,10 @@ sequenceDiagram
     participant Prompt as PromptBuilder
     participant Mark as MarkerManager
     participant Post as Post-processing
-    participant Pub as Publisher
-
     Dev->>CLI: docgen update --diff-base <ref>
     CLI->>Orc: run_update(path, base)
-    Orc->>Diff: compute(repo, base)
-    Diff-->>Orc: DiffResult(changed_files, sections)
+    Orc->>Diff: compute()
+    Diff-->>Orc: sections to refresh
     Orc->>Scan: scan()
     Scan-->>Orc: RepoManifest
     Orc->>Ana: analyze(manifest)
@@ -157,168 +168,202 @@ sequenceDiagram
     Orc->>RAG: build(manifest, sections)
     RAG-->>Orc: context snippets
     Orc->>Prompt: render_sections(sections)
-    Prompt-->>Orc: new section bodies
-    Orc->>Mark: replace(markdown, section)
-    Mark-->>Orc: patched README
-    Orc->>Post: lint/toc/badges/link check/scorecard
-    Post-->>Orc: final README + diff
-    Orc->>Pub: commit or PR (branch, title, body)
+    Prompt-->>Orc: refreshed markdown
+    Orc->>Mark: splice into README
+    Mark-->>Orc: patched markdown
+    Orc->>Post: lint + toc + badges + links + scorecard
+    Post-->>Orc: final README
 ```
 
 ### API Signal Extraction
 
-`StructureAnalyzer` inspects source files for FastAPI decorators, Express route calls, and Pydantic/ORM entities. Each match emits `Signal` metadata such as handler names, HTTP verbs, detected external calls (`requests`, `session`, `db`), and assembled `sequence` steps that downstream templates render as diagrams.
-
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API as FastAPI endpoint
-    participant Auth as External service
-    participant DB as Database
-    Client->>API: POST /login
-    API->>Auth: requests.post()
-    Auth-->>API: token/response
-    API->>DB: session.write()
-    DB-->>API: ack
-    API-->>Client: Authenticated response
+    participant fastapi_endpoint as "FastAPI endpoint"
+    Client ->> fastapi_endpoint: GET /health
+    fastapi_endpoint -->> Client: Response
+    Client ->> fastapi_endpoint: POST /init
+    fastapi_endpoint -->> Client: Response
+    Client ->> fastapi_endpoint: POST /update
+    fastapi_endpoint -->> Client: Response
 ```
 
-Other analyzers complement these signals:
+### Detected Entities
 
-- `EntryPointAnalyzer` ranks executable commands (FastAPI `uvicorn`, Django `runserver`, npm `dev`, Spring Boot `bootRun`).
-- `BuildAnalyzer` pairs manifest files with reproducible build/test commands and OS-aware scripts.
-- `DependencyAnalyzer`, `PatternAnalyzer`, and `LanguageAnalyzer` describe frameworks, Docker/K8s/CI layouts, and monorepo hints that feed the features, architecture, and quick-start sections.
-- Tests under `tests/analyzers/`, `tests/prompting/`, and `tests/git/` assert signal accuracy, command selection, and publishing behavior.
+- InitRequest (BaseModel) - `docgen/service/app.py`
+- InitResponse (BaseModel) - `docgen/service/app.py`
+- UpdateRequest (BaseModel) - `docgen/service/app.py`
+- UpdateResponse (BaseModel) - `docgen/service/app.py`
+- HealthResponse (BaseModel) - `docgen/service/app.py`
+
+### Context Highlights
+
+- Repository Guidelines Project Structure & Module Organization: `spec/spec.md` captures the end-to-end architecture, component contracts, and must be updated whenever responsibilities shift.
+- README slices under `tests/data/` and update them with helper scripts so diffs stay reviewable. Commit & Pull Request Guidelines: Follow Conventional Commits (`feat:`, `fix:`, `docs:`); keep subject lines <=72 charact...
 <!-- docgen:end:architecture -->
+
 ## Quick Start
 
 <!-- docgen:begin:quickstart -->
-1. Create a virtual environment and activate it:
-   - Windows: `python -m venv .venv` then `.\.venv\Scripts\activate`
-   - macOS/Linux: `python -m venv .venv` then `source .venv/bin/activate`
-2. Install dependencies in editable mode (includes CLI entry point and test tooling):
-   ```bash
-   python -m pip install --upgrade pip
-   python -m pip install -e .[dev]
-   ```
-3. Configure `.docgen.yml` with local LLM runner details (see Configuration below).
-4. Generate an initial README from the repository root:
-   ```bash
-   python -m docgen.cli init .
-   ```
-5. After subsequent changes, refresh documentation with:
-   ```bash
-   python -m docgen.cli update --diff-base origin/main
-   ```
-6. Use `--dry-run` to preview diffs or `--verbose` for deeper logs while iterating on analyzers.
+1. Create a virtual environment (matches PyCharm settings)
+```bash
+python -m venv .venv
+```
+
+2. Activate the environment
+```bash
+.\.venv\Scripts\activate
+source .venv/bin/activate
+```
+- Use the first command on Windows PowerShell; the second works on bash or zsh.
+
+3. Install docgen in editable mode with development extras
+```bash
+python -m pip install -e .[dev]
+```
+- Exposes the CLI, analyzer plugins, and formatting toolchain without repeated reinstalls.
+- Alternatively, use `python -m pip install -r requirements/dev.txt` if editable extras are restricted in your environment.
+
+4. Generate the initial README
+```bash
+python -m docgen.cli init .
+```
+- Rename or remove an existing README before running the bootstrapper.
+
+5. Refresh documentation after changes
+```bash
+python -m docgen.cli update --diff-base origin/main
+```
+- Point `--diff-base` at your default branch; add `--dry-run` to preview markdown.
+
+6. Iterate with verbose diagnostics
+- Append `--verbose` to surface analyzer, retrieval, and post-processing logs during development.
+
+7. Build a container image (optional)
+```bash
+docker build -t docgen .
+```
+- Append `--build-arg INSTALL_DEV=true` to include formatting and test tooling inside the image.
+
+8. Execute docgen inside Docker (optional)
+```bash
+docker run --rm -it -v ${PWD}:/workspace -w /workspace docgen python -m docgen.cli init .
+```
+- Replace `${PWD}` with the absolute repository path when using PowerShell or Command Prompt.
+
+9. Run project commands discovered by analyzers
+```bash
+python -m venv .venv
+python -m pip install -e .
+uvicorn docgen.service.app:app --reload
+python docgen/cli.py
+python docgen/analyzers/entrypoints.py
+```
 <!-- docgen:end:quickstart -->
 
 ## Configuration
 
 <!-- docgen:begin:configuration -->
-`docgen/config.py` loads `.docgen.yml` into strongly typed dataclasses and provides a minimal YAML parser when PyYAML is absent. Common fields:
+`docgen/config.py` loads `.docgen.yml` into typed dataclasses and falls back to safe defaults when the file is missing.
+
+**Tracked configuration assets:**
+- `.docgen.yml`
+- `docs/ci/docgen-update.yml`
+- `docs/ci/github-actions.md`
+- `pyproject.toml`
 
 ```yaml
 llm:
-  runner: "ollama"          # or "model-runner"
-  model: "llama3:8b-instruct"
-  base_url: "http://localhost:12434/engines/v1"
+  runner: 'model-runner'
+  base_url: 'http://localhost:12434/engines/v1'
+  model: 'ai/smollm2:360M-Q4_K_M'
   temperature: 0.2
   max_tokens: 2048
 
 readme:
-  style: "comprehensive"    # or "concise"
-  template_pack: null        # optional alt templates under docgen/prompting/templates/
+  style: 'comprehensive'
+  token_budget:
+    default: 2048
 
 publish:
-  mode: "pr"                 # "pr" or "commit"
-  branch_prefix: "docgen/readme-update"
-  labels: ["docs:auto"]
-  update_existing: false
+  mode: 'pr'
+  branch_prefix: 'docgen/readme-update'
+  labels: ['docs:auto']
 
 analyzers:
-  enabled: []                # subset of plugin names, empty uses all built-ins
   exclude_paths:
-    - "sandbox/"
+    - 'sandbox/'
 
 ci:
   watched_globs:
-    - "docgen/**"
-    - "docs/**"
-
-exclude_paths:
-  - "sandbox/"
+    - 'docgen/**'
+    - 'docs/**'
 ```
-
-Highlights:
-
-- `LLMConfig` supports env overrides (`DOCGEN_LLM_MODEL`, `DOCGEN_LLM_BASE_URL`, `DOCGEN_LLM_API_KEY`) and enforces loopback URLs.
-- `PublishConfig` toggles automatic commits or PR creation; `Publisher` relies on the GitHub CLI when `mode="pr"`.
-- `AnalyzerConfig.exclude_paths` removes noisy directories from analysis without editing `.gitignore`.
-- Template overrides can live under `docs/templates/` and are picked up automatically when present.
-- CI watchers skip updates when changed files do not match `ci.watched_globs`, aligning with the workflow in `docs/ci/docgen-update.yml`.
+**Highlights:**
+- Environment overrides (`DOCGEN_LLM_MODEL`, `DOCGEN_LLM_BASE_URL`, `DOCGEN_LLM_API_KEY`) take precedence at runtime.
+- LLM endpoints must resolve to loopback or internal hosts; remote URLs are rejected by `LLMRunner`.
+- Analyzer include/exclude settings keep noisy directories out of signal generation.
+- Validation defaults enable the no-hallucination guard; disable it only for diagnostics.
 <!-- docgen:end:configuration -->
 
 ## Build & Test
 
 <!-- docgen:begin:build_and_test -->
-- Format and lint:
-  ```bash
-  black docgen tests
-  python -m ruff check docgen tests
-  ```
-- Type-check core modules:
-  ```bash
-  python -m mypy docgen
-  ```
-- Run the full test suite (mirrors runtime modules: CLI, orchestrator, analyzers, prompting, git, RAG, post-processing):
-  ```bash
-  python -m pytest
-  ```
-- Target specific areas while iterating:
-  ```bash
-  python -m pytest -k orchestrator
-  python -m pytest tests/analyzers/test_structure.py
-  ```
-- Regenerate README fixtures or inspect scorecards stored under `.docgen/` to validate generated content.
+- **Format & lint**
+```bash
+python -m black docgen tests
+python -m ruff check docgen tests
+```
+
+- **Type-check core modules**
+```bash
+python -m mypy docgen
+```
+
+- **Run the full test suite**
+```bash
+python -m pytest
+```
+Covers CLI, orchestrator, analyzers, prompting, git, RAG, and post-processing modules.
+
+- **Iterate on specific components**
+```bash
+python -m pytest -k orchestrator
+python -m pytest tests/analyzers/test_structure.py
+```
+
+**Additional commands discovered by analyzers:**
+```bash
+python -m venv .venv
+python -m pip install -e .
+```
 <!-- docgen:end:build_and_test -->
+
 ## Deployment
 
 <!-- docgen:begin:deployment -->
-- GitHub Actions recipe: `docs/ci/docgen-update.yml` (documented in `docs/ci/github-actions.md`) installs the package in editable mode, runs `docgen update`, and optionally commits README changes back to the branch.
-- Self-hosted runners are recommended so the workflow can reach your local inference endpoint (`DOCGEN_LLM_BASE_URL`). The same settings apply when running in CI/CD pipelines outside GitHub.
-- `Publisher` can push commits directly (`publish.mode: commit`) for bootstrap scenarios or open PRs with labeled summaries when `gh` CLI credentials are available.
+- `.github/workflows/docgen-update.yml` runs `docgen update` for every pull request using the Docker Model Runner service container and commits README changes when the branch resides in this repository.
+- `docs/ci/github-actions.md` documents required secrets, health checks, and fallback behavior for forked pull requests.
+- `Publisher` integrates with the GitHub CLI when `publish.mode` is set to `pr`; use `publish.mode: commit` for bootstrap automation.
+- Run docgen against a loopback model runner such as Model Runner at `http://localhost:12434/engines/v1` or Ollama to keep data local.
+- Add Docker or Compose manifests alongside analyzer pattern signals so deployment commands surface automatically in Quick Start.
 <!-- docgen:end:deployment -->
 
 ## Troubleshooting
 
 <!-- docgen:begin:troubleshooting -->
-- Use `--verbose` to surface analyzer selection, prompt generation, and post-processing diagnostics emitted by `get_logger("orchestrator")`.
-- If the README already exists, `docgen init` will abort; switch to `docgen update` or remove the file before re-initialising.
-- Empty or failing sections trigger fallback stubs from `docgen/failsafe.py`; inspect the raised reason and rerun once the underlying analyzer or prompt issue is fixed.
-- Link validation issues are logged as warnings. Update relative paths or add missing files before committing generated docs.
-- Clear `.docgen/manifest_cache.json` and `.docgen/embeddings.json` when refactoring large parts of the repo structure to force a fresh scan.
-- Ensure the local model runner is reachable at a loopback URL; remote hosts are intentionally rejected by `LLMRunner` for security.
+- Confirm dependencies are installed before running commands.
+- Use `docgen update` after code changes to refresh sections automatically.
+- Open an issue when docgen requires additional diagnostics in this section.
 <!-- docgen:end:troubleshooting -->
 
 ## FAQ
 
 <!-- docgen:begin:faq -->
 **Q: How is this README maintained?**
-A: Generate with `docgen init` and keep it current via `docgen update` (optionally in CI using the provided workflow).
+A: Generated with `docgen init` and updated via `docgen update`.
 
-**Q: What happens if analyzers miss a framework or command?**
-A: Signals are pluggable—add a custom analyzer via the `docgen.analyzers` entry-point group or extend the existing utilities under `docgen/analyzers/utils.py`.
-
-**Q: Can docgen use a remote LLM endpoint?**
-A: No. `LLMRunner` enforces loopback/`.internal` hosts; supply a local model runner or Ollama instance instead.
-
-**Q: Where do I report issues or propose enhancements?**
-A: File an issue or open a discussion in this repository and reference the relevant sections in `spec/spec.md` or `spec/feature_order.md` when describing the change.
+**Q: Where do I report issues?**
+A: File an issue or start a discussion in this repository.
 <!-- docgen:end:faq -->
-
-## License
-
-<!-- docgen:begin:license -->
-Add licensing information once the project selects a license. Track candidate licenses alongside the roadmap in `spec/feature_order.md`.
-<!-- docgen:end:license -->

@@ -11,7 +11,9 @@ from docgen.stores import AnalyzerCache
 def test_analyzer_cache_round_trip(tmp_path: Path) -> None:
     cache_path = tmp_path / "cache.json"
     cache = AnalyzerCache(cache_path)
-    signals = [Signal(name="lang", value="Python", source="language", metadata={"files": 3})]
+    signals = [
+        Signal(name="lang", value="Python", source="language", metadata={"files": 3})
+    ]
     cache.store(
         "language",
         signature="sig-1",

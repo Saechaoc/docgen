@@ -1,0 +1,28 @@
+# Default docgen configuration for the repository.
+
+llm:
+  runner: model-runner
+  base_url: http://localhost:12434/engines/v1
+  model: ai/smollm2:360M-Q4_K_M
+  temperature: 0.0
+  request_timeout: 60
+
+generation:
+  mode: off
+  allow_inferred: true
+  sections:
+    intro: true
+    features: true
+    architecture: true
+    quickstart: true
+    configuration: true
+    build_and_test: true
+    deployment: true
+
+validation:
+  mode: balanced
+  allow_inferred: true
+
+publish:
+  mode: pr
+  branch_prefix: docgen/readme

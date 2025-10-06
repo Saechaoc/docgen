@@ -23,7 +23,9 @@ class AnalyzerCache:
         if self._path is not None:
             self._load(self._path)
 
-    def get(self, key: str, *, signature: str, fingerprint: str) -> Optional[List[Signal]]:
+    def get(
+        self, key: str, *, signature: str, fingerprint: str
+    ) -> Optional[List[Signal]]:
         entry = self._entries.get(key)
         if not entry:
             return None
@@ -74,7 +76,9 @@ class AnalyzerCache:
             "entries": self._entries,
         }
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        self._path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+        )
         self._dirty = False
 
     def clear(self) -> None:
@@ -100,7 +104,11 @@ class AnalyzerCache:
         for key, raw in entries.items():
             if not isinstance(key, str) or not isinstance(raw, dict):
                 continue
-            if "signature" not in raw or "fingerprint" not in raw or "signals" not in raw:
+            if (
+                "signature" not in raw
+                or "fingerprint" not in raw
+                or "signals" not in raw
+            ):
                 continue
             valid_entries[key] = raw
         self._entries = valid_entries
@@ -124,7 +132,11 @@ def _signal_from_dict(payload: object) -> Optional[Signal]:
     value = payload.get("value")
     source = payload.get("source")
     metadata = payload.get("metadata", {})
-    if not isinstance(name, str) or not isinstance(value, str) or not isinstance(source, str):
+    if (
+        not isinstance(name, str)
+        or not isinstance(value, str)
+        or not isinstance(source, str)
+    ):
         return None
     if not isinstance(metadata, dict):
         metadata = {}

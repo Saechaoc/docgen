@@ -58,12 +58,16 @@ class BuildAnalyzer(Analyzer):
             return None
         commands = [
             "python -m venv .venv",
-            "source .venv/bin/activate"
-            if not self._is_windows()
-            else ".\\.venv\\Scripts\\activate",
-            "python -m pip install -r requirements.txt"
-            if "requirements.txt" in manifest_paths
-            else "python -m pip install -e .",
+            (
+                "source .venv/bin/activate"
+                if not self._is_windows()
+                else ".\\.venv\\Scripts\\activate"
+            ),
+            (
+                "python -m pip install -r requirements.txt"
+                if "requirements.txt" in manifest_paths
+                else "python -m pip install -e ."
+            ),
             "python -m pytest",
         ]
         return Signal(
@@ -97,7 +101,9 @@ class BuildAnalyzer(Analyzer):
         )
 
     def _java_signal(self, root: Path, manifest_paths: set[str]) -> Optional[Signal]:
-        if not {"pom.xml", "build.gradle", "build.gradle.kts"}.intersection(manifest_paths):
+        if not {"pom.xml", "build.gradle", "build.gradle.kts"}.intersection(
+            manifest_paths
+        ):
             return None
 
         mvnw = "mvnw.cmd" if self._is_windows() else "./mvnw"

@@ -1,11 +1,6 @@
 {% if metadata['items'] %}
 {% for item in metadata['items'] %}- {{ item }}
 {% endfor %}
-{% if metadata.context %}
-> Context highlights:
-{% for snippet in metadata.context %}> {{ snippet }}
-{% endfor %}
-{% endif %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}

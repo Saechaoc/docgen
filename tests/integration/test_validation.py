@@ -19,7 +19,9 @@ class _StubDiffAnalyzer:
     def compute(self, repo_path: str, diff_base: str):  # type: ignore[no-untyped-def]
         from docgen.git.diff import DiffResult
 
-        return DiffResult(base=diff_base, changed_files=["requirements.txt"], sections=self.sections)
+        return DiffResult(
+            base=diff_base, changed_files=["requirements.txt"], sections=self.sections
+        )
 
 
 class _HallucinatingPromptBuilder:
@@ -33,7 +35,10 @@ class _HallucinatingPromptBuilder:
                 name=section,
                 title=section.replace("_", " ").title(),
                 body="This project offers instant quantum teleportation across galaxies.",
-                metadata={"context": [], "evidence": {"signals": [], "context_chunks": 0}},
+                metadata={
+                    "context": [],
+                    "evidence": {"signals": [], "context_chunks": 0},
+                },
             )
         return generated
 
@@ -104,7 +109,9 @@ def test_run_update_skip_validation_allows_override(tmp_path: Path) -> None:
         diff_analyzer=diff_analyzer,
     )
 
-    outcome = orchestrator.run_update(str(repo_root), "origin/main", skip_validation=True)
+    outcome = orchestrator.run_update(
+        str(repo_root), "origin/main", skip_validation=True
+    )
 
     assert outcome is not None
     report = _read_validation_report(repo_root)

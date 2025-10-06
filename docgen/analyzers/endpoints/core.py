@@ -26,13 +26,18 @@ class EndpointDetector(Protocol):
     def supports_repo(self, manifest) -> bool:  # noqa: ANN001 - typed dynamically
         ...
 
-    def extract(self, manifest) -> Iterable[Endpoint]:  # noqa: ANN001 - typed dynamically
+    def extract(
+        self, manifest
+    ) -> Iterable[Endpoint]:  # noqa: ANN001 - typed dynamically
         ...
 
 
 _PARAM_PATTERNS: List[Tuple[re.Pattern[str], str]] = [
     (re.compile(r"/:([A-Za-z_][A-Za-z0-9_]*)"), r"/{\1}"),
-    (re.compile(r"/<(?:(?:[A-Za-z_][A-Za-z0-9_]*):)?([A-Za-z_][A-Za-z0-9_]*)>"), r"/{\1}"),
+    (
+        re.compile(r"/<(?:(?:[A-Za-z_][A-Za-z0-9_]*):)?([A-Za-z_][A-Za-z0-9_]*)>"),
+        r"/{\1}",
+    ),
     (re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\s*:\s*[^}]+\}"), r"{\1}"),
     (re.compile(r"\(\?P<([A-Za-z_][A-Za-z0-9_]*)>[^)]+\)"), r"{\1}"),
 ]

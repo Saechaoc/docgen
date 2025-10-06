@@ -1,4 +1,4 @@
-"""Unit tests for the no-hallucination validator."""
+﻿"""Unit tests for the no-hallucination validator."""
 
 from __future__ import annotations
 
@@ -17,21 +17,43 @@ def _manifest() -> RepoManifest:
 
 def test_validator_accepts_grounded_sentences() -> None:
     signals = [
-        Signal(name="language.all", value="Python", source="language", metadata={"languages": ["Python"]}),
-        Signal(name="entrypoint.cli", value="uvicorn", source="entrypoint", metadata={"command": "uvicorn app:app"}),
+        Signal(
+            name="language.all",
+            value="Python",
+            source="language",
+            metadata={"languages": ["Python"]},
+        ),
+        Signal(
+            name="entrypoint.cli",
+            value="uvicorn",
+            source="entrypoint",
+            metadata={"command": "uvicorn app:app"},
+        ),
     ]
     sections = {
         "quickstart": Section(
             name="quickstart",
             title="Quick Start",
-            body="Follow the steps below to get started:\n\n- Install dependencies with pip\n- Launch the service via uvicorn app:app",
+            body="1. Create a virtual environment (matches PyCharm settings)\n\n```bash\npython -m venv .venv\n```\n\n2. Run project commands discovered by analyzers\n\n```bash\npython -m pip install -r requirements.txt\nuvicorn app:app\n```",
             metadata={
-                "commands": [
-                    "python -m pip install -r requirements.txt",
-                    "uvicorn app:app",
+                "steps": [
+                    {
+                        "title": "Create a virtual environment (matches PyCharm settings)",
+                        "commands": ["python -m venv .venv"],
+                    },
+                    {
+                        "title": "Run project commands discovered by analyzers",
+                        "commands": [
+                            "python -m pip install -r requirements.txt",
+                            "uvicorn app:app",
+                        ],
+                    },
                 ],
                 "context": ["This project exposes a FastAPI app via uvicorn."],
-                "evidence": {"signals": ["language.all", "entrypoint.cli"], "context_chunks": 1},
+                "evidence": {
+                    "signals": ["language.all", "entrypoint.cli"],
+                    "context_chunks": 1,
+                },
             },
         )
     }
@@ -49,7 +71,9 @@ def test_validator_accepts_grounded_sentences() -> None:
 
 
 def test_validator_flags_sentences_without_evidence() -> None:
-    signals = [Signal(name="language.all", value="Python", source="language", metadata={})]
+    signals = [
+        Signal(name="language.all", value="Python", source="language", metadata={})
+    ]
     sections = {
         "features": Section(
             name="features",
@@ -77,7 +101,11 @@ def test_validator_flags_sentences_without_evidence() -> None:
 
 
 def test_validator_handles_plural_tokens() -> None:
-    signals = [Signal(name="pattern.container", value="container", source="pattern", metadata={})]
+    signals = [
+        Signal(
+            name="pattern.container", value="container", source="pattern", metadata={}
+        )
+    ]
     sections = {
         "deployment": Section(
             name="deployment",
@@ -100,3 +128,64 @@ def test_validator_handles_plural_tokens() -> None:
     issues = validator.validate(context)
 
     assert issues == []
+
+
+def test_validator_balanced_accepts_synonyms() -> None:
+    signals = [
+        Signal(
+            name="dependencies.python", value="aws-dynamodb", source="deps", metadata={}
+        ),
+    ]
+    sections = {
+        "architecture": Section(
+            name="architecture",
+            title="Architecture",
+            body="The service persists state in DynamoDB tables.",
+            metadata={
+                "context": [],
+                "evidence": {"signals": ["dependencies.python"], "context_chunks": 0},
+            },
+        )
+    }
+    context = ValidationContext(
+        manifest=_manifest(),
+        signals=signals,
+        sections=sections,
+        evidence=build_evidence_index(signals, sections),
+    )
+    validator = NoHallucinationValidator(mode="balanced")
+
+    issues = validator.validate(context)
+
+    assert issues == []
+
+
+def test_validator_strict_requires_observed_terms() -> None:
+    signals = [
+        Signal(
+            name="dependencies.python", value="terraform", source="deps", metadata={}
+        )
+    ]
+    sections = {
+        "deployment": Section(
+            name="deployment",
+            title="Deployment",
+            body="Infrastructure changes are rolled out via Terraform.",
+            metadata={
+                "context": [],
+                "evidence": {"signals": ["dependencies.python"], "context_chunks": 0},
+            },
+        )
+    }
+    context = ValidationContext(
+        manifest=_manifest(),
+        signals=signals,
+        sections=sections,
+        evidence=build_evidence_index(signals, sections),
+    )
+    validator = NoHallucinationValidator(mode="strict")
+
+    issues = validator.validate(context)
+
+    assert len(issues) == 1
+    assert issues[0].section == "deployment"
