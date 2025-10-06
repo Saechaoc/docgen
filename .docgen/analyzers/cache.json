@@ -1,24 +1,52 @@
 {
   "entries": {
     "docgen.analyzers.build.BuildAnalyzer": {
-      "fingerprint": "4c473bdf8e9c8bff6b9d2d2bbd277003c6324ed3dbb4cb23ebd9e40d2b09e514",
+      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
       "signals": [
         {
           "metadata": {
             "commands": [
-              "# Document build steps here."
+              "python -m venv .venv",
+              ".\\.venv\\Scripts\\activate",
+              "python -m pip install -e .",
+              "python -m pytest"
+            ],
+            "files": [
+              "pyproject.toml"
             ]
           },
-          "name": "build.generic",
+          "name": "build.python",
           "source": "build",
-          "value": "generic"
+          "value": "python"
         }
       ],
       "signature": "docgen.analyzers.build.BuildAnalyzer:1:448f7c4b2d0dbb2ccb324a315150ac88664b99866a9c00a03bce4e0f024cf9d5",
-      "updated_at": "2025-10-06T21:59:20.847125Z"
+      "updated_at": "2025-10-06T22:19:42.837434Z"
+    },
+    "docgen.analyzers.dependencies.DependencyAnalyzer": {
+      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "signals": [
+        {
+          "metadata": {
+            "packages": [
+              "black",
+              "jinja2",
+              "mypy",
+              "pytest",
+              "pyyaml",
+              "ruff"
+            ]
+          },
+          "name": "dependencies.python",
+          "source": "dependencies",
+          "value": "black, jinja2, mypy, pytest, pyyaml"
+        }
+      ],
+      "signature": "docgen.analyzers.dependencies.DependencyAnalyzer:1:9bd86c7404a55116ba4cfc801036ce687a4f5123fcc8d660bac4875711acf750",
+      "updated_at": "2025-10-06T22:19:42.839466Z"
     },
     "docgen.analyzers.entrypoints.EntryPointAnalyzer": {
-      "fingerprint": "4c473bdf8e9c8bff6b9d2d2bbd277003c6324ed3dbb4cb23ebd9e40d2b09e514",
+      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
       "signals": [
         {
           "metadata": {
@@ -76,15 +104,16 @@
         }
       ],
       "signature": "docgen.analyzers.entrypoints.EntryPointAnalyzer:1:27ad09aab41c550b001de116e26117b8e1510a1d565b2866ac9f9c6052465c17",
-      "updated_at": "2025-10-06T21:59:20.890746Z"
+      "updated_at": "2025-10-06T22:19:42.887944Z"
     },
     "docgen.analyzers.language.LanguageAnalyzer": {
-      "fingerprint": "4c473bdf8e9c8bff6b9d2d2bbd277003c6324ed3dbb4cb23ebd9e40d2b09e514",
+      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
       "signals": [
         {
           "metadata": {
             "counts": {
               "Python": 73,
+              "TOML": 1,
               "YAML": 2
             }
           },
@@ -96,29 +125,31 @@
           "metadata": {
             "counts": {
               "Python": 73,
+              "TOML": 1,
               "YAML": 2
             },
             "languages": [
               "Python",
-              "YAML"
+              "YAML",
+              "TOML"
             ]
           },
           "name": "language.all",
           "source": "language",
-          "value": "Python, YAML"
+          "value": "Python, YAML, TOML"
         }
       ],
       "signature": "docgen.analyzers.language.LanguageAnalyzer:1:31d318b5ee03b0152f8c4ad4a427a84cf3a12f6de34239a60a91f5f45a52b15d",
-      "updated_at": "2025-10-06T21:59:20.844125Z"
+      "updated_at": "2025-10-06T22:19:42.834918Z"
     },
     "docgen.analyzers.patterns.PatternAnalyzer": {
-      "fingerprint": "4c473bdf8e9c8bff6b9d2d2bbd277003c6324ed3dbb4cb23ebd9e40d2b09e514",
+      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
       "signals": [],
       "signature": "docgen.analyzers.patterns.PatternAnalyzer:1:eed996582fe4516c3d752b3fb0e511bd4f2e6b5160d3581644758a6e1339b213",
-      "updated_at": "2025-10-06T21:59:20.892440Z"
+      "updated_at": "2025-10-06T22:19:42.890752Z"
     },
     "docgen.analyzers.structure.StructureAnalyzer": {
-      "fingerprint": "4c473bdf8e9c8bff6b9d2d2bbd277003c6324ed3dbb4cb23ebd9e40d2b09e514",
+      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
       "signals": [
         {
           "metadata": {
@@ -160,6 +191,22 @@
               {
                 "files": 1,
                 "languages": [],
+                "name": "README.generated.1.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "README.generated.before.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
                 "name": "README_after_changes.md",
                 "roles": [
                   "docs"
@@ -184,6 +231,14 @@
                 ]
               },
               {
+                "files": 5,
+                "languages": [],
+                "name": "docgen.egg-info",
+                "roles": [
+                  "src"
+                ]
+              },
+              {
                 "files": 2,
                 "languages": [
                   "YAML"
@@ -191,6 +246,16 @@
                 "name": "docs",
                 "roles": [
                   "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [
+                  "TOML"
+                ],
+                "name": "pyproject.toml",
+                "roles": [
+                  "src"
                 ]
               },
               {
@@ -448,7 +513,7 @@
         }
       ],
       "signature": "docgen.analyzers.structure.StructureAnalyzer:1:dd654245f615dd81961e91856387f0c6fd1a7a1ac81b11c9f157f4a4a723e917",
-      "updated_at": "2025-10-06T21:59:20.921712Z"
+      "updated_at": "2025-10-06T22:19:42.920174Z"
     }
   },
   "version": 1

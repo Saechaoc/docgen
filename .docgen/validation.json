@@ -3,46 +3,46 @@
   "evidence_summary": {
     "architecture": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "build_and_test": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "configuration": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "deployment": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "faq": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "features": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "intro": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "license": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     },
     "quickstart": {
       "context_chunks": 0,
-      "signal_count": 9
+      "signal_count": 10
     },
     "troubleshooting": {
       "context_chunks": 2,
-      "signal_count": 9
+      "signal_count": 10
     }
   },
-  "generated_at": "2025-10-06T21:59:48.169519Z",
+  "generated_at": "2025-10-06T22:20:25.722585Z",
   "issue_count": 0,
   "issues": [],
   "mode": "balanced",

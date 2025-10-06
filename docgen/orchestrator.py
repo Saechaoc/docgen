@@ -1107,6 +1107,9 @@ class Orchestrator:
                 if fallback_section:
                     generated[name] = self._clone_section(fallback_section, reason="llm_structured_payload")
                 continue
+            # Strip a redundant self-heading (e.g., "## Architecture") that some models prepend
+            expected_title = SECTION_TITLES.get(name, name.replace("_", " ").title())
+            body = self._strip_redundant_heading(expected_title, body)
             if self._looks_low_quality_section(name, body):
                 if fallback_section:
                     generated[name] = self._clone_section(fallback_section, reason="llm_low_quality")
@@ -1196,10 +1199,48 @@ class Orchestrator:
             lines = [line for line in plain.splitlines() if line.strip()]
             if not any(line.lstrip().startswith(('- ', '* ')) for line in lines):
                 return True
+        # Reject when the section body re-introduces its own H1/H2 heading
+        expected_title = SECTION_TITLES.get(name, name.replace("_", " ").title())
+        heading_patterns = (
+            f"# {expected_title}",
+            f"## {expected_title}",
+            f"### {expected_title}",
+        )
+        for pat in heading_patterns:
+            for line in plain.splitlines():
+                if line.strip().lower() == pat.lower():
+                    return True
         if name == "architecture":
             if "### " not in plain and "```mermaid" not in plain and "| ---" not in plain:
                 return True
         return False
+
+    @staticmethod
+    def _strip_redundant_heading(expected_title: str, body: str) -> str:
+        """Remove a leading H1/H2/H3 that repeats the section title.
+
+        Many small local models echo the section heading. Since the template already
+        provides the H2 (e.g., "## Architecture"), strip any top-of-body heading
+        matching the expected title to avoid duplicated sections.
+        """
+        if not body.strip():
+            return body
+        lines = body.splitlines()
+        # Find first non-empty line
+        idx = 0
+        while idx < len(lines) and not lines[idx].strip():
+            idx += 1
+        if idx >= len(lines):
+            return body
+        first = lines[idx].strip()
+        for prefix in ("# ", "## ", "### "):
+            if first.lower() == f"{prefix}{expected_title}".lower():
+                # Drop the heading line and a single following blank line if present
+                new_lines = lines[:idx] + lines[idx + 1 :]
+                if idx < len(new_lines) and not new_lines[idx].strip():
+                    new_lines.pop(idx)
+                return "\n".join(new_lines).strip()
+        return body
 
     @staticmethod
     def _apply_validation_fallback(

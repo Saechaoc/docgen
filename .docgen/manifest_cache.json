@@ -90,6 +90,16 @@
       "mtime_ns": 1758315439439818900,
       "size": 3072
     },
+    "README.generated.1.md": {
+      "hash": "9ab4cabd8ea0f27b53184d9e9eeebbc2a8a1924fb93769e86e80564ccaf31126",
+      "mtime_ns": 1759789173611021200,
+      "size": 14238
+    },
+    "README.generated.before.md": {
+      "hash": "33f48540deca09f9d460c905a996ffd769977f72b6c233896b7ae7bf0178fa6c",
+      "mtime_ns": 1759787988173374800,
+      "size": 14519
+    },
     "README_after_changes.md": {
       "hash": "90a160db4a08d8fcfc2b40f692ea730ec1f59c9d93f17370a764ee664632d30e",
       "mtime_ns": 1759767968590821600,
@@ -99,6 +109,31 @@
       "hash": "07dc268b5502c1ca88dbc3acab0a15feead554b7b722f9ec3bd0dfdc0027f564",
       "mtime_ns": 1759724609844647300,
       "size": 16033
+    },
+    "docgen.egg-info/PKG-INFO": {
+      "hash": "6f6d6fa58271ec872f7c03824d5e42d41f8c1b3c3e335926a508cb49ec2fd043",
+      "mtime_ns": 1759789099591363300,
+      "size": 15008
+    },
+    "docgen.egg-info/SOURCES.txt": {
+      "hash": "3587c3ac517995d49dc18e3278d8748477f064b7b3c96cfae631368e98cd1bf4",
+      "mtime_ns": 1759789099608359700,
+      "size": 997
+    },
+    "docgen.egg-info/dependency_links.txt": {
+      "hash": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "mtime_ns": 1759789099593415300,
+      "size": 1
+    },
+    "docgen.egg-info/requires.txt": {
+      "hash": "3b92d7d12f4c7b19bc2e4bf32313a246fe0e23b96eca01a7053661cc41421af1",
+      "mtime_ns": 1759789099593845400,
+      "size": 87
+    },
+    "docgen.egg-info/top_level.txt": {
+      "hash": "a30f858f5ac746d579ff24b15d2440daadf664bfff1a6a63d1689e679fe7897b",
+      "mtime_ns": 1759789099594359200,
+      "size": 7
     },
     "docgen/__init__.py": {
       "hash": "48c6f91c4fa6b6ea7ee0e8e593941b642dffacfde200c375e609f469005f90af",
@@ -226,9 +261,9 @@
       "size": 676
     },
     "docgen/orchestrator.py": {
-      "hash": "15340d460cc495cbb765b8077f5e8d61c4f6932efd56ee9db74a54abba207d25",
-      "mtime_ns": 1759785100022622900,
-      "size": 54818
+      "hash": "07bb3e166f059cc9b82761173642e4d9a580d5e54bc3e670519610a878a1d74b",
+      "mtime_ns": 1759789064113950000,
+      "size": 56699
     },
     "docgen/postproc/__init__.py": {
       "hash": "936e6b16a4c3a589f7d0ea2db1cfb0191b8e71b4ebb2aaca348ade3a5c1e4340",
@@ -414,6 +449,11 @@
       "hash": "518fe87441e7f08aadb0ed175d54a5ce3c227af17677678096af6df070190e59",
       "mtime_ns": 1759723741516620800,
       "size": 2504
+    },
+    "pyproject.toml": {
+      "hash": "c2c22274ad7a7ebad90b97dc9cd1c4a498e2f7a1b13e28019638b0b9d07cbf80",
+      "mtime_ns": 1759789072600931200,
+      "size": 655
     },
     "readme_generation_progress.md": {
       "hash": "7e647fe7e8d75f3f12fae0a405463abf72cfe3123198ca0f9556bca798213a7f",
