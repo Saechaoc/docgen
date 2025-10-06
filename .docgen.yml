@@ -8,7 +8,7 @@ llm:
   request_timeout: 60
 
 generation:
-  mode: balanced
+  mode: off
   allow_inferred: true
   sections:
     intro: true

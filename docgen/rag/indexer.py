@@ -25,7 +25,9 @@ class RAGIndex:
 class RAGIndexer:
     """Builds a lightweight embedding index for README generation."""
 
-    def __init__(self, *, embedder: LocalEmbedder | None = None, top_source_files: int = 20) -> None:
+    def __init__(
+        self, *, embedder: LocalEmbedder | None = None, top_source_files: int = 20
+    ) -> None:
         self.embedder = embedder or LocalEmbedder()
         self.top_source_files = top_source_files
 
@@ -41,7 +43,9 @@ class RAGIndexer:
                 return ordered
         return list(SECTION_TAGS.keys())
 
-    def build(self, manifest: RepoManifest, *, sections: Sequence[str] | None = None) -> RAGIndex:
+    def build(
+        self, manifest: RepoManifest, *, sections: Sequence[str] | None = None
+    ) -> RAGIndex:
         target_sections = self._normalise_sections(sections)
         root = Path(manifest.root)
         store_path = root / ".docgen" / "embeddings.json"
@@ -64,7 +68,9 @@ class RAGIndexer:
 
         return RAGIndex(contexts=contexts, store_path=store_path)
 
-    def load(self, manifest: RepoManifest, *, sections: Sequence[str] | None = None) -> RAGIndex | None:
+    def load(
+        self, manifest: RepoManifest, *, sections: Sequence[str] | None = None
+    ) -> RAGIndex | None:
         target_sections = self._normalise_sections(sections)
         root = Path(manifest.root)
         store_path = root / ".docgen" / "embeddings.json"
@@ -77,7 +83,9 @@ class RAGIndexer:
         contexts = self._collect_contexts(store, target_sections)
         return RAGIndex(contexts=contexts, store_path=store_path)
 
-    def _collect_contexts(self, store: EmbeddingStore, sections: Sequence[str]) -> Dict[str, List[str]]:
+    def _collect_contexts(
+        self, store: EmbeddingStore, sections: Sequence[str]
+    ) -> Dict[str, List[str]]:
         contexts: Dict[str, List[str]] = {}
         for section in sections:
             entries = store.query(section, top_k=2)
@@ -121,7 +129,9 @@ class RAGIndexer:
         if store.has_path_with_hash(source, file_hash):
             return
         store.remove_path(source)
-        self._add_chunks(store, text, source=source, tags=["readme"], file_hash=file_hash)
+        self._add_chunks(
+            store, text, source=source, tags=["readme"], file_hash=file_hash
+        )
 
     def _index_docs(
         self,
@@ -131,7 +141,9 @@ class RAGIndexer:
         visited_paths: Set[str],
     ) -> None:
         for meta in files:
-            if meta.role not in {"docs", "examples"} and not meta.path.startswith("docs/"):
+            if meta.role not in {"docs", "examples"} and not meta.path.startswith(
+                "docs/"
+            ):
                 continue
             path = root / meta.path
             text = _read_text(path)
@@ -146,7 +158,9 @@ class RAGIndexer:
             if store.has_path_with_hash(meta.path, meta.hash):
                 continue
             store.remove_path(meta.path)
-            self._add_chunks(store, text, source=meta.path, tags=tags, file_hash=meta.hash)
+            self._add_chunks(
+                store, text, source=meta.path, tags=tags, file_hash=meta.hash
+            )
 
     def _index_source_files(
         self,
@@ -169,7 +183,9 @@ class RAGIndexer:
             if store.has_path_with_hash(meta.path, meta.hash):
                 continue
             store.remove_path(meta.path)
-            self._add_chunks(store, text, source=meta.path, tags=tags, file_hash=meta.hash)
+            self._add_chunks(
+                store, text, source=meta.path, tags=tags, file_hash=meta.hash
+            )
 
     def _add_chunks(
         self,
@@ -190,7 +206,13 @@ class RAGIndexer:
                 "tags": list(tags),
                 "hash": file_hash,
             }
-            store.add(sections, chunk_id=chunk_id, vector=vector, text=chunk, metadata=metadata)
+            store.add(
+                sections,
+                chunk_id=chunk_id,
+                vector=vector,
+                text=chunk,
+                metadata=metadata,
+            )
 
     @staticmethod
     def _sections_for_tags(tags: Sequence[str]) -> List[str]:

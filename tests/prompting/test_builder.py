@@ -244,7 +244,9 @@ def test_prompt_builder_concise_style_limits_feature_list(tmp_path: Path) -> Non
             name="dependencies.python",
             value="python",
             source="test",
-            metadata={"packages": ["fastapi", "sqlalchemy", "alembic", "uvicorn", "pydantic"]},
+            metadata={
+                "packages": ["fastapi", "sqlalchemy", "alembic", "uvicorn", "pydantic"]
+            },
         ),
         Signal(
             name="dependencies.node",
@@ -269,47 +271,61 @@ def test_prompt_builder_concise_style_limits_feature_list(tmp_path: Path) -> Non
     comprehensive = PromptBuilder()
     conciseness = PromptBuilder(style="concise")
 
-    full_section = comprehensive.render_sections(manifest, signals, ["features"])["features"].body
-    concise_section = conciseness.render_sections(manifest, signals, ["features"])["features"].body
+    full_section = comprehensive.render_sections(manifest, signals, ["features"])[
+        "features"
+    ].body
+    concise_section = conciseness.render_sections(manifest, signals, ["features"])[
+        "features"
+    ].body
 
     full_bullets = [line for line in full_section.splitlines() if line.startswith("- ")]
-    concise_bullets = [line for line in concise_section.splitlines() if line.startswith("- ")]
+    concise_bullets = [
+        line for line in concise_section.splitlines() if line.startswith("- ")
+    ]
 
     assert len(full_bullets) >= len(concise_bullets)
     assert len(concise_bullets) <= 4
 
 
 def test_architecture_section_includes_sequence_diagram(tmp_path: Path) -> None:
-    repo = tmp_path / 'repo'
+    repo = tmp_path / "repo"
     repo.mkdir()
     _seed_repo(repo)
 
     manifest = RepoScanner().scan(str(repo))
 
     api_signal = Signal(
-        name='architecture.api',
-        value='GET /login',
-        source='structure',
+        name="architecture.api",
+        value="GET /login",
+        source="structure",
         metadata={
-            'framework': 'FastAPI',
-            'method': 'GET',
-            'path': '/login',
-            'sequence': [
-                {'from': 'Client', 'to': 'FastAPI endpoint', 'message': 'GET /login'},
-                {'from': 'FastAPI endpoint', 'to': 'External service', 'message': 'External HTTP call'},
-                {'from': 'External service', 'to': 'FastAPI endpoint', 'message': 'Response'},
-                {'from': 'FastAPI endpoint', 'to': 'Client', 'message': 'Response'},
+            "framework": "FastAPI",
+            "method": "GET",
+            "path": "/login",
+            "sequence": [
+                {"from": "Client", "to": "FastAPI endpoint", "message": "GET /login"},
+                {
+                    "from": "FastAPI endpoint",
+                    "to": "External service",
+                    "message": "External HTTP call",
+                },
+                {
+                    "from": "External service",
+                    "to": "FastAPI endpoint",
+                    "message": "Response",
+                },
+                {"from": "FastAPI endpoint", "to": "Client", "message": "Response"},
             ],
         },
     )
     module_signal = Signal(
-        name='architecture.modules',
-        value='modules',
-        source='structure',
+        name="architecture.modules",
+        value="modules",
+        source="structure",
         metadata={
-            'modules': [
-                {'name': 'src', 'files': 2, 'roles': ['src']},
-                {'name': 'tests', 'files': 1, 'roles': ['test']},
+            "modules": [
+                {"name": "src", "files": 2, "roles": ["src"]},
+                {"name": "tests", "files": 1, "roles": ["test"]},
             ]
         },
     )
@@ -318,9 +334,9 @@ def test_architecture_section_includes_sequence_diagram(tmp_path: Path) -> None:
     sections = builder.render_sections(
         manifest,
         signals=[api_signal, module_signal],
-        sections=['architecture'],
+        sections=["architecture"],
     )
 
-    architecture = sections['architecture'].body
-    assert 'sequenceDiagram' in architecture
-    assert 'GET /login' in architecture
+    architecture = sections["architecture"].body
+    assert "sequenceDiagram" in architecture
+    assert "GET /login" in architecture

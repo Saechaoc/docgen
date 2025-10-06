@@ -31,11 +31,7 @@ def test_table_of_contents_builder_inserts_placeholder() -> None:
 
 
 def test_table_of_contents_builder_slug_matches_github() -> None:
-    md = (
-        "# Project\n\n<!-- docgen:toc -->\n\n"
-        "## Build & Test\n"
-        "## Build & Test\n"
-    )
+    md = "# Project\n\n<!-- docgen:toc -->\n\n" "## Build & Test\n" "## Build & Test\n"
     result = TableOfContentsBuilder().build(md)
     assert "- [Build & Test](#build--test)" in result
     assert "- [Build & Test](#build--test-1)" in result
@@ -82,7 +78,7 @@ def test_markdown_linter_normalises_unicode_punctuation() -> None:
     assert "—" not in linted
     assert "“" not in linted
     assert "”" not in linted
-    assert "- Item - example\"quote\"" in linted
+    assert '- Item - example"quote"' in linted
 
 
 def test_link_validator_detects_missing_file(tmp_path: Path) -> None:

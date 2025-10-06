@@ -17,8 +17,18 @@ def _manifest() -> RepoManifest:
 
 def test_validator_accepts_grounded_sentences() -> None:
     signals = [
-        Signal(name="language.all", value="Python", source="language", metadata={"languages": ["Python"]}),
-        Signal(name="entrypoint.cli", value="uvicorn", source="entrypoint", metadata={"command": "uvicorn app:app"}),
+        Signal(
+            name="language.all",
+            value="Python",
+            source="language",
+            metadata={"languages": ["Python"]},
+        ),
+        Signal(
+            name="entrypoint.cli",
+            value="uvicorn",
+            source="entrypoint",
+            metadata={"command": "uvicorn app:app"},
+        ),
     ]
     sections = {
         "quickstart": Section(
@@ -33,11 +43,17 @@ def test_validator_accepts_grounded_sentences() -> None:
                     },
                     {
                         "title": "Run project commands discovered by analyzers",
-                        "commands": ["python -m pip install -r requirements.txt", "uvicorn app:app"],
+                        "commands": [
+                            "python -m pip install -r requirements.txt",
+                            "uvicorn app:app",
+                        ],
                     },
                 ],
                 "context": ["This project exposes a FastAPI app via uvicorn."],
-                "evidence": {"signals": ["language.all", "entrypoint.cli"], "context_chunks": 1},
+                "evidence": {
+                    "signals": ["language.all", "entrypoint.cli"],
+                    "context_chunks": 1,
+                },
             },
         )
     }
@@ -55,7 +71,9 @@ def test_validator_accepts_grounded_sentences() -> None:
 
 
 def test_validator_flags_sentences_without_evidence() -> None:
-    signals = [Signal(name="language.all", value="Python", source="language", metadata={})]
+    signals = [
+        Signal(name="language.all", value="Python", source="language", metadata={})
+    ]
     sections = {
         "features": Section(
             name="features",
@@ -83,7 +101,11 @@ def test_validator_flags_sentences_without_evidence() -> None:
 
 
 def test_validator_handles_plural_tokens() -> None:
-    signals = [Signal(name="pattern.container", value="container", source="pattern", metadata={})]
+    signals = [
+        Signal(
+            name="pattern.container", value="container", source="pattern", metadata={}
+        )
+    ]
     sections = {
         "deployment": Section(
             name="deployment",
@@ -110,14 +132,19 @@ def test_validator_handles_plural_tokens() -> None:
 
 def test_validator_balanced_accepts_synonyms() -> None:
     signals = [
-        Signal(name="dependencies.python", value="aws-dynamodb", source="deps", metadata={}),
+        Signal(
+            name="dependencies.python", value="aws-dynamodb", source="deps", metadata={}
+        ),
     ]
     sections = {
         "architecture": Section(
             name="architecture",
             title="Architecture",
             body="The service persists state in DynamoDB tables.",
-            metadata={"context": [], "evidence": {"signals": ["dependencies.python"], "context_chunks": 0}},
+            metadata={
+                "context": [],
+                "evidence": {"signals": ["dependencies.python"], "context_chunks": 0},
+            },
         )
     }
     context = ValidationContext(
@@ -133,15 +160,21 @@ def test_validator_balanced_accepts_synonyms() -> None:
     assert issues == []
 
 
-
 def test_validator_strict_requires_observed_terms() -> None:
-    signals = [Signal(name="dependencies.python", value="terraform", source="deps", metadata={})]
+    signals = [
+        Signal(
+            name="dependencies.python", value="terraform", source="deps", metadata={}
+        )
+    ]
     sections = {
         "deployment": Section(
             name="deployment",
             title="Deployment",
             body="Infrastructure changes are rolled out via Terraform.",
-            metadata={"context": [], "evidence": {"signals": ["dependencies.python"], "context_chunks": 0}},
+            metadata={
+                "context": [],
+                "evidence": {"signals": ["dependencies.python"], "context_chunks": 0},
+            },
         )
     }
     context = ValidationContext(

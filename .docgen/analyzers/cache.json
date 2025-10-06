@@ -1,7 +1,7 @@
 {
   "entries": {
     "docgen.analyzers.build.BuildAnalyzer": {
-      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
       "signals": [
         {
           "metadata": {
@@ -20,11 +20,11 @@
           "value": "python"
         }
       ],
-      "signature": "docgen.analyzers.build.BuildAnalyzer:1:448f7c4b2d0dbb2ccb324a315150ac88664b99866a9c00a03bce4e0f024cf9d5",
-      "updated_at": "2025-10-06T22:19:42.837434Z"
+      "signature": "docgen.analyzers.build.BuildAnalyzer:1:c9f718bfcc46e71066b2f9d3d3ec245ca893e81586b271065982fc493f02e0a0",
+      "updated_at": "2025-10-06T22:52:22.911818Z"
     },
     "docgen.analyzers.dependencies.DependencyAnalyzer": {
-      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
       "signals": [
         {
           "metadata": {
@@ -43,10 +43,10 @@
         }
       ],
       "signature": "docgen.analyzers.dependencies.DependencyAnalyzer:1:9bd86c7404a55116ba4cfc801036ce687a4f5123fcc8d660bac4875711acf750",
-      "updated_at": "2025-10-06T22:19:42.839466Z"
+      "updated_at": "2025-10-06T22:52:22.913886Z"
     },
     "docgen.analyzers.entrypoints.EntryPointAnalyzer": {
-      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
       "signals": [
         {
           "metadata": {
@@ -93,6 +93,16 @@
         },
         {
           "metadata": {
+            "command": "python docgen/analyzers/entrypoints.py",
+            "label": "Run entrypoints.py",
+            "priority": 60
+          },
+          "name": "entrypoint.python.entrypoints",
+          "source": "entrypoints",
+          "value": "python docgen/analyzers/entrypoints.py"
+        },
+        {
+          "metadata": {
             "command": "uvicorn docgen.service.app:app --reload",
             "framework": "FastAPI",
             "label": "Run FastAPI application",
@@ -103,11 +113,11 @@
           "value": "uvicorn docgen.service.app:app --reload"
         }
       ],
-      "signature": "docgen.analyzers.entrypoints.EntryPointAnalyzer:1:27ad09aab41c550b001de116e26117b8e1510a1d565b2866ac9f9c6052465c17",
-      "updated_at": "2025-10-06T22:19:42.887944Z"
+      "signature": "docgen.analyzers.entrypoints.EntryPointAnalyzer:1:0118ba01631216b513ed55ae0cf61b6d8290a15284554362f3ff11f289900395",
+      "updated_at": "2025-10-06T22:52:22.962164Z"
     },
     "docgen.analyzers.language.LanguageAnalyzer": {
-      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
       "signals": [
         {
           "metadata": {
@@ -139,17 +149,17 @@
           "value": "Python, YAML, TOML"
         }
       ],
-      "signature": "docgen.analyzers.language.LanguageAnalyzer:1:31d318b5ee03b0152f8c4ad4a427a84cf3a12f6de34239a60a91f5f45a52b15d",
-      "updated_at": "2025-10-06T22:19:42.834918Z"
+      "signature": "docgen.analyzers.language.LanguageAnalyzer:1:ed4f1af0c3c4ad31b43f2abce19900b2d934c967d2da67b190605cefd4495355",
+      "updated_at": "2025-10-06T22:52:22.909199Z"
     },
     "docgen.analyzers.patterns.PatternAnalyzer": {
-      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
       "signals": [],
-      "signature": "docgen.analyzers.patterns.PatternAnalyzer:1:eed996582fe4516c3d752b3fb0e511bd4f2e6b5160d3581644758a6e1339b213",
-      "updated_at": "2025-10-06T22:19:42.890752Z"
+      "signature": "docgen.analyzers.patterns.PatternAnalyzer:1:355a22a6b481a8ef07a97bbd2222b39264a08e361d6beca39f68aa1be3ca0c7c",
+      "updated_at": "2025-10-06T22:52:22.964790Z"
     },
     "docgen.analyzers.structure.StructureAnalyzer": {
-      "fingerprint": "934b04f763fa401ca7e887c6f0f20c2a9c1ae7ce28e5118a894f95499e787922",
+      "fingerprint": "e8339750b2e4008486a30ca0a9746cd8294b96dd83ef715fb463fa0f1be952a0",
       "signals": [
         {
           "metadata": {
@@ -173,7 +183,7 @@
                 ]
               },
               {
-                "files": 15,
+                "files": 28,
                 "languages": [],
                 "name": ".ruff_cache",
                 "roles": [
@@ -184,22 +194,6 @@
                 "files": 1,
                 "languages": [],
                 "name": "AGENTS.md",
-                "roles": [
-                  "docs"
-                ]
-              },
-              {
-                "files": 1,
-                "languages": [],
-                "name": "README.generated.1.md",
-                "roles": [
-                  "docs"
-                ]
-              },
-              {
-                "files": 1,
-                "languages": [],
-                "name": "README.generated.before.md",
                 "roles": [
                   "docs"
                 ]
@@ -348,7 +342,7 @@
             "file": "docgen/service/app.py",
             "framework": "FastAPI",
             "language": "Python",
-            "line": 92,
+            "line": 96,
             "method": "POST",
             "path": "/update",
             "sequence": [
@@ -374,7 +368,7 @@
             "file": "tests/analyzers/test_structure.py",
             "framework": "FastAPI",
             "language": "Python",
-            "line": 19,
+            "line": 21,
             "method": "GET",
             "path": "/users/{id}",
             "sequence": [
@@ -413,6 +407,7 @@
               "dry_run: Optional[bool]",
               "status: str",
               "orchestrator_factory: Callable[[], Orchestrator]",
+              "host: str",
               "try: import uvicorn"
             ],
             "file": "docgen/service/app.py",
@@ -439,6 +434,7 @@
               "dry_run: Optional[bool]",
               "status: str",
               "orchestrator_factory: Callable[[], Orchestrator]",
+              "host: str",
               "try: import uvicorn"
             ],
             "file": "docgen/service/app.py",
@@ -464,6 +460,7 @@
               "dry_run: Optional[bool]",
               "status: str",
               "orchestrator_factory: Callable[[], Orchestrator]",
+              "host: str",
               "try: import uvicorn"
             ],
             "file": "docgen/service/app.py",
@@ -485,6 +482,7 @@
               "dry_run: Optional[bool]",
               "status: str",
               "orchestrator_factory: Callable[[], Orchestrator]",
+              "host: str",
               "try: import uvicorn"
             ],
             "file": "docgen/service/app.py",
@@ -502,6 +500,7 @@
             "fields": [
               "status: str",
               "orchestrator_factory: Callable[[], Orchestrator]",
+              "host: str",
               "try: import uvicorn"
             ],
             "file": "docgen/service/app.py",
@@ -512,8 +511,8 @@
           "value": "HealthResponse"
         }
       ],
-      "signature": "docgen.analyzers.structure.StructureAnalyzer:1:dd654245f615dd81961e91856387f0c6fd1a7a1ac81b11c9f157f4a4a723e917",
-      "updated_at": "2025-10-06T22:19:42.920174Z"
+      "signature": "docgen.analyzers.structure.StructureAnalyzer:1:ee88d61d9785688e5a432b60d0cc7ae4adcf6013127c6cf6520f912b9cb70e3e",
+      "updated_at": "2025-10-06T22:52:22.991919Z"
     }
   },
   "version": 1

@@ -44,7 +44,9 @@ class _StubOrchestrator:
             }
         )
         if dry_run:
-            return UpdateOutcome(path=Path(path) / "README.md", diff="diff", dry_run=True)
+            return UpdateOutcome(
+                path=Path(path) / "README.md", diff="diff", dry_run=True
+            )
         return None
 
 

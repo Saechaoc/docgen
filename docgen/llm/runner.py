@@ -122,7 +122,9 @@ class LLMRunner:
             raise RuntimeError(
                 f"Unable to locate '{request.executable}'. Install Ollama or provide a custom runner."
             ) from exc
-        except subprocess.CalledProcessError as exc:  # pragma: no cover - depends on environment
+        except (
+            subprocess.CalledProcessError
+        ) as exc:  # pragma: no cover - depends on environment
             raise RuntimeError(
                 f"LLM runner failed with exit code {exc.returncode}: {exc.stderr.strip()}"
             ) from exc
@@ -154,7 +156,11 @@ class LLMRunner:
             with urlopen(http_request, timeout=timeout) as response:  # type: ignore[arg-type]
                 raw = response.read()
         except HTTPError as exc:  # pragma: no cover - depends on runtime
-            detail = exc.read().decode("utf-8", errors="ignore") if hasattr(exc, "read") else ""
+            detail = (
+                exc.read().decode("utf-8", errors="ignore")
+                if hasattr(exc, "read")
+                else ""
+            )
             message = detail.strip() or exc.reason
             raise RuntimeError(
                 f"LLM HTTP runner failed with status {exc.code}: {message}"

@@ -63,7 +63,9 @@ class NoHallucinationValidator(Validator):
         self._mode = normalized_mode
         if allow_inferred is None:
             allow_inferred = normalized_mode == "balanced"
-        self._allowed_tiers: Collection[str] = ("observed", "inferred") if allow_inferred else ("observed",)
+        self._allowed_tiers: Collection[str] = (
+            ("observed", "inferred") if allow_inferred else ("observed",)
+        )
         self._synonyms_enabled = normalized_mode == "balanced"
 
     def validate(self, context: ValidationContext) -> List[ValidationIssue]:
@@ -76,12 +78,18 @@ class NoHallucinationValidator(Validator):
                 tokens = self._extract_tokens(sentence)
                 if not tokens:
                     continue
-                overlap = self._count_overlap(tokens, context.evidence, section_name, self._allowed_tiers)
+                overlap = self._count_overlap(
+                    tokens, context.evidence, section_name, self._allowed_tiers
+                )
                 if overlap >= self._min_overlap:
                     continue
-                missing = self._missing_with_synonyms(tokens, context.evidence, section_name, self._allowed_tiers)
+                missing = self._missing_with_synonyms(
+                    tokens, context.evidence, section_name, self._allowed_tiers
+                )
                 if not missing:
-                    missing = self._missing_with_synonyms(tokens, context.evidence, None, self._allowed_tiers)
+                    missing = self._missing_with_synonyms(
+                        tokens, context.evidence, None, self._allowed_tiers
+                    )
                 detail = self._build_detail(missing, context.evidence)
                 issues.append(
                     ValidationIssue(
@@ -120,7 +128,7 @@ class NoHallucinationValidator(Validator):
             if normalized.startswith(prefix):
                 return True
         if normalized.startswith("_") and normalized.endswith(":"):
-                return True
+            return True
         lower = normalized.lower()
         if len(lower) < 20:
             return True
@@ -141,7 +149,9 @@ class NoHallucinationValidator(Validator):
         overlap = 0
         for token in tokens:
             for candidate in self._expand_token(token):
-                if evidence.has_token(candidate, section=section, allowed_tiers=allowed_tiers):
+                if evidence.has_token(
+                    candidate, section=section, allowed_tiers=allowed_tiers
+                ):
                     overlap += 1
                     break
         return overlap
@@ -157,7 +167,9 @@ class NoHallucinationValidator(Validator):
         for token in tokens:
             has_match = False
             for candidate in self._expand_token(token):
-                if evidence.has_token(candidate, section=section, allowed_tiers=allowed_tiers):
+                if evidence.has_token(
+                    candidate, section=section, allowed_tiers=allowed_tiers
+                ):
                     has_match = True
                     break
             if not has_match:
@@ -184,4 +196,3 @@ class NoHallucinationValidator(Validator):
             example_text = "; ".join(examples)
             return f"Missing evidence for: {missing_display} (nearest: {example_text})"
         return f"Missing evidence for: {missing_display}"
-

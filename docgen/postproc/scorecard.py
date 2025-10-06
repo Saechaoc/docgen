@@ -14,7 +14,9 @@ from ..prompting.constants import DEFAULT_SECTIONS
 class ReadmeScorecard:
     """Evaluates README content against basic quality gates."""
 
-    def evaluate(self, markdown: str, *, link_issues: List[str] | None = None) -> Dict[str, object]:
+    def evaluate(
+        self, markdown: str, *, link_issues: List[str] | None = None
+    ) -> Dict[str, object]:
         link_issues = link_issues or []
         coverage = self._section_coverage(markdown)
         quickstart_ok = self._quickstart_has_commands(markdown)

@@ -139,11 +139,15 @@ class Orchestrator:
         except Exception as exc:  # pragma: no cover - defensive guard
             builder_failed = True
             self._log_exception("Prompt builder failed during init", exc)
-            fallback_sections = build_section_stubs(section_order, project_name=project_name, reason=str(exc))
+            fallback_sections = build_section_stubs(
+                section_order, project_name=project_name, reason=str(exc)
+            )
             sections_map = self._clone_sections(fallback_sections)
         else:
             try:
-                can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
+                can_stream = runner is not None and hasattr(
+                    builder, "build_prompt_requests"
+                )
                 if can_stream:
                     sections_map = self._generate_sections_with_llm(
                         cast(PromptBuilder, builder),
@@ -166,11 +170,15 @@ class Orchestrator:
             except Exception as exc:  # pragma: no cover - defensive guard
                 builder_failed = True
                 self._log_exception("Prompt builder failed during init", exc)
-                fallback_sections = build_section_stubs(section_order, project_name=project_name, reason=str(exc))
+                fallback_sections = build_section_stubs(
+                    section_order, project_name=project_name, reason=str(exc)
+                )
                 sections_map = self._clone_sections(fallback_sections)
 
         if not sections_map:
-            self.logger.warning("Prompt builder returned no sections; using stub content")
+            self.logger.warning(
+                "Prompt builder returned no sections; using stub content"
+            )
             sections_map = build_section_stubs(section_order, project_name=project_name)
         else:
             sections_map = self._fill_missing_sections(
@@ -201,7 +209,9 @@ class Orchestrator:
             except ValidationError as exc:
                 if validation_retried:
                     raise
-                if not self._apply_validation_fallback(exc, sections_map, fallback_sections):
+                if not self._apply_validation_fallback(
+                    exc, sections_map, fallback_sections
+                ):
                     raise
                 self.logger.warning(
                     "Validation failed for %s; falling back to deterministic templates before retry",
@@ -218,7 +228,9 @@ class Orchestrator:
             section_order,
         )
         if not readme_content.strip():
-            self.logger.warning("Prompt builder produced empty README; using stub content")
+            self.logger.warning(
+                "Prompt builder produced empty README; using stub content"
+            )
             readme_content = build_readme_stub(repo_path)
         linted = self._lint(readme_content)
         final_content = self._apply_badges(self._apply_toc(linted))
@@ -299,11 +311,15 @@ class Orchestrator:
         except Exception as exc:  # pragma: no cover - defensive guard
             builder_failed = True
             self._log_exception("Prompt builder failed during update", exc)
-            fallback_sections = build_section_stubs(diff.sections, project_name=project_name, reason=str(exc))
+            fallback_sections = build_section_stubs(
+                diff.sections, project_name=project_name, reason=str(exc)
+            )
             sections_map = self._clone_sections(fallback_sections)
         else:
             try:
-                can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
+                can_stream = runner is not None and hasattr(
+                    builder, "build_prompt_requests"
+                )
                 if can_stream:
                     sections_map = self._generate_sections_with_llm(
                         cast(PromptBuilder, builder),
@@ -326,11 +342,15 @@ class Orchestrator:
             except Exception as exc:  # pragma: no cover - defensive guard
                 builder_failed = True
                 self._log_exception("Prompt builder failed during update", exc)
-                fallback_sections = build_section_stubs(diff.sections, project_name=project_name, reason=str(exc))
+                fallback_sections = build_section_stubs(
+                    diff.sections, project_name=project_name, reason=str(exc)
+                )
                 sections_map = self._clone_sections(fallback_sections)
 
         if not sections_map:
-            self.logger.warning("Prompt builder returned no sections for update; using stub content")
+            self.logger.warning(
+                "Prompt builder returned no sections for update; using stub content"
+            )
             sections_map = build_section_stubs(diff.sections, project_name=project_name)
             if not sections_map:
                 self._refresh_rag_index_async(manifest, list(DEFAULT_SECTIONS))
@@ -364,7 +384,9 @@ class Orchestrator:
             except ValidationError as exc:
                 if validation_retried:
                     raise
-                if not self._apply_validation_fallback(exc, sections_map, fallback_sections):
+                if not self._apply_validation_fallback(
+                    exc, sections_map, fallback_sections
+                ):
                     raise
                 self.logger.warning(
                     "Validation failed for %s; reverting to deterministic sections before retry",
@@ -383,14 +405,18 @@ class Orchestrator:
             updated = self.marker_manager.replace(updated, section_name, section.body)
 
         if updated == original:
-            self.logger.info("Rendered sections are identical to existing content; skipping write")
+            self.logger.info(
+                "Rendered sections are identical to existing content; skipping write"
+            )
             self._refresh_rag_index_async(manifest, list(DEFAULT_SECTIONS))
             return None
 
         linted = self._lint(updated)
         final_content = self._apply_badges(self._apply_toc(linted))
         if final_content == original:
-            self.logger.info("Post-processed README identical to existing version; skipping write")
+            self.logger.info(
+                "Post-processed README identical to existing version; skipping write"
+            )
             self._refresh_rag_index_async(manifest, list(DEFAULT_SECTIONS))
             return None
 
@@ -426,13 +452,19 @@ class Orchestrator:
         toc_builder = self.toc_builder or TableOfContentsBuilder()
         return toc_builder.build(markdown)
 
-    def _maybe_commit(self, repo_path: Path, readme_path: Path, config: DocGenConfig) -> None:
+    def _maybe_commit(
+        self, repo_path: Path, readme_path: Path, config: DocGenConfig
+    ) -> None:
         publish_mode = config.publish.mode if config.publish else None
         if publish_mode != "commit":
             return
         publisher = self.publisher or Publisher()
         self.logger.info("Committing README via publisher")
-        publisher.commit(str(repo_path), [readme_path], message="docs: bootstrap README via docgen init")
+        publisher.commit(
+            str(repo_path),
+            [readme_path],
+            message="docs: bootstrap README via docgen init",
+        )
 
     @staticmethod
     def _load_config(repo_path: Path) -> DocGenConfig:
@@ -481,7 +513,9 @@ class Orchestrator:
             except Exception as exc:  # pragma: no cover - background best effort
                 self.logger.debug("Async RAG rebuild failed: %s", exc)
 
-        thread = threading.Thread(target=_worker, name="docgen-rag-refresh", daemon=True)
+        thread = threading.Thread(
+            target=_worker, name="docgen-rag-refresh", daemon=True
+        )
         self._rag_refresh_thread = thread
         thread.start()
 
@@ -519,7 +553,9 @@ class Orchestrator:
                 continue
             self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
             computed = list(analyzer.analyze(manifest))
-            cache.store(key, signature=signature, fingerprint=fingerprint, signals=computed)
+            cache.store(
+                key, signature=signature, fingerprint=fingerprint, signals=computed
+            )
             signals.extend(computed)
         cache.prune(used_keys)
         cache.persist()
@@ -595,7 +631,9 @@ class Orchestrator:
                 "Prompt builder produced empty sections (%s); using stub content",
                 ", ".join(missing),
             )
-            stub_sections = build_section_stubs(missing, project_name=project_name, reason=reason)
+            stub_sections = build_section_stubs(
+                missing, project_name=project_name, reason=reason
+            )
             sections.update(stub_sections)
         return sections
 
@@ -633,7 +671,9 @@ class Orchestrator:
 
         if not settings.enabled:
             reason = skip_reason or settings.source
-            self.logger.info("README validation disabled via %s settings.", settings.source)
+            self.logger.info(
+                "README validation disabled via %s settings.", settings.source
+            )
             self._write_validation_report(
                 repo_path,
                 status="disabled",
@@ -679,7 +719,11 @@ class Orchestrator:
         if issues:
             offending_sections = sorted({issue.section for issue in issues})
             for issue in issues:
-                self.logger.error("Validation failure in section '%s': %s", issue.section, issue.detail)
+                self.logger.error(
+                    "Validation failure in section '%s': %s",
+                    issue.section,
+                    issue.detail,
+                )
                 if self.logger.isEnabledFor(logging.DEBUG):
                     self.logger.debug("Sentence: %s", issue.sentence)
             self._write_validation_report(
@@ -753,7 +797,11 @@ class Orchestrator:
         key = (settings.mode, settings.allow_inferred)
         cached = self._validator_cache.get(key)
         if cached is None:
-            cached = [NoHallucinationValidator(mode=settings.mode, allow_inferred=settings.allow_inferred)]
+            cached = [
+                NoHallucinationValidator(
+                    mode=settings.mode, allow_inferred=settings.allow_inferred
+                )
+            ]
             self._validator_cache[key] = cached
         return list(cached)
 
@@ -786,22 +834,32 @@ class Orchestrator:
         try:
             report_dir.mkdir(parents=True, exist_ok=True)
         except Exception:  # pragma: no cover - filesystem guard
-            self.logger.debug("Unable to create validation report directory", exc_info=True)
+            self.logger.debug(
+                "Unable to create validation report directory", exc_info=True
+            )
             return
         report_path = report_dir / "validation.json"
         evidence_summary: Dict[str, Dict[str, int]] = {}
         for name, section in sections.items():
             metadata = section.metadata if isinstance(section.metadata, dict) else {}
-            context_values = metadata.get("context") if isinstance(metadata, dict) else []
-            if isinstance(context_values, Sequence) and not isinstance(context_values, (str, bytes)):
+            context_values = (
+                metadata.get("context") if isinstance(metadata, dict) else []
+            )
+            if isinstance(context_values, Sequence) and not isinstance(
+                context_values, (str, bytes)
+            ):
                 context_count = len(context_values)
             else:
                 context_count = 0
-            evidence_meta = metadata.get("evidence") if isinstance(metadata, dict) else {}
+            evidence_meta = (
+                metadata.get("evidence") if isinstance(metadata, dict) else {}
+            )
             signal_count = 0
             if isinstance(evidence_meta, Mapping):
                 signals_field = evidence_meta.get("signals")
-                if isinstance(signals_field, Sequence) and not isinstance(signals_field, (str, bytes)):
+                if isinstance(signals_field, Sequence) and not isinstance(
+                    signals_field, (str, bytes)
+                ):
                     signal_count = len(list(signals_field))
             evidence_summary[name] = {
                 "context_chunks": context_count,
@@ -830,7 +888,9 @@ class Orchestrator:
             "generated_at": now_utc.isoformat().replace("+00:00", "Z"),
         }
         try:
-            report_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+            report_path.write_text(
+                json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+            )
         except Exception:  # pragma: no cover - filesystem guard
             self.logger.debug("Unable to write validation report", exc_info=True)
 
@@ -853,7 +913,11 @@ class Orchestrator:
             )
             return
 
-        branch_prefix = publish_cfg.branch_prefix if publish_cfg and publish_cfg.branch_prefix else "docgen/readme-update"
+        branch_prefix = (
+            publish_cfg.branch_prefix
+            if publish_cfg and publish_cfg.branch_prefix
+            else "docgen/readme-update"
+        )
         branch_name = self._build_branch_name(branch_prefix)
         title = self._build_pr_title(diff)
         body = self._build_pr_body(diff)
@@ -877,7 +941,9 @@ class Orchestrator:
         else:
             self.logger.error("%s: %s", message, exc)
 
-    def _resolve_prompt_builder(self, config: DocGenConfig, repo_path: Path) -> PromptBuilder:
+    def _resolve_prompt_builder(
+        self, config: DocGenConfig, repo_path: Path
+    ) -> PromptBuilder:
         base = self.prompt_builder
         if not isinstance(base, PromptBuilder):
             return base
@@ -928,7 +994,9 @@ class Orchestrator:
         llm_cfg = config.llm
         if llm_cfg is None and not self._llm_runner_is_external:
             if not self._llm_environment_available():
-                self.logger.debug("No LLM configuration detected; using deterministic generation mode.")
+                self.logger.debug(
+                    "No LLM configuration detected; using deterministic generation mode."
+                )
                 self._llm_runner = None
                 self._llm_runner_signature = None
                 return None
@@ -954,7 +1022,9 @@ class Orchestrator:
         try:
             if llm_cfg.runner and llm_cfg.runner.lower() in {"llama.cpp", "llamacpp"}:
                 if not llm_cfg.model:
-                    self.logger.warning("llama.cpp runner requires `model` to be configured in .docgen.yml")
+                    self.logger.warning(
+                        "llama.cpp runner requires `model` to be configured in .docgen.yml"
+                    )
                     return None
                 from .llm.llamacpp import LlamaCppRunner
 
@@ -1017,10 +1087,15 @@ class Orchestrator:
         requested_sections: Sequence[str],
     ) -> Set[str]:
         canonical_requested: Dict[str, str] = {
-            self._canonical_section_name(section): section for section in requested_sections
+            self._canonical_section_name(section): section
+            for section in requested_sections
         }
 
-        mode_raw = config.generation.mode if config.generation and config.generation.mode else "balanced"
+        mode_raw = (
+            config.generation.mode
+            if config.generation and config.generation.mode
+            else "balanced"
+        )
         mode = mode_raw.strip().lower()
         if mode in {"strict", "deterministic"}:
             allowed_canonical: Set[str] = set()
@@ -1075,56 +1150,86 @@ class Orchestrator:
             fallback_section = fallback_sections.get(name)
             if name not in allowed_sections:
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="llm_disabled")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="llm_disabled"
+                    )
                 continue
 
             request = requests.get(name)
             if request is None:
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="missing_prompt_request")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="missing_prompt_request"
+                    )
                 continue
 
             outline_prompt = request.metadata.get("outline_prompt")
-            system_prompt = next((m.content for m in request.messages if m.role == "system"), None)
+            system_prompt = next(
+                (m.content for m in request.messages if m.role == "system"), None
+            )
             user_messages = [m.content for m in request.messages if m.role == "user"]
             prompt_text = "\n\n".join(user_messages)
 
             self.logger.info("Generating README section via LLM: %s", name)
             try:
-                response = runner.run(prompt_text, system=system_prompt, max_tokens=request.max_tokens)
+                response = runner.run(
+                    prompt_text, system=system_prompt, max_tokens=request.max_tokens
+                )
             except RuntimeError as exc:
                 self.logger.warning("LLM runner failed for section %s: %s", name, exc)
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="llm_error")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="llm_error"
+                    )
                 continue
 
             body = response.strip()
             if not body:
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="llm_empty")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="llm_empty"
+                    )
                 continue
-            if name in {"quickstart", "configuration", "build_and_test"} and self._looks_like_structured_payload(body):
+            if name in {
+                "quickstart",
+                "configuration",
+                "build_and_test",
+            } and self._looks_like_structured_payload(body):
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="llm_structured_payload")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="llm_structured_payload"
+                    )
                 continue
             # Strip a redundant self-heading (e.g., "## Architecture") that some models prepend
             expected_title = SECTION_TITLES.get(name, name.replace("_", " ").title())
             body = self._strip_redundant_heading(expected_title, body)
             if self._looks_low_quality_section(name, body):
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="llm_low_quality")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="llm_low_quality"
+                    )
                 continue
             if self._looks_like_prompt_echo(body):
                 if fallback_section:
-                    generated[name] = self._clone_section(fallback_section, reason="llm_prompt_echo")
+                    generated[name] = self._clone_section(
+                        fallback_section, reason="llm_prompt_echo"
+                    )
                 continue
             if outline_prompt:
-                outline_lines = [item.strip("- *") for item in outline_prompt.splitlines() if item.strip()]
+                outline_lines = [
+                    item.strip("- *")
+                    for item in outline_prompt.splitlines()
+                    if item.strip()
+                ]
                 if outline_lines:
-                    matched_outline = sum(1 for item in outline_lines if item and item in body)
+                    matched_outline = sum(
+                        1 for item in outline_lines if item and item in body
+                    )
                     if matched_outline >= max(1, len(outline_lines) - 1):
                         if fallback_section:
-                            generated[name] = self._clone_section(fallback_section, reason="llm_outline_echo")
+                            generated[name] = self._clone_section(
+                                fallback_section, reason="llm_outline_echo"
+                            )
                         continue
 
             title = SECTION_TITLES.get(name, name.replace("_", " ").title())
@@ -1140,25 +1245,37 @@ class Orchestrator:
             )
         return generated
 
-
     @staticmethod
-    def _clone_section(section: Section, *, reason: str | None = None, mark_llm: bool = True) -> Section:
+    def _clone_section(
+        section: Section, *, reason: str | None = None, mark_llm: bool = True
+    ) -> Section:
         metadata = dict(section.metadata)
         if mark_llm:
             metadata.setdefault("llm", False)
             if reason:
                 metadata["llm_fallback_reason"] = reason
-        return Section(name=section.name, title=section.title, body=section.body, metadata=metadata)
+        return Section(
+            name=section.name, title=section.title, body=section.body, metadata=metadata
+        )
 
     @staticmethod
     def _clone_sections(sections: Dict[str, Section]) -> Dict[str, Section]:
-        return {name: Orchestrator._clone_section(section, mark_llm=False) for name, section in sections.items()}
+        return {
+            name: Orchestrator._clone_section(section, mark_llm=False)
+            for name, section in sections.items()
+        }
 
     @staticmethod
     def _looks_like_prompt_echo(body: str) -> bool:
         if not body:
             return True
-        markers = ("Project:", "Section:", "Outline and emphasis:", "Key signals (JSON):", "Context snippets:")
+        markers = (
+            "Project:",
+            "Section:",
+            "Outline and emphasis:",
+            "Key signals (JSON):",
+            "Context snippets:",
+        )
         marker_hits = sum(1 for marker in markers if marker in body)
         if marker_hits >= 2:
             return True
@@ -1197,7 +1314,7 @@ class Orchestrator:
             return True
         if name == "features":
             lines = [line for line in plain.splitlines() if line.strip()]
-            if not any(line.lstrip().startswith(('- ', '* ')) for line in lines):
+            if not any(line.lstrip().startswith(("- ", "* ")) for line in lines):
                 return True
         # Reject when the section body re-introduces its own H1/H2 heading
         expected_title = SECTION_TITLES.get(name, name.replace("_", " ").title())
@@ -1211,7 +1328,11 @@ class Orchestrator:
                 if line.strip().lower() == pat.lower():
                     return True
         if name == "architecture":
-            if "### " not in plain and "```mermaid" not in plain and "| ---" not in plain:
+            if (
+                "### " not in plain
+                and "```mermaid" not in plain
+                and "| ---" not in plain
+            ):
                 return True
         return False
 
@@ -1256,10 +1377,16 @@ class Orchestrator:
                 continue
             current = sections.get(name)
             if current is not None:
-                metadata = current.metadata if isinstance(current.metadata, dict) else {}
-                if metadata.get("llm") is False and metadata.get("llm_fallback_reason") not in {None, "validation_failed"}:
+                metadata = (
+                    current.metadata if isinstance(current.metadata, dict) else {}
+                )
+                if metadata.get("llm") is False and metadata.get(
+                    "llm_fallback_reason"
+                ) not in {None, "validation_failed"}:
                     continue
-            sections[name] = Orchestrator._clone_section(fallback, reason="validation_failed")
+            sections[name] = Orchestrator._clone_section(
+                fallback, reason="validation_failed"
+            )
             replaced = True
         return replaced
 
@@ -1273,7 +1400,9 @@ class Orchestrator:
         project_name = Path(manifest.root).name or "Repository"
         intro = sections.get("intro")
         if intro is None:
-            self.logger.warning("LLM runner did not produce an intro section; using stub content")
+            self.logger.warning(
+                "LLM runner did not produce an intro section; using stub content"
+            )
             stub = build_section_stubs(["intro"], project_name=project_name)
             intro = stub["intro"]
         ordered_sections: List[Section] = []
@@ -1389,8 +1518,10 @@ class Orchestrator:
             "## Changed files",
         ]
         lines.extend(f"- `{path}`" for path in changed_files)
-        lines.extend([
-            "",
-            "Generated by `docgen update`.",
-        ])
+        lines.extend(
+            [
+                "",
+                "Generated by `docgen update`.",
+            ]
+        )
         return "\n".join(lines)

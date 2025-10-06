@@ -50,7 +50,9 @@ class LlamaCppRunner:
             raise RuntimeError(
                 f"Unable to locate llama.cpp executable '{self.executable}'."
             ) from exc
-        except subprocess.CalledProcessError as exc:  # pragma: no cover - environment dependent
+        except (
+            subprocess.CalledProcessError
+        ) as exc:  # pragma: no cover - environment dependent
             message = exc.stderr.strip() or exc.stdout.strip() or str(exc.returncode)
             raise RuntimeError(f"llama.cpp execution failed: {message}") from exc
 

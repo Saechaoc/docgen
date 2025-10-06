@@ -56,7 +56,9 @@ def test_scan_rejects_missing_directory(tmp_path: Path) -> None:
     except FileNotFoundError as exc:
         assert str(missing) in str(exc)
     else:  # pragma: no cover - defensive guard
-        raise AssertionError("Expected FileNotFoundError when scanning missing directory")
+        raise AssertionError(
+            "Expected FileNotFoundError when scanning missing directory"
+        )
 
 
 def test_scan_respects_gitignore(tmp_path: Path) -> None:

@@ -247,6 +247,7 @@ python -m venv .venv
 python -m pip install -e .
 uvicorn docgen.service.app:app --reload
 python docgen/cli.py
+python docgen/analyzers/entrypoints.py
 ```
 <!-- docgen:end:quickstart -->
 
@@ -300,7 +301,7 @@ ci:
 <!-- docgen:begin:build_and_test -->
 - **Format & lint**
 ```bash
-black docgen tests
+python -m black docgen tests
 python -m ruff check docgen tests
 ```
 

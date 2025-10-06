@@ -27,7 +27,11 @@ def build_readme_stub(
 
     intro_body = _section_stub_body("intro", project_name, cleaned_reason)
     intro_block = marker_manager.wrap(
-        SectionContent(name="intro", title=SECTION_TITLES.get("intro", "Introduction"), body=intro_body)
+        SectionContent(
+            name="intro",
+            title=SECTION_TITLES.get("intro", "Introduction"),
+            body=intro_body,
+        )
     )
     lines.append(intro_block)
     lines.append("")
@@ -62,7 +66,11 @@ def build_section_stubs(
             name=name,
             title=title,
             body=body,
-            metadata={"fallback": True, "reason": cleaned_reason} if cleaned_reason else {"fallback": True},
+            metadata=(
+                {"fallback": True, "reason": cleaned_reason}
+                if cleaned_reason
+                else {"fallback": True}
+            ),
         )
     return sections
 

@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from typing import List
 
-_UNICODE_PUNCT = str.maketrans({
-    ord("–"): "-",
-    ord("—"): "-",
-    ord("“"): '"',
-    ord("”"): '"',
-    ord("‘"): "'",
-    ord("’"): "'",
-})
+_UNICODE_PUNCT = str.maketrans(
+    {
+        ord("–"): "-",
+        ord("—"): "-",
+        ord("“"): '"',
+        ord("”"): '"',
+        ord("‘"): "'",
+        ord("’"): "'",
+    }
+)
 
 
 class MarkdownLinter:

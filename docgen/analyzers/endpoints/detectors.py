@@ -76,7 +76,15 @@ class SpecDetector(EndpointDetector):
                 continue
             for method in mapping.keys():
                 verb = method.upper()
-                if verb not in {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"}:
+                if verb not in {
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "PATCH",
+                    "OPTIONS",
+                    "HEAD",
+                }:
                     continue
                 yield Endpoint(
                     method=verb,
@@ -125,7 +133,11 @@ class SpecDetector(EndpointDetector):
             url = request.get("url") or {}
             path_segments = url.get("path") if isinstance(url, dict) else None
             if isinstance(path_segments, list) and path_segments:
-                path = "/" + "/".join(segment.strip("/") for segment in path_segments if isinstance(segment, str))
+                path = "/" + "/".join(
+                    segment.strip("/")
+                    for segment in path_segments
+                    if isinstance(segment, str)
+                )
             else:
                 raw = url.get("raw") if isinstance(url, dict) else None
                 path = raw or "/"
@@ -165,6 +177,7 @@ class SpecDetector(EndpointDetector):
                 confidence=1.0,
             )
         return []
+
 
 # ---------------------------------------------------------------------------
 # FastAPI detector
@@ -216,7 +229,9 @@ class ExpressDetector(EndpointDetector):
     """Detect Express-style router verb invocations."""
 
     def supports_repo(self, manifest) -> bool:  # noqa: ANN001 - dynamic typing
-        return any(file.language in {"JavaScript", "TypeScript"} for file in manifest.files)
+        return any(
+            file.language in {"JavaScript", "TypeScript"} for file in manifest.files
+        )
 
     def extract(self, manifest) -> Iterable[Endpoint]:  # noqa: ANN001 - dynamic typing
         root = Path(manifest.root)
@@ -248,7 +263,9 @@ _SPRING_SHORT = re.compile(
     r"@(?P<verb>Get|Post|Put|Delete|Patch)Mapping\s*\(\s*(?:value|path\s*=\s*)?(?P<quote>['\"])(?P<path>[^'\"]+)(?P=quote)",
     re.IGNORECASE,
 )
-_SPRING_REQUEST_MAPPING = re.compile(r"@RequestMapping\s*\(\s*(?P<args>[^)]*)\)", re.DOTALL | re.IGNORECASE)
+_SPRING_REQUEST_MAPPING = re.compile(
+    r"@RequestMapping\s*\(\s*(?P<args>[^)]*)\)", re.DOTALL | re.IGNORECASE
+)
 
 
 class SpringDetector(EndpointDetector):
@@ -298,7 +315,11 @@ class SpringDetector(EndpointDetector):
 
     @staticmethod
     def _resolve_class_base(text: str) -> str:
-        class_mapping = re.search(r"@RequestMapping\s*\(\s*(?P<args>[^)]*)\)\s*(?:public\s+|protected\s+|private\s+)?class", text, re.DOTALL | re.IGNORECASE)
+        class_mapping = re.search(
+            r"@RequestMapping\s*\(\s*(?P<args>[^)]*)\)\s*(?:public\s+|protected\s+|private\s+)?class",
+            text,
+            re.DOTALL | re.IGNORECASE,
+        )
         if not class_mapping:
             return ""
         path = SpringDetector._extract_request_path(class_mapping.group("args"))
@@ -306,14 +327,20 @@ class SpringDetector(EndpointDetector):
 
     @staticmethod
     def _extract_request_method(args: str) -> Optional[str]:
-        match = re.search(r"method\s*=\s*RequestMethod\.(GET|POST|PUT|DELETE|PATCH)", args, re.IGNORECASE)
+        match = re.search(
+            r"method\s*=\s*RequestMethod\.(GET|POST|PUT|DELETE|PATCH)",
+            args,
+            re.IGNORECASE,
+        )
         if match:
             return match.group(1).upper()
         return None
 
     @staticmethod
     def _extract_request_path(args: str) -> Optional[str]:
-        named = re.search(r"(?:value|path)\s*=\s*(?P<quote>['\"])(?P<path>[^'\"]+)(?P=quote)", args)
+        named = re.search(
+            r"(?:value|path)\s*=\s*(?P<quote>['\"])(?P<path>[^'\"]+)(?P=quote)", args
+        )
         if named:
             return named.group("path")
         positional = re.search(r"(?P<quote>['\"])(?P<path>[^'\"]+)(?P=quote)", args)

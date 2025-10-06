@@ -5,7 +5,17 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 import re
-from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Protocol, Sequence, Set
+from typing import (
+    Collection,
+    Iterable,
+    List,
+    Mapping,
+    MutableMapping,
+    Optional,
+    Protocol,
+    Sequence,
+    Set,
+)
 
 from typing import TYPE_CHECKING
 
@@ -123,8 +133,12 @@ class EvidenceIndex:
 
     def __init__(self) -> None:
         self._global_terms: Dict[str, str] = {}
-        self._section_terms: MutableMapping[Optional[str], Dict[str, str]] = defaultdict(dict)
-        self._token_sources: MutableMapping[str, List[EvidenceSnapshot]] = defaultdict(list)
+        self._section_terms: MutableMapping[Optional[str], Dict[str, str]] = (
+            defaultdict(dict)
+        )
+        self._token_sources: MutableMapping[str, List[EvidenceSnapshot]] = defaultdict(
+            list
+        )
 
     def add(
         self,
@@ -156,7 +170,10 @@ class EvidenceIndex:
         for token, snapshots in other._token_sources.items():
             existing = self._token_sources[token]
             for snap in snapshots:
-                if all(s.source != snap.source or s.snippet != snap.snippet for s in existing):
+                if all(
+                    s.source != snap.source or s.snippet != snap.snippet
+                    for s in existing
+                ):
                     existing.append(snap)
 
     def has_token(
@@ -182,7 +199,10 @@ class EvidenceIndex:
         section: Optional[str] = None,
         allowed_tiers: Optional[Collection[str]] = None,
     ) -> bool:
-        return any(self.has_token(token, section=section, allowed_tiers=allowed_tiers) for token in tokens)
+        return any(
+            self.has_token(token, section=section, allowed_tiers=allowed_tiers)
+            for token in tokens
+        )
 
     def missing_tokens(
         self,
@@ -205,7 +225,10 @@ class EvidenceIndex:
         tier = tier if tier in self._TIER_PRIORITY else self._INFERRED
         if section is None:
             current = self._global_terms.get(token)
-            if current is None or self._TIER_PRIORITY[tier] > self._TIER_PRIORITY[current]:
+            if (
+                current is None
+                or self._TIER_PRIORITY[tier] > self._TIER_PRIORITY[current]
+            ):
                 self._global_terms[token] = tier
             return
         bucket = self._section_terms[section]
@@ -242,7 +265,9 @@ class EvidenceIndex:
             tokens.add(lowered)
             if any(c.isupper() for c in raw[1:]):
                 parts = [part.lower() for part in _CAMEL_PATTERN.split(raw) if part]
-                tokens.update(part for part in parts if len(part) >= 3 and part not in _STOPWORDS)
+                tokens.update(
+                    part for part in parts if len(part) >= 3 and part not in _STOPWORDS
+                )
             for splitter in ("-", "_", "/", "."):
                 if splitter in raw:
                     tokens.update(
@@ -259,7 +284,6 @@ class EvidenceIndex:
                 if len(digits) >= 2:
                     tokens.add(digits)
         return tokens
-
 
 
 @dataclass
@@ -279,23 +303,42 @@ def build_evidence_index(
     """Construct an evidence index from analyzer signals and section metadata."""
     index = EvidenceIndex()
     for signal in signals:
-        index.add(signal.value, section=None, source=f"signal:{signal.name}", tier="inferred")
+        index.add(
+            signal.value, section=None, source=f"signal:{signal.name}", tier="inferred"
+        )
         for item in _flatten(signal.metadata):
-            index.add(str(item), section=None, source=f"signal_meta:{signal.name}", tier="inferred")
+            index.add(
+                str(item),
+                section=None,
+                source=f"signal_meta:{signal.name}",
+                tier="inferred",
+            )
     for name, section in sections.items():
-        context_values = section.metadata.get("context", []) if isinstance(section.metadata, dict) else []
+        context_values = (
+            section.metadata.get("context", [])
+            if isinstance(section.metadata, dict)
+            else []
+        )
         if isinstance(context_values, Sequence):
             for chunk in context_values:
                 as_str = str(chunk)
-                index.add(as_str, section=name, source=f"context:{name}", tier="observed")
-                index.add(as_str, section=None, source=f"context:{name}", tier="observed")
+                index.add(
+                    as_str, section=name, source=f"context:{name}", tier="observed"
+                )
+                index.add(
+                    as_str, section=None, source=f"context:{name}", tier="observed"
+                )
         for meta_value in _flatten(section.metadata):
             as_str = str(meta_value)
             index.add(as_str, section=name, source=f"metadata:{name}", tier="observed")
             index.add(as_str, section=None, source=f"metadata:{name}", tier="observed")
         if section.title:
-            index.add(section.title, section=name, source=f"title:{name}", tier="observed")
-            index.add(section.title, section=None, source=f"title:{name}", tier="observed")
+            index.add(
+                section.title, section=name, source=f"title:{name}", tier="observed"
+            )
+            index.add(
+                section.title, section=None, source=f"title:{name}", tier="observed"
+            )
     return index
 
 

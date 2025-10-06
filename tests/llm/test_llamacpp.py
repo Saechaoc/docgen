@@ -25,7 +25,12 @@ def test_llamacpp_runner_invokes_subprocess(monkeypatch, tmp_path: Path) -> None
 
     monkeypatch.setattr("docgen.llm.llamacpp.subprocess.run", fake_run)
 
-    runner = LlamaCppRunner(model_path=str(model), executable="llama-binary", max_tokens=128, temperature=0.5)
+    runner = LlamaCppRunner(
+        model_path=str(model),
+        executable="llama-binary",
+        max_tokens=128,
+        temperature=0.5,
+    )
     response = runner.run("Hello", system="Be helpful", max_tokens=64)
 
     assert response == "response"

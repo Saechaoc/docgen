@@ -132,7 +132,9 @@ def load_config(config_path: Path) -> DocGenConfig:
 
     readme_data = _as_dict(data.get("readme"))
     style = _as_str(readme_data.get("style")) if readme_data else None
-    templates_dir_str = _as_str(readme_data.get("templates_dir")) if readme_data else None
+    templates_dir_str = (
+        _as_str(readme_data.get("templates_dir")) if readme_data else None
+    )
     template_pack = _as_str(readme_data.get("template_pack")) if readme_data else None
     token_budget_default: Optional[int] = None
     token_budget_overrides: Dict[str, int] = {}
@@ -159,7 +161,14 @@ def load_config(config_path: Path) -> DocGenConfig:
             labels=_as_str_list(publish_data.get("labels")),
             update_existing=_as_bool(publish_data.get("update_existing")) or False,
         )
-        if not any((publish.mode, publish.branch_prefix, publish.labels, publish.update_existing)):
+        if not any(
+            (
+                publish.mode,
+                publish.branch_prefix,
+                publish.labels,
+                publish.update_existing,
+            )
+        ):
             publish = None
 
     ci_data = _as_dict(data.get("ci"))
@@ -249,7 +258,9 @@ def _parse_simple_yaml(text: str) -> Dict[str, Any]:
     return mapping
 
 
-def _parse_mapping(lines: Sequence[str], start: int, indent: int) -> tuple[Dict[str, Any], int]:
+def _parse_mapping(
+    lines: Sequence[str], start: int, indent: int
+) -> tuple[Dict[str, Any], int]:
     result: Dict[str, Any] = {}
     index = start
     while index < len(lines):
@@ -292,7 +303,9 @@ def _parse_mapping(lines: Sequence[str], start: int, indent: int) -> tuple[Dict[
     return result, index
 
 
-def _parse_sequence(lines: Sequence[str], start: int, indent: int) -> tuple[List[Any], int]:
+def _parse_sequence(
+    lines: Sequence[str], start: int, indent: int
+) -> tuple[List[Any], int]:
     items: List[Any] = []
     index = start
     while index < len(lines):
@@ -428,7 +441,9 @@ def _as_str_list(value: Any) -> List[str]:
     if isinstance(value, str):
         return [value]
     if isinstance(value, Sequence):
-        result = [str(item) for item in value if isinstance(item, (str, int, float, bool))]
+        result = [
+            str(item) for item in value if isinstance(item, (str, int, float, bool))
+        ]
         return result
     return []
 
