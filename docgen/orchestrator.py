@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 import difflib
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, cast
@@ -595,6 +595,7 @@ class Orchestrator:
                 "context_chunks": context_count,
                 "signal_count": signal_count,
             }
+        now_utc = datetime.now(UTC)
         payload = {
             "status": status,
             "mode": mode,
@@ -612,7 +613,7 @@ class Orchestrator:
             ],
             "requested_sections": list(request_sections),
             "evidence_summary": evidence_summary,
-            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "generated_at": now_utc.isoformat().replace("+00:00", "Z"),
         }
         try:
             report_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
@@ -895,7 +896,7 @@ class Orchestrator:
     @staticmethod
     def _build_branch_name(prefix: str) -> str:
         sanitized = prefix.strip().replace(" ", "-") or "docgen/readme-update"
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
         if sanitized.endswith("/"):
             return f"{sanitized}{timestamp}"
         return f"{sanitized}-{timestamp}"
