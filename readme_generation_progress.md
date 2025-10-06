@@ -20,6 +20,7 @@ Establish a reproducible, high-quality README generation pipeline that works acr
 - Added async RAG refresh hooks that rebuild embeddings after init/update without delaying markdown writes.
 - Updated builder, validator, config, and orchestrator unit suites plus the validation integration test (current runs pass under the new defaults).
 - Extended orchestrator coverage for strict generation overrides and per-section LLM toggles.
+- Refreshed failsafe stubs so fallback sections provide actionable guidance instead of placeholder warnings.
 
 ## Work In Flight
 - Finalize spec updates documenting balanced validation, generation modes, and fallback behaviour (see `spec/spec.md`).

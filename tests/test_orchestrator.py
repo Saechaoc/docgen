@@ -383,7 +383,7 @@ def test_run_init_falls_back_to_stub_on_prompt_failure(tmp_path: Path) -> None:
     readme_path = orchestrator.run_init(str(repo_root))
 
     content = readme_path.read_text(encoding="utf-8")
-    assert "placeholder README" in content
+    assert "placeholder introduction" in content
     assert "## Table of Contents" in content
 
 
@@ -406,7 +406,7 @@ def test_run_update_uses_stub_when_builder_fails(tmp_path: Path) -> None:
     assert isinstance(outcome, UpdateOutcome)
     assert not outcome.dry_run
     content = (repo_root / "README.md").read_text(encoding="utf-8")
-    assert "docgen could not populate the Build & Test section automatically." in content
+    assert "Outline how contributors lint, test, and build the project." in content
 
 
 def test_run_update_with_llm_runner_and_custom_builder_falls_back(tmp_path: Path) -> None:
