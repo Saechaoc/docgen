@@ -79,11 +79,15 @@ def create_app(
         orchestrator: Orchestrator = Depends(get_orchestrator),
     ) -> InitResponse:
         def _run_init() -> Path:
-            return orchestrator.run_init(payload.path, skip_validation=payload.skip_validation)
+            return orchestrator.run_init(
+                payload.path, skip_validation=payload.skip_validation
+            )
 
         try:
             loop = asyncio.get_running_loop()
-        except RuntimeError:  # pragma: no cover - fallback path when not in async context
+        except (
+            RuntimeError
+        ):  # pragma: no cover - fallback path when not in async context
             readme_path = _run_init()
         else:
             readme_path = await loop.run_in_executor(None, _run_init)
@@ -120,17 +124,23 @@ def create_app(
         )
 
     @app.exception_handler(FileNotFoundError)
-    async def file_not_found_handler(_: Any, exc: FileNotFoundError) -> JSONResponse:  # pragma: no cover - simple mapping
+    async def file_not_found_handler(
+        _: Any, exc: FileNotFoundError
+    ) -> JSONResponse:  # pragma: no cover - simple mapping
         return JSONResponse(status_code=404, content={"detail": str(exc)})
 
     @app.exception_handler(RuntimeError)
-    async def runtime_error_handler(_: Any, exc: RuntimeError) -> JSONResponse:  # pragma: no cover - simple mapping
+    async def runtime_error_handler(
+        _: Any, exc: RuntimeError
+    ) -> JSONResponse:  # pragma: no cover - simple mapping
         return JSONResponse(status_code=400, content={"detail": str(exc)})
 
     return app
 
 
-def run_service(host: str = "0.0.0.0", port: int = 8000) -> None:  # pragma: no cover - integration path
+def run_service(
+    host: str = "0.0.0.0", port: int = 8000
+) -> None:  # pragma: no cover - integration path
     if not _FASTAPI_AVAILABLE:
         raise RuntimeError(
             "FastAPI is required for service mode. Install it with `pip install fastapi uvicorn`."
@@ -139,7 +149,9 @@ def run_service(host: str = "0.0.0.0", port: int = 8000) -> None:  # pragma: no 
     try:
         import uvicorn
     except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
-        raise RuntimeError("uvicorn is required to run the service. Install it with `pip install uvicorn`.") from exc
+        raise RuntimeError(
+            "uvicorn is required to run the service. Install it with `pip install uvicorn`."
+        ) from exc
 
     app = create_app()
     uvicorn.run(app, host=host, port=port)

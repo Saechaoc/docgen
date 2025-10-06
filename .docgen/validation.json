@@ -1,0 +1,67 @@
+{
+  "allow_inferred": true,
+  "evidence_summary": {
+    "architecture": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "build_and_test": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "configuration": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "deployment": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "faq": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "features": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "intro": {
+      "context_chunks": 2,
+      "signal_count": 13
+    },
+    "license": {
+      "context_chunks": 0,
+      "signal_count": 0
+    },
+    "quickstart": {
+      "context_chunks": 0,
+      "signal_count": 13
+    },
+    "troubleshooting": {
+      "context_chunks": 2,
+      "signal_count": 13
+    }
+  },
+  "generated_at": "2025-10-07T00:10:20.957431Z",
+  "issue_count": 0,
+  "issues": [],
+  "mode": "balanced",
+  "mode_source": "config",
+  "requested_sections": [
+    "intro",
+    "features",
+    "architecture",
+    "quickstart",
+    "configuration",
+    "build_and_test",
+    "deployment",
+    "troubleshooting",
+    "faq",
+    "license"
+  ],
+  "skip_reason": null,
+  "status": "passed",
+  "validators": [
+    "no_hallucination"
+  ]
+}

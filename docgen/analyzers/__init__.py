@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from importlib import metadata
-from typing import Callable, Iterable, List, Sequence, Set, Type
+from typing import Callable, Iterable, List, Sequence, Set
 
 from .base import Analyzer
 from .build import BuildAnalyzer
@@ -46,7 +46,9 @@ def discover_analyzers(enabled: Sequence[str] | None = None) -> List[Analyzer]:
             return
         instance = factory()
         if not isinstance(instance, Analyzer):
-            raise TypeError(f"Analyzer factory for '{name}' did not return an Analyzer instance")
+            raise TypeError(
+                f"Analyzer factory for '{name}' did not return an Analyzer instance"
+            )
         analyzers.append(instance)
         seen.add(key)
         if enabled_set is not None:
@@ -60,7 +62,9 @@ def discover_analyzers(enabled: Sequence[str] | None = None) -> List[Analyzer]:
         try:
             loaded = entry.load()
         except Exception as exc:  # pragma: no cover - defensive guard
-            raise RuntimeError(f"Failed to load analyzer entry point '{name}': {exc}") from exc
+            raise RuntimeError(
+                f"Failed to load analyzer entry point '{name}': {exc}"
+            ) from exc
 
         def _factory(obj: object = loaded) -> Analyzer:
             return _coerce_analyzer(obj)

@@ -29,6 +29,7 @@ class TableOfContentsBuilder:
         lines = markdown.splitlines()
         headings: List[tuple[int, str, str]] = []
         in_code = False
+        slug_counts: dict[str, int] = {}
         for line in lines:
             stripped = line.strip()
             if stripped.startswith("```"):
@@ -40,7 +41,10 @@ class TableOfContentsBuilder:
             if match:
                 level = len(match.group(1))
                 title = match.group(2).strip()
-                anchor = self._slugify(title)
+                base = self._slugify(title)
+                count = slug_counts.get(base, 0)
+                anchor = base if count == 0 else f"{base}-{count}"
+                slug_counts[base] = count + 1
                 headings.append((level, title, anchor))
 
         if not headings:
@@ -57,6 +61,7 @@ class TableOfContentsBuilder:
     def _slugify(title: str) -> str:
         slug = title.lower()
         slug = re.sub(r"[^a-z0-9\s-]", "", slug)
-        slug = re.sub(r"\s+", "-", slug)
-        slug = re.sub(r"-+", "-", slug)
-        return slug.strip("-")
+        slug = re.sub(r"\s", " ", slug)
+        slug = slug.replace(" ", "-")
+        slug = slug.strip("-")
+        return slug or "section"

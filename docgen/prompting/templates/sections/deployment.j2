@@ -1,10 +1,7 @@
-{% if metadata['docker'] %}
-Container image can be built with `docker build -t <image> .`.
-{% if metadata.context %}
-> Context highlights:
-{% for snippet in metadata.context %}> {{ snippet }}
+{% if metadata.bullets %}
+{% for bullet in metadata.bullets %}- {{ bullet }}
 {% endfor %}
-{% endif %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}
+

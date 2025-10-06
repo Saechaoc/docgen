@@ -7,7 +7,7 @@ import re
 import tomllib
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Set
 
 # Python dependency helpers
 
@@ -54,7 +54,11 @@ def _parse_pyproject(path: Path) -> List[str]:
         for values in optional.values():
             dependencies.extend(values or [])
 
-    poetry = data.get("tool", {}).get("poetry", {}) if isinstance(data.get("tool"), dict) else {}
+    poetry = (
+        data.get("tool", {}).get("poetry", {})
+        if isinstance(data.get("tool"), dict)
+        else {}
+    )
     if isinstance(poetry, dict):
         poetry_deps = poetry.get("dependencies", {}) or {}
         dependencies.extend(poetry_deps.keys())
@@ -144,11 +148,15 @@ def load_java_dependencies(root: Path) -> List[str]:
 
     build_gradle = root / "build.gradle"
     if build_gradle.exists():
-        deps.update(_parse_gradle_dependencies(build_gradle.read_text(encoding="utf-8")))
+        deps.update(
+            _parse_gradle_dependencies(build_gradle.read_text(encoding="utf-8"))
+        )
 
     build_gradle_kts = root / "build.gradle.kts"
     if build_gradle_kts.exists():
-        deps.update(_parse_gradle_dependencies(build_gradle_kts.read_text(encoding="utf-8")))
+        deps.update(
+            _parse_gradle_dependencies(build_gradle_kts.read_text(encoding="utf-8"))
+        )
 
     return sorted(deps)
 
@@ -185,7 +193,10 @@ def _parse_gradle_dependencies(content: str) -> Set[str]:
         line = line.strip()
         if not line or line.startswith("//"):
             continue
-        if any(token in line for token in ("implementation", "api", "compile", "runtimeOnly")):
+        if any(
+            token in line
+            for token in ("implementation", "api", "compile", "runtimeOnly")
+        ):
             match = pattern.search(line)
             if match:
                 deps.add(match.group(1))

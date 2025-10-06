@@ -83,7 +83,9 @@ def test_llm_runner_http_posts_payload(monkeypatch) -> None:
         captured["headers"] = {k.lower(): v for k, v in request.header_items()}
         captured["payload"] = json.loads(request.data.decode("utf-8"))
         captured["timeout"] = timeout
-        return FakeResponse({"choices": [{"message": {"content": "Whales are mammals."}}]})
+        return FakeResponse(
+            {"choices": [{"message": {"content": "Whales are mammals."}}]}
+        )
 
     monkeypatch.setattr("docgen.llm.runner.urlopen", fake_urlopen)
 
@@ -95,7 +97,9 @@ def test_llm_runner_http_posts_payload(monkeypatch) -> None:
         max_tokens=128,
         request_timeout=25.0,
     )
-    result = runner.run("Give me a fact about whales.", system="Act like a marine biologist.")
+    result = runner.run(
+        "Give me a fact about whales.", system="Act like a marine biologist."
+    )
 
     assert result == "Whales are mammals."
     assert captured["url"] == "http://localhost:12434/engines/v1/chat/completions"
@@ -104,7 +108,10 @@ def test_llm_runner_http_posts_payload(monkeypatch) -> None:
     assert headers["authorization"] == "Bearer local-key"
     payload = captured["payload"]
     assert payload["model"] == "ai/smollm2:360M-Q4_K_M"
-    assert payload["messages"][0] == {"role": "system", "content": "Act like a marine biologist."}
+    assert payload["messages"][0] == {
+        "role": "system",
+        "content": "Act like a marine biologist.",
+    }
     assert payload["messages"][1] == {
         "role": "user",
         "content": "Give me a fact about whales.",
@@ -157,7 +164,9 @@ def test_llm_runner_accepts_docker_internal_host() -> None:
     )
     runner.run("ping")
 
-    assert captured["base_url"] == "http://model-runner.docker.internal:12434/engines/v1"
+    assert (
+        captured["base_url"] == "http://model-runner.docker.internal:12434/engines/v1"
+    )
 
 
 def test_llm_runner_prefers_environment_settings(monkeypatch) -> None:

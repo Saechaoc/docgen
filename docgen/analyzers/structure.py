@@ -10,7 +10,12 @@ from typing import Dict, Iterable, List, Sequence
 
 from .base import Analyzer
 from .endpoints.core import DetectorRegistry
-from .endpoints.detectors import ExpressDetector, FastAPIDetector, SpecDetector, SpringDetector
+from .endpoints.detectors import (
+    ExpressDetector,
+    FastAPIDetector,
+    SpecDetector,
+    SpringDetector,
+)
 from ..models import RepoManifest, Signal
 
 _PY_MODEL_CLASS = re.compile(r"class\s+(\w+)\(([^)]*)\):")
@@ -87,7 +92,9 @@ class StructureAnalyzer(Analyzer):
         endpoints = registry.run(manifest)
         signals: List[Signal] = []
         for endpoint in endpoints:
-            role = f"{endpoint.framework} endpoint" if endpoint.framework else "Endpoint"
+            role = (
+                f"{endpoint.framework} endpoint" if endpoint.framework else "Endpoint"
+            )
             sequence = self._build_sequence(role, endpoint.method, endpoint.path)
             signals.append(
                 Signal(
@@ -124,7 +131,13 @@ class StructureAnalyzer(Analyzer):
             for class_match in _PY_MODEL_CLASS.finditer(text):
                 name, bases = class_match.groups()
                 lower_bases = bases.lower()
-                if "basemodel" in lower_bases or "models.model" in lower_bases or "sqlalchemy" in lower_bases or "declarative_base" in lower_bases or "Base" in bases:
+                if (
+                    "basemodel" in lower_bases
+                    or "models.model" in lower_bases
+                    or "sqlalchemy" in lower_bases
+                    or "declarative_base" in lower_bases
+                    or "Base" in bases
+                ):
                     fields = self._extract_class_fields(text, class_match.end())
                     signals.append(
                         Signal(
@@ -145,7 +158,9 @@ class StructureAnalyzer(Analyzer):
     def _extract_class_fields(text: str, position: int) -> List[str]:
         body = text[position:]
         fields: List[str] = []
-        for match in re.finditer(r"^(\s{4}|\t)(\w+)\s*:\s*([^=\n]+)", body, flags=re.MULTILINE):
+        for match in re.finditer(
+            r"^(\s{4}|\t)(\w+)\s*:\s*([^=\n]+)", body, flags=re.MULTILINE
+        ):
             name = match.group(2)
             annotation = match.group(3).strip()
             fields.append(f"{name}: {annotation}")

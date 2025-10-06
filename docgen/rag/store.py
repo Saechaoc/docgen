@@ -47,7 +47,11 @@ class EmbeddingStore:
     def remove_path(self, path: str) -> None:
         normalized = path.replace("\\", "/")
         for entries in self._store.values():
-            entries[:] = [entry for entry in entries if entry.get("metadata", {}).get("path") != normalized]
+            entries[:] = [
+                entry
+                for entry in entries
+                if entry.get("metadata", {}).get("path") != normalized
+            ]
 
     def paths(self) -> Iterable[str]:
         seen: set[str] = set()
@@ -66,7 +70,10 @@ class EmbeddingStore:
         for entries in self._store.values():
             for entry in entries:
                 metadata = entry.get("metadata", {})
-                if metadata.get("path") == normalized and metadata.get("hash") == file_hash:
+                if (
+                    metadata.get("path") == normalized
+                    and metadata.get("hash") == file_hash
+                ):
                     return True
         return False
 
@@ -106,7 +113,11 @@ class EmbeddingStore:
     def _prepare_entry(entry: Dict[str, object]) -> Dict[str, object]:
         vector = entry.get("vector", {})
         if isinstance(vector, dict):
-            vector = {str(key): float(value) for key, value in vector.items() if isinstance(value, (int, float))}
+            vector = {
+                str(key): float(value)
+                for key, value in vector.items()
+                if isinstance(value, (int, float))
+            }
         prepared = dict(entry)
         prepared["vector"] = vector
         return prepared

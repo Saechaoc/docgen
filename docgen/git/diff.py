@@ -163,8 +163,12 @@ class DiffAnalyzer:
         changed_files = self._changed_files(repo, diff_base)
         sections = self._sections_for_changes(changed_files)
         ordered_sections = sorted(sections, key=_section_sort_key)
-        filtered_files = [path for path in changed_files if path not in self._IGNORED_PATHS]
-        return DiffResult(base=diff_base, changed_files=filtered_files, sections=ordered_sections)
+        filtered_files = [
+            path for path in changed_files if path not in self._IGNORED_PATHS
+        ]
+        return DiffResult(
+            base=diff_base, changed_files=filtered_files, sections=ordered_sections
+        )
 
     # ------------------------------------------------------------------
     # Internals

@@ -14,7 +14,7 @@ _WORD_PATTERN = re.compile(r"[A-Za-z0-9_]+")
 class LocalEmbedder:
     """Handles simple chunking and bag-of-words embeddings."""
 
-    def __init__(self, *, chunk_size: int = 350, overlap: int = 60) -> None:
+    def __init__(self, *, chunk_size: int = 220, overlap: int = 40) -> None:
         self.chunk_size = max(50, chunk_size)
         self.overlap = min(overlap, self.chunk_size // 2)
 

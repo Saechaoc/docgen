@@ -30,7 +30,9 @@ class Publisher:
         for rel in relative_files:
             self._run(["git", "add", rel], cwd=repo)
 
-        status = self._run(["git", "status", "--porcelain"], cwd=repo, capture_output=True)
+        status = self._run(
+            ["git", "status", "--porcelain"], cwd=repo, capture_output=True
+        )
         if not status.strip():
             return False
 

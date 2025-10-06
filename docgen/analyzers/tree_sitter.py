@@ -46,7 +46,9 @@ class TreeSitterAnalyzer(Analyzer):
     def supports(self, manifest: RepoManifest) -> bool:
         if not self._enabled:
             return False
-        return any(self._language_for_file(meta.path, meta.language) for meta in manifest.files)
+        return any(
+            self._language_for_file(meta.path, meta.language) for meta in manifest.files
+        )
 
     def analyze(self, manifest: RepoManifest) -> Iterable[Signal]:
         if not self._enabled:
@@ -67,7 +69,9 @@ class TreeSitterAnalyzer(Analyzer):
                 continue
             source_bytes = source.encode("utf-8")
             tree = parser.parse(source_bytes)
-            for symbol in self._collect_symbols(language_key, tree.root_node, source_bytes):
+            for symbol in self._collect_symbols(
+                language_key, tree.root_node, source_bytes
+            ):
                 signals.append(
                     Signal(
                         name=f"symbol.{symbol.kind}",
@@ -95,7 +99,9 @@ class TreeSitterAnalyzer(Analyzer):
         return parser
 
     @staticmethod
-    def _language_for_file(path: str, manifest_language: Optional[str]) -> Optional[str]:
+    def _language_for_file(
+        path: str, manifest_language: Optional[str]
+    ) -> Optional[str]:
         if manifest_language in _SUPPORTED_LANGUAGES:
             return _SUPPORTED_LANGUAGES[manifest_language]
         lower = path.lower()
@@ -117,7 +123,9 @@ class TreeSitterAnalyzer(Analyzer):
 
     @staticmethod
     def _node_text(node, source_bytes) -> str:  # type: ignore[no-untyped-def]
-        return source_bytes[node.start_byte : node.end_byte].decode("utf-8", errors="ignore")
+        return source_bytes[node.start_byte : node.end_byte].decode(
+            "utf-8", errors="ignore"
+        )
 
     def _collect_python_symbols(self, node, source_bytes) -> Iterable[_ParsedSymbol]:  # type: ignore[no-untyped-def]
         for child in node.children:

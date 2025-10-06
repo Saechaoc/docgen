@@ -4,9 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="Update feature order">
-      <change afterPath="$PROJECT_DIR$/spec/prompt_template.md" afterDir="false" />
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="WIP">
+      <change beforePath="$PROJECT_DIR$/.docgen/analyzers/cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/analyzers/cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/manifest_cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/manifest_cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/validation.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/validation.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/docgen-update.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/docgen-update.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/ci/docgen-update.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ci/docgen-update.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/ci/github-actions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/ci/github-actions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spec/spec.md" beforeDir="false" afterPath="$PROJECT_DIR$/spec/spec.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,18 +30,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "Saechaoc"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Saechaoc&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/Saechaoc/docgen.git",
-    "accountId": "d45ed314-e8a3-4c29-a0ad-2d10ee8329cc"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Saechaoc/docgen.git&quot;,
+    &quot;accountId&quot;: &quot;d67965e8-3821-498a-bf04-62bf4dd8a57f&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -59,12 +66,13 @@
     "Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor": "Run",
     "Python tests.Python tests in test_builder.py.executor": "Run",
     "Python tests.Python tests in tests.executor": "Run",
+    "Python.python -m docgen.cli update --diff-base origin/main.executor": "Run",
     "Python.test.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "task/test__ci",
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
@@ -73,7 +81,29 @@
       <recent name="C:\Users\chris\PycharmProjects\docgen" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Python tests in tests">
+  <component name="RunManager" selected="Python.python -m docgen.cli update --diff-base origin/main">
+    <configuration name="python -m docgen.cli update --diff-base origin/main" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="docgen" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="docgen.cli" />
+      <option name="PARAMETERS" value="update --diff-base origin/main" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="true" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
       <option name="ENV_FILES" value="" />
@@ -119,21 +149,6 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
-      <module name="docgen" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;tests.test_config.test_load_config_returns_defaults_when_missing&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
     <configuration name="Python tests in tests" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="docgen" />
       <option name="ENV_FILES" value="" />
@@ -151,11 +166,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.python -m docgen.cli update --diff-base origin/main" />
         <item itemvalue="Python tests.Python tests in tests" />
         <item itemvalue="Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts" />
         <item itemvalue="Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo" />
         <item itemvalue="Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request" />
-        <item itemvalue="Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing" />
       </list>
     </recent_temporary>
   </component>
@@ -230,7 +245,23 @@
       <option name="project" value="LOCAL" />
       <updated>1759703619968</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="WIP: Local LLM Not Working">
+      <option name="closed" value="true" />
+      <created>1759727568913</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1759727568913</updated>
+    </task>
+    <task id="LOCAL-00009" summary="WIP">
+      <option name="closed" value="true" />
+      <created>1759775559929</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1759775559929</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -241,6 +272,8 @@
     <MESSAGE value="Move git ignore" />
     <MESSAGE value="Update feature checklist" />
     <MESSAGE value="Update feature order" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update feature order" />
+    <MESSAGE value="WIP: Local LLM Not Working" />
+    <MESSAGE value="WIP" />
+    <option name="LAST_COMMIT_MESSAGE" value="WIP" />
   </component>
 </project>

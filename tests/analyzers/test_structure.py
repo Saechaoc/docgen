@@ -8,7 +8,9 @@ from docgen.analyzers.structure import StructureAnalyzer
 from tests._fixtures.repo_builder import RepoBuilder
 
 
-def test_structure_analyzer_detects_fastapi_and_spring_endpoints(repo_builder: RepoBuilder) -> None:
+def test_structure_analyzer_detects_fastapi_and_spring_endpoints(
+    repo_builder: RepoBuilder,
+) -> None:
     repo_builder.write(
         {
             "api/users.py": """
@@ -46,8 +48,12 @@ def test_structure_analyzer_detects_fastapi_and_spring_endpoints(repo_builder: R
     assert "GET /users/{id}" in values
     assert "GET /v1/users/{id}" in values
 
-    fastapi_signal = next(sig for sig in api_signals if sig.metadata.get("framework") == "FastAPI")
-    spring_signal = next(sig for sig in api_signals if sig.metadata.get("framework") == "Spring")
+    fastapi_signal = next(
+        sig for sig in api_signals if sig.metadata.get("framework") == "FastAPI"
+    )
+    spring_signal = next(
+        sig for sig in api_signals if sig.metadata.get("framework") == "Spring"
+    )
     assert fastapi_signal.metadata["confidence"] >= 0.9
     assert spring_signal.metadata["confidence"] >= 0.9
 
@@ -84,7 +90,9 @@ def test_structure_analyzer_prefers_openapi_spec(repo_builder: RepoBuilder) -> N
     api_signals = [sig for sig in signals if sig.name == "architecture.api"]
 
     assert api_signals
-    spec_signal = next(sig for sig in api_signals if sig.metadata.get("framework") == "spec")
+    spec_signal = next(
+        sig for sig in api_signals if sig.metadata.get("framework") == "spec"
+    )
     assert spec_signal.metadata["file"] == "docs/openapi.json"
     assert spec_signal.metadata["confidence"] == 1.0
 
@@ -127,5 +135,7 @@ def test_spring_method_level_request_mapping(repo_builder: RepoBuilder) -> None:
 
     manifest = repo_builder.scan()
     signals = list(StructureAnalyzer().analyze(manifest))
-    api_paths = {sig.metadata["path"] for sig in signals if sig.name == "architecture.api"}
+    api_paths = {
+        sig.metadata["path"] for sig in signals if sig.name == "architecture.api"
+    }
     assert "/ping" in api_paths

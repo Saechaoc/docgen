@@ -67,7 +67,8 @@ class LanguageAnalyzer(Analyzer):
                 Signal(
                     name="language.frameworks",
                     value=", ".join(
-                        f"{lang}: {', '.join(items)}" for lang, items in frameworks.items()
+                        f"{lang}: {', '.join(items)}"
+                        for lang, items in frameworks.items()
                     ),
                     source="language",
                     metadata={"frameworks": frameworks},

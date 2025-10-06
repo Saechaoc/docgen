@@ -25,17 +25,31 @@ class RAGIndex:
 class RAGIndexer:
     """Builds a lightweight embedding index for README generation."""
 
-    def __init__(self, *, embedder: LocalEmbedder | None = None, top_source_files: int = 20) -> None:
+    def __init__(
+        self, *, embedder: LocalEmbedder | None = None, top_source_files: int = 20
+    ) -> None:
         self.embedder = embedder or LocalEmbedder()
         self.top_source_files = top_source_files
 
-    def build(self, manifest: RepoManifest, *, sections: Sequence[str] | None = None) -> RAGIndex:
-        target_sections = list(sections) if sections else list(SECTION_TAGS.keys())
+    def _normalise_sections(self, sections: Sequence[str] | None) -> List[str]:
+        if sections:
+            ordered = []
+            seen = set()
+            for name in sections:
+                if name and name not in seen:
+                    ordered.append(name)
+                    seen.add(name)
+            if ordered:
+                return ordered
+        return list(SECTION_TAGS.keys())
+
+    def build(
+        self, manifest: RepoManifest, *, sections: Sequence[str] | None = None
+    ) -> RAGIndex:
+        target_sections = self._normalise_sections(sections)
         root = Path(manifest.root)
         store_path = root / ".docgen" / "embeddings.json"
         store = EmbeddingStore(store_path, load_existing=True)
-
-        contexts: Dict[str, List[str]] = {section: [] for section in target_sections}
 
         meta_lookup = {file.path: file for file in manifest.files}
         visited_paths: Set[str] = set()
@@ -50,11 +64,43 @@ class RAGIndexer:
 
         store.persist()
 
-        for section in target_sections:
-            snippets = [entry["text"] for entry in store.query(section, top_k=3)]
-            contexts[section] = [snippet.strip() for snippet in snippets if snippet.strip()]
+        contexts = self._collect_contexts(store, target_sections)
 
         return RAGIndex(contexts=contexts, store_path=store_path)
+
+    def load(
+        self, manifest: RepoManifest, *, sections: Sequence[str] | None = None
+    ) -> RAGIndex | None:
+        target_sections = self._normalise_sections(sections)
+        root = Path(manifest.root)
+        store_path = root / ".docgen" / "embeddings.json"
+        if not store_path.exists():
+            return None
+        try:
+            store = EmbeddingStore(store_path, load_existing=True)
+        except Exception:
+            return None
+        contexts = self._collect_contexts(store, target_sections)
+        return RAGIndex(contexts=contexts, store_path=store_path)
+
+    def _collect_contexts(
+        self, store: EmbeddingStore, sections: Sequence[str]
+    ) -> Dict[str, List[str]]:
+        contexts: Dict[str, List[str]] = {}
+        for section in sections:
+            entries = store.query(section, top_k=2)
+            snippets: List[str] = []
+            for entry in entries:
+                if isinstance(entry, dict):
+                    text_value = entry.get("text")
+                else:
+                    text_value = None
+                if isinstance(text_value, str):
+                    trimmed = _trim_snippet(text_value)
+                    if trimmed:
+                        snippets.append(trimmed)
+            contexts[section] = snippets
+        return contexts
 
     # ------------------------------------------------------------------
     # Index helpers
@@ -83,7 +129,9 @@ class RAGIndexer:
         if store.has_path_with_hash(source, file_hash):
             return
         store.remove_path(source)
-        self._add_chunks(store, text, source=source, tags=["readme"], file_hash=file_hash)
+        self._add_chunks(
+            store, text, source=source, tags=["readme"], file_hash=file_hash
+        )
 
     def _index_docs(
         self,
@@ -93,7 +141,9 @@ class RAGIndexer:
         visited_paths: Set[str],
     ) -> None:
         for meta in files:
-            if meta.role not in {"docs", "examples"} and not meta.path.startswith("docs/"):
+            if meta.role not in {"docs", "examples"} and not meta.path.startswith(
+                "docs/"
+            ):
                 continue
             path = root / meta.path
             text = _read_text(path)
@@ -108,7 +158,9 @@ class RAGIndexer:
             if store.has_path_with_hash(meta.path, meta.hash):
                 continue
             store.remove_path(meta.path)
-            self._add_chunks(store, text, source=meta.path, tags=tags, file_hash=meta.hash)
+            self._add_chunks(
+                store, text, source=meta.path, tags=tags, file_hash=meta.hash
+            )
 
     def _index_source_files(
         self,
@@ -131,7 +183,9 @@ class RAGIndexer:
             if store.has_path_with_hash(meta.path, meta.hash):
                 continue
             store.remove_path(meta.path)
-            self._add_chunks(store, text, source=meta.path, tags=tags, file_hash=meta.hash)
+            self._add_chunks(
+                store, text, source=meta.path, tags=tags, file_hash=meta.hash
+            )
 
     def _add_chunks(
         self,
@@ -152,7 +206,13 @@ class RAGIndexer:
                 "tags": list(tags),
                 "hash": file_hash,
             }
-            store.add(sections, chunk_id=chunk_id, vector=vector, text=chunk, metadata=metadata)
+            store.add(
+                sections,
+                chunk_id=chunk_id,
+                vector=vector,
+                text=chunk,
+                metadata=metadata,
+            )
 
     @staticmethod
     def _sections_for_tags(tags: Sequence[str]) -> List[str]:
@@ -160,6 +220,15 @@ class RAGIndexer:
         for tag in tags:
             sections.extend(TAG_SECTIONS.get(tag, []))
         return list(dict.fromkeys(sections))
+
+
+def _trim_snippet(text: str, *, max_chars: int = 400) -> str:
+    cleaned = " ".join(text.strip().split())
+    if not cleaned:
+        return ""
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[:max_chars].rstrip() + "..."
 
 
 def _read_text(path: Path) -> str:

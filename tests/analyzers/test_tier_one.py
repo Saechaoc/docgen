@@ -26,12 +26,12 @@ def _seed_repo(root: Path) -> None:
     )
     _write(
         root / "pyproject.toml",
-        "[project]\ndependencies = [\"django==4.2\"]\n",
+        '[project]\ndependencies = ["django==4.2"]\n',
     )
 
     _write(
         root / "package.json",
-        '{"name": "demo", "dependencies": {"express": "^4.18.2"}, "devDependencies": {"react": "18"}}\n'
+        '{"name": "demo", "dependencies": {"express": "^4.18.2"}, "devDependencies": {"react": "18"}}\n',
     )
     _write(root / "pnpm-lock.yaml", "lockfileVersion: 6\n")
 
@@ -50,7 +50,7 @@ def _seed_repo(root: Path) -> None:
     </dependency>
   </dependencies>
 </project>
-"""
+""",
     )
     _write(root / "mvnw", "#!/bin/sh\n")
 

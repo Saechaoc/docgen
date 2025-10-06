@@ -1,15 +1,19 @@
-{% if metadata['commands'] %}
-Follow the steps below to get started:
-
+{% if metadata.steps %}
+{% for step in metadata.steps %}
+{{ loop.index }}. {{ step.title }}
+{% if step.commands %}
 ```bash
-{% for cmd in metadata['commands'] %}{{ cmd }}
+{% for cmd in step.commands %}{{ cmd }}
 {% endfor %}
 ```
-{% if metadata.context %}
-> Context highlights:
-{% for snippet in metadata.context %}> {{ snippet }}
+{% endif %}
+{% if step.notes %}
+{% for note in step.notes %}- {{ note }}
 {% endfor %}
 {% endif %}
+
+{% endfor %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}
+
