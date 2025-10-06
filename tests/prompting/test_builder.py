@@ -56,7 +56,7 @@ def test_prompt_builder_render_sections_subset(tmp_path: Path) -> None:
     sections = builder.render_sections(manifest, signals, ["intro", "deployment"])
 
     assert set(sections) == {"intro", "deployment"}
-    assert "docgen" in sections["intro"].body
+    assert "Python project" in sections["intro"].body
     assert sections["deployment"].body.strip()
 
 
@@ -217,7 +217,7 @@ def test_quickstart_includes_entrypoint_and_pattern_commands(tmp_path: Path) -> 
     quickstart = sections["quickstart"].body
     assert "uvicorn app.main:app --reload" in quickstart
     assert "docker compose up" in quickstart
-    assert "python -m pytest" in quickstart
+    assert "python -m pytest" not in quickstart
 
 
 def test_prompt_builder_concise_style_limits_feature_list(tmp_path: Path) -> None:

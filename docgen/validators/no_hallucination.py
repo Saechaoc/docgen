@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Sequence, Set
+from typing import Collection, Dict, Iterable, List, Optional, Sequence, Set
 
 from .base import EvidenceIndex, ValidationContext, ValidationIssue, Validator
 
@@ -21,6 +21,7 @@ _SAFE_PREFIXES = (
     "Follow the steps below",
     "_Observed frameworks",
 )
+
 _SAFE_EXACT = {
     "This README was bootstrapped by ``docgen init`` to summarize the repository at a glance.",
     "Replace this text with a concise mission statement for the repository.",
@@ -29,6 +30,18 @@ _SAFE_EXACT = {
     "Container image can be built with `docker build -t <image> .`.",
     "Outline deployment strategies or hosting targets here.",
 }
+_SYNONYM_GROUPS = [
+    {"dynamodb", "aws dynamodb", "aws-dynamodb", "amazon dynamodb"},
+    {"terraform", "iac", "hashicorp terraform"},
+    {"postgres", "postgresql"},
+    {"kubernetes", "k8s"},
+]
+
+_SYNONYM_MAP: Dict[str, Set[str]] = {}
+for group in _SYNONYM_GROUPS:
+    lowered = {token.lower() for token in group}
+    for token in lowered:
+        _SYNONYM_MAP[token] = lowered
 
 
 class NoHallucinationValidator(Validator):
@@ -36,8 +49,22 @@ class NoHallucinationValidator(Validator):
 
     name = "no_hallucination"
 
-    def __init__(self, *, min_overlap: int = 1) -> None:
+    def __init__(
+        self,
+        *,
+        min_overlap: int = 1,
+        mode: str = "balanced",
+        allow_inferred: Optional[bool] = None,
+    ) -> None:
         self._min_overlap = min_overlap
+        normalized_mode = (mode or "strict").strip().lower()
+        if normalized_mode not in {"strict", "balanced"}:
+            normalized_mode = "strict"
+        self._mode = normalized_mode
+        if allow_inferred is None:
+            allow_inferred = normalized_mode == "balanced"
+        self._allowed_tiers: Collection[str] = ("observed", "inferred") if allow_inferred else ("observed",)
+        self._synonyms_enabled = normalized_mode == "balanced"
 
     def validate(self, context: ValidationContext) -> List[ValidationIssue]:
         issues: List[ValidationIssue] = []
@@ -49,13 +76,12 @@ class NoHallucinationValidator(Validator):
                 tokens = self._extract_tokens(sentence)
                 if not tokens:
                     continue
-                overlap = self._count_overlap(tokens, context.evidence, section_name)
+                overlap = self._count_overlap(tokens, context.evidence, section_name, self._allowed_tiers)
                 if overlap >= self._min_overlap:
                     continue
-                missing = context.evidence.missing_tokens(tokens, section=section_name)
+                missing = self._missing_with_synonyms(tokens, context.evidence, section_name, self._allowed_tiers)
                 if not missing:
-                    # fall back to global check
-                    missing = context.evidence.missing_tokens(tokens, section=None)
+                    missing = self._missing_with_synonyms(tokens, context.evidence, None, self._allowed_tiers)
                 detail = self._build_detail(missing, context.evidence)
                 issues.append(
                     ValidationIssue(
@@ -94,7 +120,7 @@ class NoHallucinationValidator(Validator):
             if normalized.startswith(prefix):
                 return True
         if normalized.startswith("_") and normalized.endswith(":"):
-            return True
+                return True
         lower = normalized.lower()
         if len(lower) < 20:
             return True
@@ -105,13 +131,44 @@ class NoHallucinationValidator(Validator):
         tokens = EvidenceIndex._tokenize(sentence)
         return {token for token in tokens if len(token) >= 3}
 
-    @staticmethod
-    def _count_overlap(tokens: Set[str], evidence: EvidenceIndex, section: str) -> int:
+    def _count_overlap(
+        self,
+        tokens: Set[str],
+        evidence: EvidenceIndex,
+        section: Optional[str],
+        allowed_tiers: Collection[str],
+    ) -> int:
         overlap = 0
         for token in tokens:
-            if evidence.has_token(token, section=section) or evidence.has_token(token, section=None):
-                overlap += 1
+            for candidate in self._expand_token(token):
+                if evidence.has_token(candidate, section=section, allowed_tiers=allowed_tiers):
+                    overlap += 1
+                    break
         return overlap
+
+    def _missing_with_synonyms(
+        self,
+        tokens: Set[str],
+        evidence: EvidenceIndex,
+        section: Optional[str],
+        allowed_tiers: Collection[str],
+    ) -> List[str]:
+        missing: List[str] = []
+        for token in tokens:
+            has_match = False
+            for candidate in self._expand_token(token):
+                if evidence.has_token(candidate, section=section, allowed_tiers=allowed_tiers):
+                    has_match = True
+                    break
+            if not has_match:
+                missing.append(token)
+        return missing
+
+    def _expand_token(self, token: str) -> Set[str]:
+        base = token.lower()
+        if self._synonyms_enabled and base in _SYNONYM_MAP:
+            return _SYNONYM_MAP[base]
+        return {base}
 
     @staticmethod
     def _build_detail(missing: Sequence[str], evidence: EvidenceIndex) -> str:
@@ -121,9 +178,10 @@ class NoHallucinationValidator(Validator):
         for token in missing[:3]:
             snapshot = evidence.snapshot(token)
             if snapshot:
-                examples.append(f"{token} ↔ {snapshot.source}")
+                examples.append(f"{token} -> {snapshot.source}")
         missing_display = ", ".join(missing[:5])
         if examples:
             example_text = "; ".join(examples)
             return f"Missing evidence for: {missing_display} (nearest: {example_text})"
         return f"Missing evidence for: {missing_display}"
+

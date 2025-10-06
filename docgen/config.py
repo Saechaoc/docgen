@@ -60,6 +60,17 @@ class ValidationConfig:
     """Validation related settings."""
 
     no_hallucination: bool = True
+    mode: Optional[str] = None
+    allow_inferred: Optional[bool] = None
+
+
+@dataclass
+class GenerationConfig:
+    """Generation related settings for LLM usage and fallbacks."""
+
+    mode: Optional[str] = None
+    allow_inferred: Optional[bool] = None
+    section_overrides: Dict[str, bool] = field(default_factory=dict)
 
 
 @dataclass
@@ -77,6 +88,7 @@ class DocGenConfig:
     template_pack: Optional[str] = None
     token_budget_default: Optional[int] = None
     token_budget_overrides: Dict[str, int] = field(default_factory=dict)
+    generation: GenerationConfig = field(default_factory=GenerationConfig)
     validation: ValidationConfig = field(default_factory=ValidationConfig)
 
 
@@ -161,6 +173,28 @@ def load_config(config_path: Path) -> DocGenConfig:
         no_hallucination = _as_bool(validation_data.get("no_hallucination"))
         if no_hallucination is not None:
             validation.no_hallucination = no_hallucination
+        mode_value = _as_str(validation_data.get("mode"))
+        if mode_value:
+            validation.mode = mode_value
+        allow_inferred_value = _as_bool(validation_data.get("allow_inferred"))
+        if allow_inferred_value is not None:
+            validation.allow_inferred = allow_inferred_value
+
+    generation_data = _as_dict(data.get("generation"))
+    generation = GenerationConfig()
+    if generation_data:
+        gen_mode = _as_str(generation_data.get("mode"))
+        if gen_mode:
+            generation.mode = gen_mode
+        gen_allow_inferred = _as_bool(generation_data.get("allow_inferred"))
+        if gen_allow_inferred is not None:
+            generation.allow_inferred = gen_allow_inferred
+        section_data = _as_dict(generation_data.get("sections"))
+        if section_data:
+            for key, value in section_data.items():
+                flag = _as_bool(value)
+                if flag is not None:
+                    generation.section_overrides[str(key)] = flag
 
     exclude_paths = _as_str_list(data.get("exclude_paths"))
 
@@ -176,6 +210,7 @@ def load_config(config_path: Path) -> DocGenConfig:
         template_pack=template_pack,
         token_budget_default=token_budget_default,
         token_budget_overrides=token_budget_overrides,
+        generation=generation,
         validation=validation,
     )
 

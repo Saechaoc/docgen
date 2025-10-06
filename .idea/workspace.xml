@@ -5,22 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="WIP: Local LLM Not Working">
-      <change afterPath="$PROJECT_DIR$/README_after_changes.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.docgen/analyzers/cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/analyzers/cache.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.docgen/embeddings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/embeddings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.docgen/manifest_cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/manifest_cache.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.docgen/scorecard.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/scorecard.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.docgen/validation.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/validation.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/architecture.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/architecture.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/build_and_test.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/build_and_test.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/configuration.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/configuration.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/deployment.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/deployment.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/quickstart.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/quickstart.j2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/rag/indexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/indexer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/validators/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/validators/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docgen/validators/no_hallucination.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/validators/no_hallucination.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/spec/spec.md" beforeDir="false" afterPath="$PROJECT_DIR$/spec/spec.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/prompting/test_builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/prompting/test_builder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/test_orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_orchestrator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/validators/test_no_hallucination_validator.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/validators/test_no_hallucination_validator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

@@ -1,4 +1,4 @@
-"""Unit tests for the no-hallucination validator."""
+﻿"""Unit tests for the no-hallucination validator."""
 
 from __future__ import annotations
 
@@ -106,3 +106,53 @@ def test_validator_handles_plural_tokens() -> None:
     issues = validator.validate(context)
 
     assert issues == []
+
+
+def test_validator_balanced_accepts_synonyms() -> None:
+    signals = [
+        Signal(name="dependencies.python", value="aws-dynamodb", source="deps", metadata={}),
+    ]
+    sections = {
+        "architecture": Section(
+            name="architecture",
+            title="Architecture",
+            body="The service persists state in DynamoDB tables.",
+            metadata={"context": [], "evidence": {"signals": ["dependencies.python"], "context_chunks": 0}},
+        )
+    }
+    context = ValidationContext(
+        manifest=_manifest(),
+        signals=signals,
+        sections=sections,
+        evidence=build_evidence_index(signals, sections),
+    )
+    validator = NoHallucinationValidator(mode="balanced")
+
+    issues = validator.validate(context)
+
+    assert issues == []
+
+
+
+def test_validator_strict_requires_observed_terms() -> None:
+    signals = [Signal(name="dependencies.python", value="terraform", source="deps", metadata={})]
+    sections = {
+        "deployment": Section(
+            name="deployment",
+            title="Deployment",
+            body="Infrastructure changes are rolled out via Terraform.",
+            metadata={"context": [], "evidence": {"signals": ["dependencies.python"], "context_chunks": 0}},
+        )
+    }
+    context = ValidationContext(
+        manifest=_manifest(),
+        signals=signals,
+        sections=sections,
+        evidence=build_evidence_index(signals, sections),
+    )
+    validator = NoHallucinationValidator(mode="strict")
+
+    issues = validator.validate(context)
+
+    assert len(issues) == 1
+    assert issues[0].section == "deployment"

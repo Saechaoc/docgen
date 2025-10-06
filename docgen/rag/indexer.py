@@ -29,13 +29,23 @@ class RAGIndexer:
         self.embedder = embedder or LocalEmbedder()
         self.top_source_files = top_source_files
 
+    def _normalise_sections(self, sections: Sequence[str] | None) -> List[str]:
+        if sections:
+            ordered = []
+            seen = set()
+            for name in sections:
+                if name and name not in seen:
+                    ordered.append(name)
+                    seen.add(name)
+            if ordered:
+                return ordered
+        return list(SECTION_TAGS.keys())
+
     def build(self, manifest: RepoManifest, *, sections: Sequence[str] | None = None) -> RAGIndex:
-        target_sections = list(sections) if sections else list(SECTION_TAGS.keys())
+        target_sections = self._normalise_sections(sections)
         root = Path(manifest.root)
         store_path = root / ".docgen" / "embeddings.json"
         store = EmbeddingStore(store_path, load_existing=True)
-
-        contexts: Dict[str, List[str]] = {section: [] for section in target_sections}
 
         meta_lookup = {file.path: file for file in manifest.files}
         visited_paths: Set[str] = set()
@@ -50,12 +60,39 @@ class RAGIndexer:
 
         store.persist()
 
-        for section in target_sections:
-            entries = store.query(section, top_k=2)
-            snippets = [_trim_snippet(entry["text"]) for entry in entries]
-            contexts[section] = [snippet for snippet in snippets if snippet]
+        contexts = self._collect_contexts(store, target_sections)
 
         return RAGIndex(contexts=contexts, store_path=store_path)
+
+    def load(self, manifest: RepoManifest, *, sections: Sequence[str] | None = None) -> RAGIndex | None:
+        target_sections = self._normalise_sections(sections)
+        root = Path(manifest.root)
+        store_path = root / ".docgen" / "embeddings.json"
+        if not store_path.exists():
+            return None
+        try:
+            store = EmbeddingStore(store_path, load_existing=True)
+        except Exception:
+            return None
+        contexts = self._collect_contexts(store, target_sections)
+        return RAGIndex(contexts=contexts, store_path=store_path)
+
+    def _collect_contexts(self, store: EmbeddingStore, sections: Sequence[str]) -> Dict[str, List[str]]:
+        contexts: Dict[str, List[str]] = {}
+        for section in sections:
+            entries = store.query(section, top_k=2)
+            snippets: List[str] = []
+            for entry in entries:
+                if isinstance(entry, dict):
+                    text_value = entry.get("text")
+                else:
+                    text_value = None
+                if isinstance(text_value, str):
+                    trimmed = _trim_snippet(text_value)
+                    if trimmed:
+                        snippets.append(trimmed)
+            contexts[section] = snippets
+        return contexts
 
     # ------------------------------------------------------------------
     # Index helpers

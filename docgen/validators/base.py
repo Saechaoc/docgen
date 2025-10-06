@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 import re
-from typing import Iterable, List, Mapping, MutableMapping, Optional, Protocol, Sequence, Set
+from typing import Collection, Iterable, List, Mapping, MutableMapping, Optional, Protocol, Sequence, Set
 
 from typing import TYPE_CHECKING
 
@@ -38,6 +38,10 @@ _STOPWORDS = {
     "step",
     "steps",
     "started",
+    "rest",
+    "consistent",
+    "designed",
+    "powered",
     "below",
     "each",
     "from",
@@ -113,52 +117,114 @@ class EvidenceSnapshot:
 class EvidenceIndex:
     """Collects normalized evidence terms from signals, contexts, and metadata."""
 
+    _OBSERVED = "observed"
+    _INFERRED = "inferred"
+    _TIER_PRIORITY = {_OBSERVED: 2, _INFERRED: 1}
+
     def __init__(self) -> None:
-        self._global_terms: Set[str] = set()
-        self._section_terms: MutableMapping[Optional[str], Set[str]] = defaultdict(set)
+        self._global_terms: Dict[str, str] = {}
+        self._section_terms: MutableMapping[Optional[str], Dict[str, str]] = defaultdict(dict)
         self._token_sources: MutableMapping[str, List[EvidenceSnapshot]] = defaultdict(list)
 
-    def add(self, text: str, *, section: Optional[str], source: str) -> None:
+    def add(
+        self,
+        text: str,
+        *,
+        section: Optional[str],
+        source: str,
+        tier: str = _OBSERVED,
+    ) -> None:
         tokens = list(self._tokenize(text))
         if not tokens:
             return
-        if section is None:
-            target = self._global_terms
-        else:
-            target = self._section_terms[section]
         for token in tokens:
-            target.add(token)
+            self._store_token(token, section, tier)
             if not self._token_sources[token]:
                 snippet = text.strip()
                 if len(snippet) > 120:
                     snippet = snippet[:117].rstrip() + "..."
-                self._token_sources[token].append(EvidenceSnapshot(token=token, source=source, snippet=snippet))
+                self._token_sources[token].append(
+                    EvidenceSnapshot(token=token, source=source, snippet=snippet)
+                )
 
     def merge(self, other: "EvidenceIndex") -> None:
-        for token in other._global_terms:
-            self._global_terms.add(token)
-        for section, tokens in other._section_terms.items():
-            self._section_terms[section].update(tokens)
+        for token, tier in other._global_terms.items():
+            self._store_token(token, None, tier)
+        for section, mapping in other._section_terms.items():
+            for token, tier in mapping.items():
+                self._store_token(token, section, tier)
         for token, snapshots in other._token_sources.items():
             existing = self._token_sources[token]
             for snap in snapshots:
                 if all(s.source != snap.source or s.snippet != snap.snippet for s in existing):
                     existing.append(snap)
 
-    def has_token(self, token: str, section: Optional[str] = None) -> bool:
-        if token in self._global_terms:
+    def has_token(
+        self,
+        token: str,
+        *,
+        section: Optional[str] = None,
+        allowed_tiers: Optional[Collection[str]] = None,
+    ) -> bool:
+        tier = self._get_token_tier(token, section)
+        if tier and self._tier_allowed(tier, allowed_tiers):
             return True
-        return token in self._section_terms.get(section, set())
+        if section is not None:
+            tier = self._global_terms.get(token)
+            if tier and self._tier_allowed(tier, allowed_tiers):
+                return True
+        return False
 
-    def has_any(self, tokens: Iterable[str], section: Optional[str] = None) -> bool:
-        return any(self.has_token(token, section=section) for token in tokens)
+    def has_any(
+        self,
+        tokens: Iterable[str],
+        *,
+        section: Optional[str] = None,
+        allowed_tiers: Optional[Collection[str]] = None,
+    ) -> bool:
+        return any(self.has_token(token, section=section, allowed_tiers=allowed_tiers) for token in tokens)
 
-    def missing_tokens(self, tokens: Iterable[str], section: Optional[str] = None) -> List[str]:
-        return [token for token in tokens if not self.has_token(token, section=section)]
+    def missing_tokens(
+        self,
+        tokens: Iterable[str],
+        *,
+        section: Optional[str] = None,
+        allowed_tiers: Optional[Collection[str]] = None,
+    ) -> List[str]:
+        return [
+            token
+            for token in tokens
+            if not self.has_token(token, section=section, allowed_tiers=allowed_tiers)
+        ]
 
     def snapshot(self, token: str) -> Optional[EvidenceSnapshot]:
         snapshots = self._token_sources.get(token)
         return snapshots[0] if snapshots else None
+
+    def _store_token(self, token: str, section: Optional[str], tier: str) -> None:
+        tier = tier if tier in self._TIER_PRIORITY else self._INFERRED
+        if section is None:
+            current = self._global_terms.get(token)
+            if current is None or self._TIER_PRIORITY[tier] > self._TIER_PRIORITY[current]:
+                self._global_terms[token] = tier
+            return
+        bucket = self._section_terms[section]
+        current = bucket.get(token)
+        if current is None or self._TIER_PRIORITY[tier] > self._TIER_PRIORITY[current]:
+            bucket[token] = tier
+
+    def _get_token_tier(self, token: str, section: Optional[str]) -> Optional[str]:
+        if section is not None:
+            value = self._section_terms.get(section, {}).get(token)
+            if value:
+                return value
+        return self._global_terms.get(token)
+
+    @staticmethod
+    def _tier_allowed(tier: str, allowed: Optional[Collection[str]]) -> bool:
+        if not allowed:
+            return True
+        return tier in allowed
 
     @staticmethod
     def _tokenize(text: str) -> Set[str]:
@@ -195,6 +261,7 @@ class EvidenceIndex:
         return tokens
 
 
+
 @dataclass
 class ValidationContext:
     """Context shared with validators when evaluating README output."""
@@ -212,18 +279,23 @@ def build_evidence_index(
     """Construct an evidence index from analyzer signals and section metadata."""
     index = EvidenceIndex()
     for signal in signals:
-        index.add(signal.value, section=None, source=f"signal:{signal.name}")
+        index.add(signal.value, section=None, source=f"signal:{signal.name}", tier="inferred")
         for item in _flatten(signal.metadata):
-            index.add(str(item), section=None, source=f"signal_meta:{signal.name}")
+            index.add(str(item), section=None, source=f"signal_meta:{signal.name}", tier="inferred")
     for name, section in sections.items():
         context_values = section.metadata.get("context", []) if isinstance(section.metadata, dict) else []
         if isinstance(context_values, Sequence):
             for chunk in context_values:
-                index.add(str(chunk), section=name, source=f"context:{name}")
+                as_str = str(chunk)
+                index.add(as_str, section=name, source=f"context:{name}", tier="observed")
+                index.add(as_str, section=None, source=f"context:{name}", tier="observed")
         for meta_value in _flatten(section.metadata):
-            index.add(str(meta_value), section=name, source=f"metadata:{name}")
+            as_str = str(meta_value)
+            index.add(as_str, section=name, source=f"metadata:{name}", tier="observed")
+            index.add(as_str, section=None, source=f"metadata:{name}", tier="observed")
         if section.title:
-            index.add(section.title, section=name, source=f"title:{name}")
+            index.add(section.title, section=name, source=f"title:{name}", tier="observed")
+            index.add(section.title, section=None, source=f"title:{name}", tier="observed")
     return index
 
 

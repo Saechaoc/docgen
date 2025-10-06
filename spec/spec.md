@@ -118,10 +118,10 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 ### 3.8 Validation Layer
 
 * Runs after section rendering and before linting/publishing to ensure generated claims are grounded.
-* Normalizes analyzer signals, section metadata, and retrieved context into an **Evidence Index** used for token overlap checks.
-* Default `NoHallucinationValidator` rejects sentences lacking supporting evidence, replaces offending sections with fail-safe stubs, and raises actionable errors.
+* Normalizes analyzer signals, section metadata, and retrieved context into an **Evidence Index** that stores observed vs. inferred tiers for each token.
+* Default `NoHallucinationValidator` operates in balanced mode: it accepts analyzer-backed inferences, applies synonym matching (e.g., `dynamodb` vs. `aws-dynamodb`), and falls back to deterministic stubs when validation fails.
 * Writes `.docgen/validation.json` capturing validator status, issues, and evidence summaries for auditability.
-* Respects `.docgen.yml` `validation.no_hallucination` toggle, `DOCGEN_VALIDATION_NO_HALLUCINATION` environment override, and CLI `--skip-validation` flag for one-off bypasses.
+* Respects `.docgen.yml` `validation` settings (`mode`, `no_hallucination`, `allow_inferred`), the `DOCGEN_VALIDATION_NO_HALLUCINATION` environment override, and CLI `--skip-validation` for one-off bypasses.
 
 ### 3.9 Doc Store (Artifacts & Versions)
 
@@ -224,8 +224,17 @@ readme:
     - faq
     - license
 
+generation:
+  mode: balanced            # balanced | strict | deterministic | model-first
+  allow_inferred: true     # allow analyzers to backfill missing evidence
+  sections:
+    architecture: true     # enable LLM narratives for these sections
+    deployment: true
+
 validation:
-  no_hallucination: true  # set to false or use DOCGEN_VALIDATION_NO_HALLUCINATION=0 to disable
+  mode: balanced           # balanced | strict | off
+  no_hallucination: true   # set to false or use DOCGEN_VALIDATION_NO_HALLUCINATION=0 to disable
+  allow_inferred: true
 
 publish:
   mode: "pr"                  # "commit" | "pr" | "dry-run"

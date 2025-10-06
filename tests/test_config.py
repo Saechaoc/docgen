@@ -24,6 +24,11 @@ def test_load_config_returns_defaults_when_missing(tmp_path: Path) -> None:
     assert config.templates_dir is None
     assert config.template_pack is None
     assert config.validation.no_hallucination is True
+    assert config.generation.mode is None
+    assert config.generation.allow_inferred is None
+    assert config.generation.section_overrides == {}
+    assert config.validation.mode is None
+    assert config.validation.allow_inferred is None
 
 
 def test_load_config_parses_expected_fields(tmp_path: Path) -> None:
@@ -59,8 +64,15 @@ ci:
   watched_globs:
     - "src/**"
     - "Dockerfile"
+generation:
+  mode: strict
+  allow_inferred: false
+  sections:
+    architecture: false
 validation:
+  mode: strict
   no_hallucination: false
+  allow_inferred: false
 """,
         encoding="utf-8",
     )
@@ -94,7 +106,12 @@ validation:
     assert config.ci.watched_globs == ["src/**", "Dockerfile"]
 
     assert config.exclude_paths == ["sandbox/"]
+    assert config.generation.mode == "strict"
+    assert config.generation.allow_inferred is False
+    assert config.generation.section_overrides == {"architecture": False}
+    assert config.validation.mode == "strict"
     assert config.validation.no_hallucination is False
+    assert config.validation.allow_inferred is False
 
 
 def test_load_config_fallback_parser_handles_lists(tmp_path: Path, monkeypatch) -> None:

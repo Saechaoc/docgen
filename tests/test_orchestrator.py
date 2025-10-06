@@ -144,7 +144,7 @@ analyzers:
     content = readme_path.read_text(encoding="utf-8")
 
     assert "python -m pytest" not in content
-    assert "Primary languages" in content
+    assert "Primary stack" in content
 
 
 def test_run_init_commit_mode_triggers_publisher(tmp_path: Path) -> None:
@@ -181,7 +181,8 @@ def test_run_init_uses_llm_runner_streaming(tmp_path: Path) -> None:
 
     content = readme_path.read_text(encoding="utf-8")
     assert "generated content" in content
-    assert len(runner.calls) == len(DEFAULT_SECTIONS)
+    assert len(runner.calls) == 1
+    assert "Section: Introduction" in runner.calls[0]["prompt"]
     assert all(call["system"] == PromptBuilder.SYSTEM_PROMPT for call in runner.calls)
     assert all(call["max_tokens"] is None for call in runner.calls)
 

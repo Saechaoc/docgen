@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass, field
 import json
+import re
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 try:  # pragma: no cover - optional dependency
     from jinja2 import Environment, FileSystemLoader, TemplateNotFound
@@ -306,21 +307,33 @@ class PromptBuilder:
     ) -> Tuple[str, Dict[str, object]]:
         project_name = Path(manifest.root).name or "Repository"
         language_phrase = self._join_languages(languages) if languages else "polyglot"
-        framework_clause = ""
-        if languages:
-            primary_frameworks = frameworks.get(languages[0], [])
-            if primary_frameworks:
+        primary_frameworks = frameworks.get(languages[0], []) if languages else []
+        files = {file.path for file in manifest.files}
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
+
+        body_lines: List[str] = []
+        metadata: Dict[str, object] = {"languages": languages, "frameworks": frameworks, "project_name": project_name}
+
+        if is_docgen:
+            framework_clause = ""
+            if languages and primary_frameworks:
                 framework_clause = f" using {', '.join(primary_frameworks)}"
-        has_spec = any(file.path == "spec/spec.md" for file in manifest.files)
-        body_lines = [
-            f"{project_name} is a local-first README generator for polyglot repositories built primarily with {language_phrase}{framework_clause}.",
-            "It scans every tracked file, emits analyzer signals, retrieves grounded context, and drives a local LLM through templated sections to keep documentation accurate.",
-            "The overview below captures the full pipeline so contributors understand the moving pieces before running `docgen init`.",
-        ]
-        if has_spec:
-            body_lines.append("Refer to `spec/spec.md` for detailed architecture contracts and responsibilities.")
+            body_lines.append(
+                f"{project_name} is a local-first README generator for polyglot repositories built primarily with {language_phrase}{framework_clause}."
+            )
+            body_lines.append("It scans every tracked file, emits analyzer signals, retrieves grounded context, and drives a local LLM through templated sections to keep documentation accurate.")
+            body_lines.append("The overview below captures the full pipeline so contributors understand the moving pieces before running `docgen init`.")
+            if any(file.path == "spec/spec.md" for file in manifest.files):
+                body_lines.append("Refer to `spec/spec.md` for detailed architecture contracts and responsibilities.")
+            metadata.update({"project_name": project_name})
+        else:
+            if primary_frameworks:
+                body_lines.append(f"{project_name} is a {language_phrase} project using {', '.join(primary_frameworks)}.")
+            elif languages:
+                body_lines.append(f"{project_name} is a {language_phrase} project.")
+            else:
+                body_lines.append(f"{project_name} is a codebase managed with docgen.")
         body = " ".join(body_lines)
-        metadata = {"languages": languages, "frameworks": frameworks, "project_name": project_name}
         return body, metadata
 
     def _build_features(
@@ -339,6 +352,8 @@ class PromptBuilder:
         entities: Sequence[Signal],
     ) -> Tuple[str, Dict[str, object]]:
         files = {file.path for file in manifest.files}
+        project_name = Path(manifest.root).name or "Repository"
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
         items: List[str] = []
 
         def add(condition: bool, text: str) -> None:
@@ -372,7 +387,8 @@ class PromptBuilder:
         if build_commands:
             tool_list = ", ".join(sorted(build_commands.keys()))
             items.append(f"Supported build tooling: {tool_list}")
-        items.append("Ready for continuous README generation via docgen.")
+        if is_docgen:
+            items.append("Ready for continuous README generation via docgen.")
 
         display_items = self._select_items(items, max_items=8)
         body = self._format_bullet_list(display_items)
@@ -388,6 +404,8 @@ class PromptBuilder:
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
         files = {file.path for file in manifest.files}
+        project_name = Path(manifest.root).name or "Repository"
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
         module_list = list(modules)
         if not module_list:
             layout: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -427,93 +445,102 @@ class PromptBuilder:
             )
         module_overview = module_overview[:8]
 
-        flow_summary_parts = [
-            "The orchestrator (`docgen/orchestrator.py`) coordinates RepoScanner, analyzer plugins, the retrieval indexer, PromptBuilder, the local LLM runner, and post-processing publishers to keep README updates grounded in repository state."
-        ]
-        if "spec/spec.md" in files:
-            flow_summary_parts.append("Contracts and component expectations live in `spec/spec.md`; keep the spec and README in sync when responsibilities change.")
-        flow_summary = " ".join(flow_summary_parts)
-
-        component_specs = [
-            {
-                "layer": "CLI & logging",
-                "modules": ["docgen/cli.py", "docgen/logging.py", "docgen/failsafe.py"],
-                "purpose": "Parses `init`/`update` commands, wires verbose logging, and falls back to stub sections when prompting fails.",
-            },
-            {
-                "layer": "Configuration",
-                "modules": ["docgen/config.py"],
-                "purpose": "Loads `.docgen.yml`, enforces loopback-only LLM endpoints, and exposes analyzer/publishing toggles.",
-            },
-            {
-                "layer": "Repository scanning",
-                "modules": ["docgen/repo_scanner.py", ".docgen/manifest_cache.json"],
-                "purpose": "Builds `RepoManifest` entries, classifies file roles, and caches hashes for incremental runs.",
-            },
-            {
-                "layer": "Analyzer plugins",
-                "modules": ["docgen/analyzers/__init__.py", "docgen/analyzers/utils.py"],
-                "purpose": "Emit language, dependency, entrypoint, architecture, and pattern signals consumed downstream.",
-            },
-            {
-                "layer": "Prompting",
-                "modules": ["docgen/prompting/builder.py", "docgen/prompting/templates/readme.j2"],
-                "purpose": "Shapes section prompts, estimates token budgets, validates commands, and renders markdown scaffolds.",
-            },
-            {
-                "layer": "Retrieval (RAG)",
-                "modules": ["docgen/rag/indexer.py", "docgen/rag/store.py", "docgen/rag/embedder.py"],
-                "purpose": "Chunks docs/source into embeddings stored under `.docgen/embeddings.json` for section-scoped context.",
-            },
-            {
-                "layer": "LLM runtime",
-                "modules": ["docgen/llm/runner.py", "docgen/llm/llamacpp.py"],
-                "purpose": "Calls local model runners (Model Runner, Ollama, llama.cpp) with strict token and temperature limits.",
-            },
-            {
-                "layer": "Post-processing & publishing",
-                "modules": [
-                    "docgen/postproc/toc.py",
-                    "docgen/postproc/markers.py",
-                    "docgen/postproc/badges.py",
-                    "docgen/postproc/links.py",
-                    "docgen/git/publisher.py",
-                    "docgen/git/diff.py",
-                    "docgen/postproc/scorecard.py",
-                ],
-                "purpose": "Rebuilds the ToC, repairs markers, validates links, computes scorecards, and pushes commits or PRs.",
-            },
-            {
-                "layer": "Service API",
-                "modules": ["docgen/service/app.py"],
-                "purpose": "Exposes health, init, and update endpoints for external orchestration or hosted runners.",
-            },
-        ]
-
-        component_rows: List[Dict[str, object]] = []
-        repo_root = Path(manifest.root)
-        for spec in component_specs:
-            present_modules = [
-                module
-                for module in spec["modules"]
-                if module in files or (repo_root / module).exists()
+        if is_docgen:
+            flow_summary_parts = [
+                "The orchestrator (`docgen/orchestrator.py`) coordinates RepoScanner, analyzer plugins, the retrieval indexer, PromptBuilder, the local LLM runner, and post-processing publishers to keep README updates grounded in repository state."
             ]
-            if not present_modules:
-                continue
-            component_rows.append(
+            if "spec/spec.md" in files:
+                flow_summary_parts.append("Contracts and component expectations live in `spec/spec.md`; keep the spec and README in sync when responsibilities change.")
+            flow_summary = " ".join(flow_summary_parts)
+
+            component_specs = [
                 {
-                    "layer": spec["layer"],
-                    "modules": present_modules,
-                    "purpose": spec["purpose"],
-                }
-            )
+                    "layer": "CLI & logging",
+                    "modules": ["docgen/cli.py", "docgen/logging.py", "docgen/failsafe.py"],
+                    "purpose": "Parses `init`/`update` commands, wires verbose logging, and falls back to stub sections when prompting fails.",
+                },
+                {
+                    "layer": "Configuration",
+                    "modules": ["docgen/config.py"],
+                    "purpose": "Loads `.docgen.yml`, enforces loopback-only LLM endpoints, and exposes analyzer/publishing toggles.",
+                },
+                {
+                    "layer": "Repository scanning",
+                    "modules": ["docgen/repo_scanner.py", ".docgen/manifest_cache.json"],
+                    "purpose": "Builds `RepoManifest` entries, classifies file roles, and caches hashes for incremental runs.",
+                },
+                {
+                    "layer": "Analyzer plugins",
+                    "modules": ["docgen/analyzers/__init__.py", "docgen/analyzers/utils.py"],
+                    "purpose": "Emit language, dependency, entrypoint, architecture, and pattern signals consumed downstream.",
+                },
+                {
+                    "layer": "Prompting",
+                    "modules": ["docgen/prompting/builder.py", "docgen/prompting/templates/readme.j2"],
+                    "purpose": "Shapes section prompts, estimates token budgets, validates commands, and renders markdown scaffolds.",
+                },
+                {
+                    "layer": "Retrieval (RAG)",
+                    "modules": ["docgen/rag/indexer.py", "docgen/rag/store.py", "docgen/rag/embedder.py"],
+                    "purpose": "Chunks docs/source into embeddings stored under `.docgen/embeddings.json` for section-scoped context.",
+                },
+                {
+                    "layer": "LLM runtime",
+                    "modules": ["docgen/llm/runner.py", "docgen/llm/llamacpp.py"],
+                    "purpose": "Calls local model runners (Model Runner, Ollama, llama.cpp) with strict token and temperature limits.",
+                },
+                {
+                    "layer": "Post-processing & publishing",
+                    "modules": [
+                        "docgen/postproc/toc.py",
+                        "docgen/postproc/markers.py",
+                        "docgen/postproc/badges.py",
+                        "docgen/postproc/links.py",
+                        "docgen/git/publisher.py",
+                        "docgen/git/diff.py",
+                        "docgen/postproc/scorecard.py",
+                    ],
+                    "purpose": "Rebuilds the ToC, repairs markers, validates links, computes scorecards, and pushes commits or PRs.",
+                },
+                {
+                    "layer": "Service API",
+                    "modules": ["docgen/service/app.py"],
+                    "purpose": "Exposes health, init, and update endpoints for external orchestration or hosted runners.",
+                },
+            ]
+
+            component_rows: List[Dict[str, object]] = []
+            repo_root = Path(manifest.root)
+            for spec in component_specs:
+                present_modules = [
+                    module
+                    for module in spec["modules"]
+                    if module in files or (repo_root / module).exists()
+                ]
+                if not present_modules:
+                    continue
+                component_rows.append(
+                    {
+                        "layer": spec["layer"],
+                        "modules": present_modules,
+                        "purpose": spec["purpose"],
+                    }
+                )
+
+            flow_diagram = self._default_flow_diagram()
+            init_sequence = self._default_init_sequence()
+            update_sequence = self._default_update_sequence()
+        else:
+            flow_summary = self._build_generic_architecture_summary(module_overview, project_name)
+            if "spec/spec.md" in files:
+                flow_summary += " Reference `spec/spec.md` for detailed contracts."
+            component_rows = self._build_generic_component_rows(module_overview)
+            flow_diagram = ""
+            init_sequence = ""
+            update_sequence = ""
 
         artifacts = self._discover_artifacts(manifest)
-        init_sequence = self._default_init_sequence()
-        update_sequence = self._default_update_sequence()
         api_diagram = self._build_sequence_diagram(apis[:3])
-        flow_diagram = self._default_flow_diagram()
-
         entity_rows: List[Dict[str, object]] = []
         for signal in entities[:8]:
             metadata = signal.metadata or {}
@@ -555,6 +582,50 @@ class PromptBuilder:
         include(".docgen/validation.json", "Validation trace covering hallucination checks and sentence-level issues.")
         include(".docgen/analyzers/cache.json", "Analyzer cache that enables incremental signal execution.")
         return artifacts
+
+    def _build_generic_architecture_summary(
+        self,
+        modules: Sequence[Dict[str, object]],
+        project_name: str,
+    ) -> str:
+        if not modules:
+            return f"{project_name} combines application code with supporting documentation and configuration assets."
+        module_names = [entry.get("name") for entry in modules if entry.get("name")]
+        roles = {role for entry in modules for role in entry.get("roles", []) if role}
+        parts: List[str] = []
+        if module_names:
+            display = ", ".join(module_names[:3])
+            if len(module_names) > 3:
+                display += ", ..."
+            parts.append(f"Top-level modules such as {display} organise the project structure.")
+        if roles:
+            role_phrases = [
+                _ROLE_DESCRIPTIONS.get(str(role), str(role).replace('_', ' '))
+                for role in sorted(roles)
+            ]
+            parts.append(f"Roles covered include {', '.join(role_phrases)}.")
+        return " ".join(parts) or f"{project_name} combines application code with supporting documentation and configuration assets."
+
+    def _build_generic_component_rows(
+        self,
+        modules: Sequence[Dict[str, object]],
+    ) -> List[Dict[str, object]]:
+        rows: List[Dict[str, object]] = []
+        for entry in modules[:6]:
+            name = entry.get("name")
+            if not name:
+                continue
+            roles = [str(role) for role in entry.get("roles", []) if role]
+            if roles:
+                descriptions = [
+                    _ROLE_DESCRIPTIONS.get(role, role.replace('_', ' '))
+                    for role in roles
+                ]
+                purpose = "; ".join(descriptions)
+            else:
+                purpose = "Application code and supporting assets."
+            rows.append({"layer": str(name).replace('_', ' ').title(), "modules": [str(name)], "purpose": purpose})
+        return rows
 
     @staticmethod
     def _default_flow_diagram() -> str:
@@ -714,8 +785,11 @@ class PromptBuilder:
         validated = self._validate_commands(build_only, manifest)
         entrypoint_cmds = [str(ep.get("command")) for ep in entrypoints if ep.get("command")]
         runtime_commands: List[str] = []
-        for cmd in validated + entrypoint_cmds + list(pattern_commands):
-            if not cmd:
+        for raw_cmd in validated + entrypoint_cmds + list(pattern_commands):
+            if not raw_cmd:
+                continue
+            cmd = str(raw_cmd)
+            if self._is_runtime_test_command(cmd):
                 continue
             if cmd not in runtime_commands:
                 runtime_commands.append(cmd)
@@ -738,63 +812,102 @@ class PromptBuilder:
     ) -> Tuple[str, Dict[str, object]]:
         root = Path(manifest.root)
         files = {file.path for file in manifest.files}
-
-        summary = (
-            "`docgen/config.py` loads `.docgen.yml` into typed dataclasses and falls back to safe defaults when the file is missing."
-        )
+        project_name = root.name or "Repository"
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
 
         tracked_paths: List[str] = []
-        for candidate in [
-            ".docgen.yml",
-            "docs/ci/docgen-update.yml",
-            "docs/ci/github-actions.md",
-            "docs/models.md",
-        ]:
-            if candidate in files or (root / candidate).exists():
-                tracked_paths.append(candidate)
 
-        env_files = sorted(
-            path for path in files if path.endswith((".env", ".env.example"))
-        )
-        for path in env_files:
+        def add_path(path: str) -> None:
             if path not in tracked_paths:
                 tracked_paths.append(path)
 
-        config_example_lines = [
-            "llm:",
-            "  runner: 'model-runner'",
-            "  base_url: 'http://localhost:12434/engines/v1'",
-            "  model: 'ai/smollm2:360M-Q4_K_M'",
-            "  temperature: 0.2",
-            "  max_tokens: 2048",
-            "",
-            "readme:",
-            "  style: 'comprehensive'",
-            "  token_budget:",
-            "    default: 2048",
-            "",
-            "publish:",
-            "  mode: 'pr'",
-            "  branch_prefix: 'docgen/readme-update'",
-            "  labels: ['docs:auto']",
-            "",
-            "analyzers:",
-            "  exclude_paths:",
-            "    - 'sandbox/'",
-            "",
-            "ci:",
-            "  watched_globs:",
-            "    - 'docgen/**'",
-            "    - 'docs/**'",
-        ]
-        config_example = "\n".join(config_example_lines)
+        docgen_candidates = [".docgen.yml", "docs/ci/docgen-update.yml", "docs/ci/github-actions.md", "docs/models.md"]
+        for candidate in docgen_candidates:
+            if candidate in files or (root / candidate).exists():
+                add_path(candidate)
 
-        notes = [
-            "Environment overrides (`DOCGEN_LLM_MODEL`, `DOCGEN_LLM_BASE_URL`, `DOCGEN_LLM_API_KEY`) take precedence at runtime.",
-            "LLM endpoints must resolve to loopback or internal hosts; remote URLs are rejected by `LLMRunner`.",
-            "Analyzer include/exclude settings keep noisy directories out of signal generation.",
-            "Validation defaults enable the no-hallucination guard; disable it only for diagnostics.",
+        env_files = sorted(path for path in files if path.endswith((".env", ".env.example")))
+        for path in env_files:
+            add_path(path)
+
+        generic_candidates = [
+            "pyproject.toml",
+            "poetry.lock",
+            "Pipfile",
+            "Pipfile.lock",
+            "requirements.txt",
+            "requirements.in",
+            "setup.cfg",
+            "package.json",
+            "package-lock.json",
+            "yarn.lock",
+            "pnpm-lock.yaml",
+            "Dockerfile",
+            "docker-compose.yml",
+            "compose.yaml",
+            "Makefile",
         ]
+        for candidate in generic_candidates:
+            if candidate in files or (root / candidate).exists():
+                add_path(candidate)
+
+        workflow_files = sorted(path for path in files if path.startswith(".github/workflows/"))
+        for path in workflow_files:
+            add_path(path)
+
+        if is_docgen:
+            summary = "`docgen/config.py` loads `.docgen.yml` into typed dataclasses and falls back to safe defaults when the file is missing."
+            config_example_lines = [
+                "llm:",
+                "  runner: 'model-runner'",
+                "  base_url: 'http://localhost:12434/engines/v1'",
+                "  model: 'ai/smollm2:360M-Q4_K_M'",
+                "  temperature: 0.2",
+                "  max_tokens: 2048",
+                "",
+                "readme:",
+                "  style: 'comprehensive'",
+                "  token_budget:",
+                "    default: 2048",
+                "",
+                "publish:",
+                "  mode: 'pr'",
+                "  branch_prefix: 'docgen/readme-update'",
+                "  labels: ['docs:auto']",
+                "",
+                "analyzers:",
+                "  exclude_paths:",
+                "    - 'sandbox/'",
+                "",
+                "ci:",
+                "  watched_globs:",
+                "    - 'docgen/**'",
+                "    - 'docs/**'",
+            ]
+            config_example = "\n".join(config_example_lines)
+            notes = [
+                "Environment overrides (`DOCGEN_LLM_MODEL`, `DOCGEN_LLM_BASE_URL`, `DOCGEN_LLM_API_KEY`) take precedence at runtime.",
+                "LLM endpoints must resolve to loopback or internal hosts; remote URLs are rejected by `LLMRunner`.",
+                "Analyzer include/exclude settings keep noisy directories out of signal generation.",
+                "Validation defaults enable the no-hallucination guard; disable it only for diagnostics.",
+            ]
+        else:
+            summary = ""
+            if tracked_paths:
+                display = ", ".join(tracked_paths[:3])
+                if len(tracked_paths) > 3:
+                    display += ", ..."
+                summary = f"Configuration assets live in {display}."
+            config_example = None
+            notes: List[str] = []
+            if any(path.endswith((".env", ".env.example")) for path in tracked_paths):
+                notes.append("Duplicate sensitive values into a local `.env` file before running services.")
+            if any(path.startswith(".github/workflows/") for path in tracked_paths):
+                notes.append("GitHub Actions workflows define CI/CD checks; update them alongside code changes.")
+            if any(tp.endswith(("Dockerfile", "docker-compose.yml", "compose.yaml")) for tp in tracked_paths):
+                notes.append("Container and compose files document how to run the stack consistently.")
+            if not summary:
+                summary = "Surface key runtime and deployment configuration files here."
 
         metadata = {
             "summary": summary,
@@ -804,35 +917,97 @@ class PromptBuilder:
         }
         return summary, metadata
 
+
     def _build_build_and_test(
         self,
         *,
         build_commands: Dict[str, List[str]],
+        pattern_commands: Sequence[str],
         manifest: RepoManifest,
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
-        workflows: List[Dict[str, object]] = [
-            {
-                "title": "Format & lint",
-                "commands": ["black docgen tests", "python -m ruff check docgen tests"],
-            },
-            {
-                "title": "Type-check core modules",
-                "commands": ["python -m mypy docgen"],
-            },
-            {
-                "title": "Run the full test suite",
-                "commands": ["python -m pytest"],
-                "notes": ["Covers CLI, orchestrator, analyzers, prompting, git, RAG, and post-processing modules."],
-            },
-            {
-                "title": "Iterate on specific components",
-                "commands": [
-                    "python -m pytest -k orchestrator",
-                    "python -m pytest tests/analyzers/test_structure.py",
-                ],
-            },
-        ]
+        files = {file.path for file in manifest.files}
+        project_name = Path(manifest.root).name or "Repository"
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
+
+        if is_docgen:
+            workflows: List[Dict[str, object]] = [
+                {
+                    "title": "Format & lint",
+                    "commands": ["black docgen tests", "python -m ruff check docgen tests"],
+                },
+                {
+                    "title": "Type-check core modules",
+                    "commands": ["python -m mypy docgen"],
+                },
+                {
+                    "title": "Run the full test suite",
+                    "commands": ["python -m pytest"],
+                    "notes": ["Covers CLI, orchestrator, analyzers, prompting, git, RAG, and post-processing modules."],
+                },
+                {
+                    "title": "Iterate on specific components",
+                    "commands": [
+                        "python -m pytest -k orchestrator",
+                        "python -m pytest tests/analyzers/test_structure.py",
+                    ],
+                },
+            ]
+        else:
+            workflows = []
+
+            unique_commands = self._unique_commands(build_commands)
+            validated = self._validate_commands(unique_commands, manifest)
+            combined: List[str] = []
+            for raw in validated + [str(cmd) for cmd in pattern_commands]:
+                cmd = str(raw).strip()
+                if not cmd or cmd in combined:
+                    continue
+                combined.append(cmd)
+
+            lint_keywords = ("lint", "format", "ruff", "flake", "black", "eslint", "prettier", "pylint")
+            type_keywords = ("mypy", "pyright", "tsc", "type-check", "typecheck")
+            build_keywords = ("build", "compile", "bundle", "dist", "package")
+
+            lint_commands: List[str] = []
+            type_commands: List[str] = []
+            test_commands: List[str] = []
+            build_cmds: List[str] = []
+            runtime_commands: List[str] = []
+
+            for cmd in combined:
+                lower = cmd.lower()
+                if self._is_runtime_test_command(cmd):
+                    test_commands.append(cmd)
+                    continue
+                if any(keyword in lower for keyword in lint_keywords):
+                    lint_commands.append(cmd)
+                    continue
+                if any(keyword in lower for keyword in type_keywords):
+                    type_commands.append(cmd)
+                    continue
+                if any(keyword in lower for keyword in build_keywords):
+                    build_cmds.append(cmd)
+                    continue
+                runtime_commands.append(cmd)
+
+            if lint_commands:
+                workflows.append({"title": "Format & lint", "commands": lint_commands[:4]})
+            if type_commands:
+                workflows.append({"title": "Type-check", "commands": type_commands[:4]})
+            if test_commands:
+                workflows.append({"title": "Run tests", "commands": test_commands[:4]})
+            if build_cmds:
+                workflows.append({"title": "Build artifacts", "commands": build_cmds[:4]})
+            if runtime_commands:
+                workflows.append({"title": "Runtime commands", "commands": runtime_commands[:4]})
+            if not workflows:
+                workflows.append(
+                    {
+                        "title": "Document project workflows",
+                        "notes": ["Extend docgen analyzers to surface build and test commands automatically."],
+                    }
+                )
 
         base_commands = {
             cmd
@@ -853,6 +1028,7 @@ class PromptBuilder:
         }
         return "", metadata
 
+
     def _build_deployment(
         self,
         *,
@@ -860,19 +1036,35 @@ class PromptBuilder:
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
         root = Path(manifest.root)
+        files = {file.path for file in manifest.files}
+        project_name = root.name or "Repository"
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
 
         bullets: List[str] = []
-        if (root / "docs/ci/docgen-update.yml").exists():
-            bullets.append("`docs/ci/docgen-update.yml` installs the package in editable mode, runs `docgen update`, and can push README changes from CI.")
-        if (root / "docs/ci/github-actions.md").exists():
-            bullets.append("`docs/ci/github-actions.md` documents required secrets and explains the scheduled workflow for README refreshes.")
-        if (root / "docgen/git/publisher.py").exists():
-            bullets.append("`Publisher` integrates with the GitHub CLI when `publish.mode` is set to `pr`; use `publish.mode: commit` for bootstrap automation.")
-        bullets.append("Run docgen against a loopback model runner such as Model Runner at `http://localhost:12434/engines/v1` or Ollama to keep data local.")
-        bullets.append("Add Docker or Compose manifests alongside analyzer pattern signals so deployment commands surface automatically in Quick Start.")
+        if is_docgen:
+            if (root / "docs/ci/docgen-update.yml").exists():
+                bullets.append("`docs/ci/docgen-update.yml` installs the package in editable mode, runs `docgen update`, and can push README changes from CI.")
+            if (root / "docs/ci/github-actions.md").exists():
+                bullets.append("`docs/ci/github-actions.md` documents required secrets and explains the scheduled workflow for README refreshes.")
+            if (root / "docgen/git/publisher.py").exists():
+                bullets.append("`Publisher` integrates with the GitHub CLI when `publish.mode` is set to `pr`; use `publish.mode: commit` for bootstrap automation.")
+            bullets.append("Run docgen against a loopback model runner such as Model Runner at `http://localhost:12434/engines/v1` or Ollama to keep data local.")
+            bullets.append("Add Docker or Compose manifests alongside analyzer pattern signals so deployment commands surface automatically in Quick Start.")
+        else:
+            if any(path.startswith(".github/workflows/") for path in files):
+                bullets.append("GitHub Actions workflows under `.github/workflows/` coordinate tests and deployments; keep README guidance aligned with those jobs.")
+            if any(fp.endswith(("Dockerfile", "docker-compose.yml", "compose.yaml")) for fp in files):
+                bullets.append("Container manifests (`Dockerfile`, `docker-compose.yml`) enable parity between local and production environments.")
+            if any(path.endswith(".tf") or path.startswith("infra/") for path in files):
+                bullets.append("Infrastructure-as-code assets should have documented plan/apply steps in your release pipeline.")
+            if any(path.endswith(".yaml") and "k8s" in path.lower() for path in files):
+                bullets.append("Kubernetes manifests require cluster credentials; note the target namespaces and rollout commands.")
+            if not bullets:
+                bullets.append("Capture deployment targets (e.g., cloud provider, container registry, package index) and the commands required to publish new versions.")
 
         metadata = {"bullets": bullets}
         return "", metadata
+
 
     def _build_troubleshooting(
         self,
@@ -881,13 +1073,23 @@ class PromptBuilder:
         **_: object,
     ) -> Tuple[str, Dict[str, object]]:
         project_name = Path(manifest.root).name or "Repository"
-        items = [
-            "Confirm dependencies are installed before running commands.",
-            "Use `docgen update` after code changes to refresh sections automatically.",
-            f"Open an issue when {project_name} requires additional diagnostics in this section.",
-        ]
+        files = {file.path for file in manifest.files}
+        is_docgen = self._looks_like_docgen_repo(files, project_name)
+        if is_docgen:
+            items = [
+                "Confirm dependencies are installed before running commands.",
+                "Use `docgen update` after code changes to refresh sections automatically.",
+                f"Open an issue when {project_name} requires additional diagnostics in this section.",
+            ]
+        else:
+            items = [
+                "Confirm dependencies are installed before running commands.",
+                "Review recent CI failures or local test runs for failing components.",
+                "Increase logging verbosity or enable debug flags to capture more context when issues persist.",
+            ]
         display_items = self._select_items(items, max_items=5)
         return self._format_bullet_list(display_items), {"items": display_items, "all_items": items}
+
 
     def _build_faq(
         self,
@@ -1295,6 +1497,29 @@ class PromptBuilder:
         for frm, to, arrow, msg in edges:
             lines.append(f"    {frm} {arrow} {to}: {msg}")
         return "\n".join(lines)
+
+    @staticmethod
+    def _is_runtime_test_command(command: str) -> bool:
+        normalized = command.strip().lower()
+        if not normalized:
+            return False
+        if "/tests" in normalized or "\tests" in normalized:
+            return True
+        if re.search(r"\btest(s|ing)?\b", normalized):
+            return True
+        for keyword in ("pytest", "tox", "coverage", "lint", "flake8", "mypy", "ruff", "bandit", "unittest"):
+            if keyword in normalized:
+                return True
+        return False
+
+    @staticmethod
+    def _looks_like_docgen_repo(files: Set[str], project_name: Optional[str] = None) -> bool:
+        markers = {"docgen/cli.py", "docgen/orchestrator.py", "docgen/prompting/builder.py"}
+        if any(marker in files for marker in markers):
+            return True
+        if project_name and project_name.lower().startswith("docgen"):
+            return True
+        return False
 
     @staticmethod
     def _unique_commands(commands_by_tool: Dict[str, List[str]]) -> List[str]:
