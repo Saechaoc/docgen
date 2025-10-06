@@ -1,11 +1,3 @@
-# GitHub Actions Integration
-
-The workflow below runs `docgen update` for every pull request using a
-GitHub-hosted runner plus the Docker Model Runner service. The service
-container downloads the requested weights (`ai/smollm2:latest`) the first
-time it starts and exposes the inference endpoint on port `12434`.
-
-```yaml
 name: docgen-update
 
 on:
@@ -66,7 +58,8 @@ jobs:
       - name: Run docgen update
         env:
           DIFF_BASE: ${{ github.event.pull_request.base.sha }}
-        run: python -m docgen.cli update --diff-base "$DIFF_BASE"
+        run: |
+          python -m docgen.cli update --diff-base "$DIFF_BASE"
 
       - name: Commit README updates
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
@@ -76,6 +69,7 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git add README.md README_after_changes.md readme_generation_progress.md
           if git diff --cached --quiet; then
+            echo "No README changes to commit"
             exit 0
           fi
           git commit -m "docs: refresh README via docgen"
@@ -87,10 +81,3 @@ jobs:
         with:
           name: docgen-readme
           path: README*.md
-```
-
-> **Note:** commits back to forks are skipped to avoid permission errors; the
-> generated README artifacts are attached instead so contributors can apply the
-> diff locally. Adjust `MODEL_RUNNER_MODEL` and `DOCGEN_LLM_MODEL` if you change
-> the default weights.
-```

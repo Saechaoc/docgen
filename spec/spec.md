@@ -450,12 +450,14 @@ def regenerate(sections: str = "", full: bool = False): ...
 
 ### CI (GitHub/GitLab/Bitbucket)
 
-* On push/PR:
+* On pull requests:
 
-  1. Checkout repo.
-  2. `docgen update --event pr --diff-base $BASE_SHA`
-  3. If changes → open/update PR with labeled `docs:auto`.
-* Tokenless mode possible if PR created from a GitHub App/bot account.
+  1. Checkout repo with full history (`fetch-depth: 0`).
+  2. Launch Docker Model Runner (`ghcr.io/sourcegraph/model-runner:latest`) as a service container with `MODEL_RUNNER_MODEL=ai/smollm2:latest` and wait for `/engines/v1/models` health.
+  3. Install dependencies via `requirements/dev.txt` on Python 3.11.
+  4. Run `docgen update --diff-base $BASE_SHA` with `DOCGEN_LLM_BASE_URL=http://model-runner:12434/engines/v1` and `DOCGEN_LLM_MODEL=ai/smollm2:360M-Q4_K_M`.
+  5. If README artifacts change and the branch belongs to the main repository, commit and push (`docs: refresh README via docgen`); otherwise upload artifacts for manual application.
+* Forked PRs skip the push step to avoid permission failures but still attach generated markdown.
 
 ---
 

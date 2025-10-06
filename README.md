@@ -343,8 +343,8 @@ python -m pip install -e .
 ## Deployment
 
 <!-- docgen:begin:deployment -->
-- `docs/ci/docgen-update.yml` installs the package in editable mode, runs `docgen update`, and can push README changes from CI.
-- `docs/ci/github-actions.md` documents required secrets and explains the scheduled workflow for README refreshes.
+- `.github/workflows/docgen-update.yml` runs `docgen update` for every pull request using the Docker Model Runner service container and commits README changes when the branch resides in this repository.
+- `docs/ci/github-actions.md` documents required secrets, health checks, and fallback behavior for forked pull requests.
 - `Publisher` integrates with the GitHub CLI when `publish.mode` is set to `pr`; use `publish.mode: commit` for bootstrap automation.
 - Run docgen against a loopback model runner such as Model Runner at `http://localhost:12434/engines/v1` or Ollama to keep data local.
 - Add Docker or Compose manifests alongside analyzer pattern signals so deployment commands surface automatically in Quick Start.
