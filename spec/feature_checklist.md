@@ -8,7 +8,7 @@
 - [x] **docgen update** — Detect changes on commit/PR and patch affected sections **[MVP]**
 - [ ] **docgen regenerate** — Manual full/partial regeneration **[MVP]**
 - [x] Dry‑run mode (`--dry-run`) to preview diffs without writing **[NEXT]**
-- [ ] Service mode (FastAPI) endpoints for CI/bots **[STRETCH]**
+- [x] Service mode (FastAPI) endpoints for CI/bots **[STRETCH]**
 
 ## 2) Repository Scanning & Indexing
 - [x] Walk filesystem with ignore rules (`.gitignore`, `.docgen.yml`) **[MVP]**
@@ -22,7 +22,7 @@
 - [x] Build analyzers: Poetry/Setuptools, Maven/Gradle, npm/pnpm/yarn **[MVP]**
 - [x] Dependency analyzers from manifest files **[MVP]**
 - [x] Pattern analyzers: Docker/K8s, CI config, monorepo layout **[NEXT]**
-- [ ] Tree‑sitter powered symbol/entrypoint extraction (flagged) **[STRETCH]**
+- [x] Tree‑sitter powered symbol/entrypoint extraction (flagged) **[STRETCH]**
 
 ## 4) Knowledge Store (RAG)
 - [x] Local embedding model + chunking strategy **[MVP]**
@@ -40,7 +40,7 @@
 
 ## 6) Local LLM Runner
 - [x] Model Runner HTTP adapter (host/container defaults, env/API key overrides) **[MVP]**
-- [ ] llama.cpp adapter **[NEXT]**
+- [x] llama.cpp adapter **[NEXT]**
 - [ ] Structured outputs / tool‑use compatibility **[STRETCH]**
 
 ## 7) Post‑Processing

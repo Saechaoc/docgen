@@ -78,6 +78,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * **Entrypoint analyzers** (infer run commands for FastAPI, Django, Spring Boot, Node scripts).
 * **Pattern analyzers** (monorepo layout, CI/CD, containerization/K8s heuristics).
 * **Structure analyzer** (module topology, detected entities/DTOs, API endpoint sequences, service interactions).
+* **Tree-sitter symbol analyzer** (Python/Java/TypeScript) extracts functions/classes when parsers available and degrades gracefully otherwise.
 * Each analyzer returns **Signals** (key facts) to the knowledge graph.
 
 ### 3.4 Knowledge Graph & Embeddings (RAG)
@@ -103,6 +104,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Supports **function calling style** for structured outputs when available.
 * Streaming decode with stop tokens; **section-by-section** generation to stay within context limits.
 * Validates configuration to ensure runners stay local (loopback/`*.internal` hosts only).
+* Includes a `LlamaCppRunner` adapter for local `llama.cpp` binaries, enforcing filesystem-backed model paths and CLI execution.
 
 ### 3.7 Post-Processor
 
@@ -133,6 +135,13 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * PR body explains detected changes and what sections were updated.
 * Can commit directly (configurable) on init for empty repos.
 * Applies labels (e.g., `docs:auto`) and updates existing PRs when configured.
+
+### 3.11 Service Mode (FastAPI)
+
+* FastAPI app exposes `/init` and `/update` POST endpoints plus `/health` for readiness.
+* Reuses the orchestrator dependency and executes operations in thread pools to keep the event loop responsive.
+* CLI `docgen service --host 0.0.0.0 --port 8000` boots the service with authentication hooks ready for future hardening.
+* Error handlers surface actionable JSON (`detail` field) for common runtime issues.
 
 ---
 
@@ -195,6 +204,7 @@ class UpdatePlan:
 ```yaml
 llm:
   runner: "ollama"            # or "llama.cpp"
+  executable: "ollama"        # optional override for CLI binaries
   model: "llama3:8b-instruct" # example; local only
   max_tokens: 2048
   temperature: 0.2

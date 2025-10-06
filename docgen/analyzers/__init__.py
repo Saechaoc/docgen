@@ -12,6 +12,7 @@ from .entrypoints import EntryPointAnalyzer
 from .language import LanguageAnalyzer
 from .patterns import PatternAnalyzer
 from .structure import StructureAnalyzer
+from .tree_sitter import TreeSitterAnalyzer
 
 _ENTRY_POINT_GROUP = "docgen.analyzers"
 
@@ -22,6 +23,7 @@ _BUILTIN_FACTORIES: dict[str, Callable[[], Analyzer]] = {
     "entrypoints": EntryPointAnalyzer,
     "patterns": PatternAnalyzer,
     "structure": StructureAnalyzer,
+    "symbols": TreeSitterAnalyzer,
 }
 
 

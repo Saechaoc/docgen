@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from .orchestrator import Orchestrator
+from .service import run_service
 from .logging import configure_logging
 
 
@@ -86,6 +87,13 @@ def _build_parser() -> argparse.ArgumentParser:
     _add_verbose_option(regenerate_parser, suppress_default=True)
     _add_skip_validation_option(regenerate_parser)
 
+    service_parser = subparsers.add_parser(
+        "service",
+        help="Start the FastAPI service for docgen operations.",
+    )
+    service_parser.add_argument("--host", default="0.0.0.0", help="Host address to bind (default: 0.0.0.0).")
+    service_parser.add_argument("--port", type=int, default=8000, help="Port to bind (default: 8000).")
+
     return parser
 
 
@@ -143,6 +151,11 @@ def main(argv: list[str] | None = None) -> None:
             1,
             "`docgen regenerate` is not implemented yet. Use `docgen init` followed by manual edits.\n",
         )
+    elif args.command == "service":
+        try:
+            run_service(host=getattr(args, "host", "0.0.0.0"), port=int(getattr(args, "port", 8000)))
+        except Exception as exc:  # pragma: no cover - runtime safeguard
+            parser.exit(1, f"docgen service failed: {exc}\n")
     else:  # pragma: no cover - argparse enforces choices
         parser.exit(1, "Unknown command\n")
 

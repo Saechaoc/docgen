@@ -49,7 +49,7 @@
   - Documentation in `spec/spec.md` updated to reflect artifact caching behavior.
 
 ## Story S-034 — Service Mode & Extended Runtimes
-- **Status:** ☐ Not started
+- **Status:** ✔ Done
 - **Story Text:** Deliver FastAPI-based service mode, llama.cpp runtime adapter, and tree-sitter powered symbol extraction to round out stretch goals.
 - **Dependencies already completed:** S-010 (Git publishing infrastructure), S-017 (entrypoint detection groundwork)
 - **Constraints:**

@@ -31,3 +31,11 @@ def test_cli_accepts_skip_validation_flag() -> None:
     args = parser.parse_args(["init", "--skip-validation"])
     assert args.command == "init"
     assert args.skip_validation is True
+
+
+def test_cli_parses_service_arguments() -> None:
+    parser = _build_parser()
+    args = parser.parse_args(["service", "--host", "127.0.0.1", "--port", "9000"])
+    assert args.command == "service"
+    assert args.host == "127.0.0.1"
+    assert args.port == 9000

@@ -800,6 +800,7 @@ class Orchestrator:
         signature = (
             llm_cfg.runner,
             llm_cfg.model,
+            llm_cfg.executable,
             llm_cfg.base_url,
             llm_cfg.temperature,
             llm_cfg.max_tokens,
@@ -810,23 +811,41 @@ class Orchestrator:
         if self._llm_runner_signature == signature and self._llm_runner is not None:
             return self._llm_runner
 
-        kwargs: Dict[str, object] = {}
-        if llm_cfg.runner:
-            kwargs["executable"] = llm_cfg.runner
-        if llm_cfg.model:
-            kwargs["model"] = llm_cfg.model
-        if llm_cfg.base_url is not None:
-            kwargs["base_url"] = llm_cfg.base_url
-        if llm_cfg.temperature is not None:
-            kwargs["temperature"] = llm_cfg.temperature
-        if llm_cfg.max_tokens is not None:
-            kwargs["max_tokens"] = llm_cfg.max_tokens
-        if llm_cfg.api_key is not None:
-            kwargs["api_key"] = llm_cfg.api_key
-        if llm_cfg.request_timeout is not None:
-            kwargs["request_timeout"] = llm_cfg.request_timeout
+        runner = None
         try:
-            runner = LLMRunner(**kwargs)  # type: ignore[arg-type]
+            if llm_cfg.runner and llm_cfg.runner.lower() in {"llama.cpp", "llamacpp"}:
+                if not llm_cfg.model:
+                    self.logger.warning("llama.cpp runner requires `model` to be configured in .docgen.yml")
+                    return None
+                from .llm.llamacpp import LlamaCppRunner
+
+                model_path = Path(llm_cfg.model).expanduser()
+                if not model_path.is_absolute():
+                    model_path = (config.root / model_path).resolve()
+                runner = LlamaCppRunner(
+                    model_path=str(model_path),
+                    executable=llm_cfg.executable or llm_cfg.runner,
+                    temperature=llm_cfg.temperature,
+                    max_tokens=llm_cfg.max_tokens,
+                )
+            else:
+                kwargs: Dict[str, object] = {}
+                executable = llm_cfg.executable or llm_cfg.runner
+                if executable:
+                    kwargs["executable"] = executable
+                if llm_cfg.model:
+                    kwargs["model"] = llm_cfg.model
+                if llm_cfg.base_url is not None:
+                    kwargs["base_url"] = llm_cfg.base_url
+                if llm_cfg.temperature is not None:
+                    kwargs["temperature"] = llm_cfg.temperature
+                if llm_cfg.max_tokens is not None:
+                    kwargs["max_tokens"] = llm_cfg.max_tokens
+                if llm_cfg.api_key is not None:
+                    kwargs["api_key"] = llm_cfg.api_key
+                if llm_cfg.request_timeout is not None:
+                    kwargs["request_timeout"] = llm_cfg.request_timeout
+                runner = LLMRunner(**kwargs)  # type: ignore[arg-type]
         except Exception as exc:  # pragma: no cover - defensive guard
             self.logger.warning("Failed to initialise LLM runner: %s", exc)
             return None
