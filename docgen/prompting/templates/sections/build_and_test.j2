@@ -1,10 +1,26 @@
-{% if metadata['tools'] %}
-{% for tool, commands in metadata['tools'].items() %}
-**{{ tool.capitalize() }}**
-{% for cmd in commands %}- {{ cmd }}
+{% if metadata.workflows %}
+{% for item in metadata.workflows %}
+- **{{ item.title }}**
+{% if item.commands %}
+```bash
+{% for cmd in item.commands %}{{ cmd }}
 {% endfor %}
+```
+{% endif %}
+{% if item.notes %}
+{% for note in item.notes %}{{ note }}
+{% endfor %}
+{% endif %}
 
 {% endfor %}
+{% if metadata.extra_commands %}
+**Additional commands discovered by analyzers:**
+```bash
+{% for cmd in metadata.extra_commands %}{{ cmd }}
+{% endfor %}
+```
+{% endif %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}
+

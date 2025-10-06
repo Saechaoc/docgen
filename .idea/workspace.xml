@@ -4,30 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="Update feature order">
+    <list default="true" id="6f5ee0ad-1dd2-4e8c-9f9f-d7dfd4de6aa6" name="Changes" comment="WIP: Local LLM Not Working">
+      <change afterPath="$PROJECT_DIR$/README_after_changes.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/analyzers/cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/analyzers/cache.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.docgen/embeddings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/embeddings.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.docgen/manifest_cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/manifest_cache.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.docgen/scorecard.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/scorecard.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.docgen/validation.json" beforeDir="false" afterPath="$PROJECT_DIR$/.docgen/validation.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/analyzers/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/analyzers/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/orchestrator.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/orchestrator.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/postproc/links.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/postproc/links.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/builder.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/architecture.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/architecture.j2" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/build_and_test.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/build_and_test.j2" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/configuration.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/configuration.j2" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/deployment.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/deployment.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/features.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/features.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/intro.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/intro.j2" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docgen/prompting/templates/sections/quickstart.j2" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/prompting/templates/sections/quickstart.j2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/rag/embedder.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/embedder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/rag/indexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/rag/indexer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docgen/validators/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/docgen/validators/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/analyzers/test_discovery.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/analyzers/test_discovery.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/rag/test_indexer.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/rag/test_indexer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/test_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/test_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/prompting/test_builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/prompting/test_builder.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/validators/test_no_hallucination_validator.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/validators/test_no_hallucination_validator.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,12 +44,12 @@
     &quot;assignee&quot;: &quot;Saechaoc&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/Saechaoc/docgen.git&quot;,
-    &quot;accountId&quot;: &quot;d45ed314-e8a3-4c29-a0ad-2d10ee8329cc&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Saechaoc/docgen.git",
+    "accountId": "d67965e8-3821-498a-bf04-62bf4dd8a57f"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 7
 }</component>
@@ -67,28 +61,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo.executor": "Run",
-    "Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request.executor": "Run",
-    "Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts.executor": "Run",
-    "Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing.executor": "Run",
-    "Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart.executor": "Run",
-    "Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme.executor": "Run",
-    "Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language.executor": "Run",
-    "Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor": "Run",
-    "Python tests.Python tests in test_builder.py.executor": "Run",
-    "Python tests.Python tests in tests.executor": "Run",
-    "Python.test.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "SONARLINT_PRECOMMIT_ANALYSIS": "true",
-    "git-widget-placeholder": "task/improvements",
-    "ignore.virus.scanning.warn.message": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python tests.Python tests for tests.git.test_publisher.test_publisher_noop_without_git_repo.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.llm.test_runner.test_llm_runner_constructs_request.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.rag.test_indexer.test_rag_indexer_builds_contexts.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.test_config.test_load_config_returns_defaults_when_missing.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.test_orchestrator.test_run_init_creates_readme_with_quickstart.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.test_orchestrator.test_run_init_refuses_to_overwrite_existing_readme.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.test_repo_scanner.test_scan_builds_manifest_with_roles_and_language.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for tests.test_repo_scanner.test_scan_rejects_missing_directory.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in test_builder.py.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests in tests.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;SONARLINT_PRECOMMIT_ANALYSIS&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;task/improvements&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\chris\PycharmProjects\docgen" />
@@ -251,7 +245,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759703619968</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="WIP: Local LLM Not Working">
+      <option name="closed" value="true" />
+      <created>1759727568913</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1759727568913</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -262,6 +264,7 @@
     <MESSAGE value="Move git ignore" />
     <MESSAGE value="Update feature checklist" />
     <MESSAGE value="Update feature order" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update feature order" />
+    <MESSAGE value="WIP: Local LLM Not Working" />
+    <option name="LAST_COMMIT_MESSAGE" value="WIP: Local LLM Not Working" />
   </component>
 </project>

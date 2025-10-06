@@ -1,7 +1,25 @@
-{% if metadata['files'] %}
-Configuration files referenced by the project:
-{% for path in metadata['files'] %}- {{ path }}
+{% if metadata.summary %}
+{{ metadata.summary }}
+
+{% endif %}
+{% if metadata.files %}
+**Tracked configuration assets:**
+{% for path in metadata.files %}- `{{ path }}`
 {% endfor %}
-{% else %}
+
+{% endif %}
+{% if metadata.config_example %}
+```yaml
+{{ metadata.config_example }}
+```
+{% endif %}
+{% if metadata.notes %}
+**Highlights:**
+{% for note in metadata.notes %}- {{ note }}
+{% endfor %}
+{% endif %}
+
+{% if not (metadata.summary or metadata.files or metadata.config_example or metadata.notes) %}
 {{ body | trim | safe }}
 {% endif %}
+

@@ -1,47 +1,47 @@
 {
   "evidence_summary": {
     "architecture": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "build_and_test": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "configuration": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "deployment": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "faq": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "features": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "intro": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "license": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     },
     "quickstart": {
       "context_chunks": 0,
-      "signal_count": 0
+      "signal_count": 9
     },
     "troubleshooting": {
-      "context_chunks": 0,
-      "signal_count": 0
+      "context_chunks": 2,
+      "signal_count": 9
     }
   },
-  "generated_at": "2025-10-06T04:58:43.781728Z",
+  "generated_at": "2025-10-06T16:31:25.455896Z",
   "issue_count": 0,
   "issues": [],
   "mode": "config",
@@ -57,8 +57,8 @@
     "faq",
     "license"
   ],
-  "skip_reason": "fallback",
-  "status": "skipped",
+  "skip_reason": null,
+  "status": "passed",
   "validators": [
     "no_hallucination"
   ]

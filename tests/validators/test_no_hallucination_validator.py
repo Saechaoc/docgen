@@ -24,11 +24,17 @@ def test_validator_accepts_grounded_sentences() -> None:
         "quickstart": Section(
             name="quickstart",
             title="Quick Start",
-            body="Follow the steps below to get started:\n\n- Install dependencies with pip\n- Launch the service via uvicorn app:app",
+            body="1. Create a virtual environment (matches PyCharm settings)\n\n```bash\npython -m venv .venv\n```\n\n2. Run project commands discovered by analyzers\n\n```bash\npython -m pip install -r requirements.txt\nuvicorn app:app\n```",
             metadata={
-                "commands": [
-                    "python -m pip install -r requirements.txt",
-                    "uvicorn app:app",
+                "steps": [
+                    {
+                        "title": "Create a virtual environment (matches PyCharm settings)",
+                        "commands": ["python -m venv .venv"],
+                    },
+                    {
+                        "title": "Run project commands discovered by analyzers",
+                        "commands": ["python -m pip install -r requirements.txt", "uvicorn app:app"],
+                    },
                 ],
                 "context": ["This project exposes a FastAPI app via uvicorn."],
                 "evidence": {"signals": ["language.all", "entrypoint.cli"], "context_chunks": 1},

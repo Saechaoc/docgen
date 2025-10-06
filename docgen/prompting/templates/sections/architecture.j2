@@ -2,55 +2,78 @@
 ### High-Level Flow
 
 {{ metadata.flow_summary }}
+
+{% if metadata.flow_diagram %}
+```mermaid
+{{ metadata.flow_diagram }}
+```
+{% endif %}
 {% endif %}
 
-{% if metadata.entries %}
+{% if metadata.components %}
 ### Component Responsibilities
 
-| Module | Roles | Files |
+| Layer | Key modules | Purpose |
 | --- | --- | --- |
-{% for entry in metadata.entries %}{% set roles = entry.roles if entry.roles is defined else entry.description %}{% if roles is undefined %}{% set roles = 'Project files' %}{% endif %}| {{ entry.name if entry.name is defined else entry.path }} | {% if roles is string %}{{ roles }}{% elif roles is iterable %}{{ roles|join(', ') }}{% else %}{{ roles }}{% endif %} | {{ entry.files if entry.files is defined else entry.count if entry.count is defined else 0 }} |
+{% for entry in metadata.components %}| {{ entry.layer }} | {{ entry.modules | join(', ') }} | {{ entry.purpose }} |
+{% endfor %}
+{% endif %}
+
+{% if metadata.module_overview %}
+### Repository Layout Snapshot
+
+| Path | Roles | File count |
+| --- | --- | --- |
+{% for entry in metadata.module_overview %}| {{ entry.name }} | {{ entry.roles | join(', ') }} | {{ entry.files }} |
 {% endfor %}
 {% endif %}
 
 {% if metadata.artifacts %}
 ### Artifacts and Data Stores
 
-{% for artifact in metadata.artifacts %}- {{ artifact.path }} - {{ artifact.description }}
+{% for artifact in metadata.artifacts %}- `{{ artifact.path }}` — {{ artifact.description }}
 {% endfor %}
 {% endif %}
 
 {% if metadata.init_sequence %}
-### Pipeline Sequence (docgen init)
+### Pipeline Sequence (`docgen init`)
 
-`mermaid
+```mermaid
 {{ metadata.init_sequence }}
-`
+```
 {% endif %}
 
 {% if metadata.update_sequence %}
-### Patch Sequence (docgen update)
+### Patch Sequence (`docgen update`)
 
-`mermaid
+```mermaid
 {{ metadata.update_sequence }}
-`
+```
 {% endif %}
 
-{% if metadata.diagram %}
+{% if metadata.api_diagram %}
 ### API Signal Extraction
 
-`mermaid
-{{ metadata.diagram }}
-`
+```mermaid
+{{ metadata.api_diagram }}
+```
 {% endif %}
 
 {% if metadata.entities %}
 ### Detected Entities
 
-{% for entity in metadata.entities %}- {{ entity.name }}{% if entity.bases %} ({{ entity.bases|join(', ') }}){% endif %}{% if entity.file %} - {{ entity.file }}{% endif %}
+{% for entity in metadata.entities %}- {{ entity.name }}{% if entity.bases %} ({{ entity.bases | join(', ') }}){% endif %}{% if entity.file %} — {{ entity.file }}{% endif %}
 {% endfor %}
 {% endif %}
 
-{% if not (metadata.flow_summary or metadata.entries or metadata.init_sequence or metadata.update_sequence or metadata.diagram or metadata.artifacts or metadata.entities) %}
+{% if metadata.context %}
+### Context Highlights
+
+{% for snippet in metadata.context %}- {{ snippet }}
+{% endfor %}
+{% endif %}
+
+{% if not (metadata.flow_summary or metadata.components or metadata.module_overview or metadata.artifacts or metadata.init_sequence or metadata.update_sequence or metadata.api_diagram or metadata.entities) %}
 {{ body | trim | safe }}
 {% endif %}
+

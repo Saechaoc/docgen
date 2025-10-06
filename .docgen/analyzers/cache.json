@@ -1,7 +1,7 @@
 {
   "entries": {
     "docgen.analyzers.build.BuildAnalyzer": {
-      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "fingerprint": "76fd9def81f0faab79d38162841eee34405f47f4f748c848c0518970b0064818",
       "signals": [
         {
           "metadata": {
@@ -15,10 +15,10 @@
         }
       ],
       "signature": "docgen.analyzers.build.BuildAnalyzer:1:448f7c4b2d0dbb2ccb324a315150ac88664b99866a9c00a03bce4e0f024cf9d5",
-      "updated_at": "2025-10-06T04:58:41.460199Z"
+      "updated_at": "2025-10-06T16:31:07.799709Z"
     },
     "docgen.analyzers.entrypoints.EntryPointAnalyzer": {
-      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "fingerprint": "76fd9def81f0faab79d38162841eee34405f47f4f748c848c0518970b0064818",
       "signals": [
         {
           "metadata": {
@@ -76,10 +76,10 @@
         }
       ],
       "signature": "docgen.analyzers.entrypoints.EntryPointAnalyzer:1:27ad09aab41c550b001de116e26117b8e1510a1d565b2866ac9f9c6052465c17",
-      "updated_at": "2025-10-06T04:58:41.498473Z"
+      "updated_at": "2025-10-06T16:31:07.840857Z"
     },
     "docgen.analyzers.language.LanguageAnalyzer": {
-      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "fingerprint": "76fd9def81f0faab79d38162841eee34405f47f4f748c848c0518970b0064818",
       "signals": [
         {
           "metadata": {
@@ -109,16 +109,16 @@
         }
       ],
       "signature": "docgen.analyzers.language.LanguageAnalyzer:1:31d318b5ee03b0152f8c4ad4a427a84cf3a12f6de34239a60a91f5f45a52b15d",
-      "updated_at": "2025-10-06T04:58:41.457199Z"
+      "updated_at": "2025-10-06T16:31:07.796514Z"
     },
     "docgen.analyzers.patterns.PatternAnalyzer": {
-      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "fingerprint": "76fd9def81f0faab79d38162841eee34405f47f4f748c848c0518970b0064818",
       "signals": [],
       "signature": "docgen.analyzers.patterns.PatternAnalyzer:1:eed996582fe4516c3d752b3fb0e511bd4f2e6b5160d3581644758a6e1339b213",
-      "updated_at": "2025-10-06T04:58:41.500474Z"
+      "updated_at": "2025-10-06T16:31:07.843855Z"
     },
     "docgen.analyzers.structure.StructureAnalyzer": {
-      "fingerprint": "109b30f5b6a6d26c76611d01b8123e153581851045bbaa46cb6da90f5bfbe172",
+      "fingerprint": "76fd9def81f0faab79d38162841eee34405f47f4f748c848c0518970b0064818",
       "signals": [
         {
           "metadata": {
@@ -150,7 +150,47 @@
               {
                 "files": 1,
                 "languages": [],
+                "name": "README_after_changes.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
                 "name": "README_before.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "README_current.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "README_prev_run.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "README_stub.md",
+                "roles": [
+                  "docs"
+                ]
+              },
+              {
+                "files": 1,
+                "languages": [],
+                "name": "README_with_prompt_echo.md",
                 "roles": [
                   "docs"
                 ]
@@ -422,7 +462,7 @@
         }
       ],
       "signature": "docgen.analyzers.structure.StructureAnalyzer:1:dd654245f615dd81961e91856387f0c6fd1a7a1ac81b11c9f157f4a4a723e917",
-      "updated_at": "2025-10-06T04:58:41.528748Z"
+      "updated_at": "2025-10-06T16:31:07.872576Z"
     }
   },
   "version": 1

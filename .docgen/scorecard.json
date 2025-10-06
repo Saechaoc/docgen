@@ -2,7 +2,7 @@
   "badges_present": true,
   "link_issues": [],
   "missing_sections": [],
-  "quickstart_has_commands": false,
-  "score": 80,
+  "quickstart_has_commands": true,
+  "score": 100,
   "section_coverage": 1.0
 }

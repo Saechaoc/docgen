@@ -1,5 +1,7 @@
-{% if metadata['docker'] %}
-Container image can be built with docker build -t <image> ..
+{% if metadata.bullets %}
+{% for bullet in metadata.bullets %}- {{ bullet }}
+{% endfor %}
 {% else %}
 {{ body | trim | safe }}
 {% endif %}
+

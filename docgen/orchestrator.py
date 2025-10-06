@@ -115,6 +115,14 @@ class Orchestrator:
         sections_map: Dict[str, Section] = {}
         builder_failed = False
 
+        fallback_sections = builder.render_sections(
+            manifest,
+            signals,
+            section_order,
+            contexts=contexts,
+            token_budgets=token_budgets,
+        )
+
         try:
             can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
             if can_stream:
@@ -126,6 +134,7 @@ class Orchestrator:
                     section_order,
                     contexts,
                     token_budgets,
+                    fallback_sections,
                 )
             else:
                 if runner and not can_stream:
@@ -133,13 +142,7 @@ class Orchestrator:
                         "LLM runner enabled but prompt builder %s lacks build_prompt_requests; falling back to template rendering",
                         builder.__class__.__name__,
                     )
-                sections_map = builder.render_sections(
-                    manifest,
-                    signals,
-                    section_order,
-                    contexts=contexts,
-                    token_budgets=token_budgets,
-                )
+                sections_map = self._clone_sections(fallback_sections)
         except Exception as exc:  # pragma: no cover - defensive guard
             builder_failed = True
             self._log_exception("Prompt builder failed during init", exc)
@@ -245,6 +248,14 @@ class Orchestrator:
         sections_map: Dict[str, Section] = {}
         builder_failed = False
 
+        fallback_sections = builder.render_sections(
+            manifest,
+            signals,
+            diff.sections,
+            contexts=contexts,
+            token_budgets=token_budgets,
+        )
+
         try:
             can_stream = runner is not None and hasattr(builder, "build_prompt_requests")
             if can_stream:
@@ -256,6 +267,7 @@ class Orchestrator:
                     diff.sections,
                     contexts,
                     token_budgets,
+                    fallback_sections,
                 )
             else:
                 if runner and not can_stream:
@@ -263,13 +275,7 @@ class Orchestrator:
                         "LLM runner enabled but prompt builder %s lacks build_prompt_requests; using render_sections",
                         builder.__class__.__name__,
                     )
-                sections_map = builder.render_sections(
-                    manifest,
-                    signals,
-                    diff.sections,
-                    contexts=contexts,
-                    token_budgets=token_budgets,
-                )
+                sections_map = self._clone_sections(fallback_sections)
         except Exception as exc:  # pragma: no cover - defensive guard
             builder_failed = True
             self._log_exception("Prompt builder failed during update", exc)
@@ -851,6 +857,7 @@ class Orchestrator:
         self._llm_runner_is_external = False
         return runner
 
+
     def _generate_sections_with_llm(
         self,
         builder: PromptBuilder,
@@ -860,6 +867,7 @@ class Orchestrator:
         section_names: Sequence[str],
         contexts: Dict[str, List[str]],
         token_budgets: Dict[str, int] | None,
+        fallback_sections: Dict[str, Section],
     ) -> Dict[str, Section]:
         requests = builder.build_prompt_requests(
             manifest,
@@ -871,25 +879,90 @@ class Orchestrator:
 
         generated: Dict[str, Section] = {}
         for name in section_names:
+            fallback_section = fallback_sections.get(name)
+            if name in {"features", "architecture", "quickstart", "configuration", "build_and_test", "deployment", "troubleshooting", "faq", "license"}:
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="llm_disabled")
+                continue
+
             request = requests.get(name)
             if request is None:
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="missing_prompt_request")
                 continue
+
+            outline_prompt = request.metadata.get("outline_prompt")
             system_prompt = next((m.content for m in request.messages if m.role == "system"), None)
             user_messages = [m.content for m in request.messages if m.role == "user"]
             prompt_text = "\n\n".join(user_messages)
+
             self.logger.info("Generating README section via LLM: %s", name)
-            response = runner.run(prompt_text, system=system_prompt, max_tokens=request.max_tokens)
+            try:
+                response = runner.run(prompt_text, system=system_prompt, max_tokens=request.max_tokens)
+            except RuntimeError as exc:
+                self.logger.warning("LLM runner failed for section %s: %s", name, exc)
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="llm_error")
+                continue
+
+            body = response.strip()
+            if not body:
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="llm_empty")
+                continue
+            if self._looks_like_prompt_echo(body):
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="llm_prompt_echo")
+                continue
+            if outline_prompt:
+                outline_lines = [item.strip("- *") for item in outline_prompt.splitlines() if item.strip()]
+                if outline_lines:
+                    matched_outline = sum(1 for item in outline_lines if item and item in body)
+                    if matched_outline >= max(1, len(outline_lines) - 1):
+                        if fallback_section:
+                            generated[name] = self._clone_section(fallback_section, reason="llm_outline_echo")
+                        continue
+
             title = SECTION_TITLES.get(name, name.replace("_", " ").title())
             metadata = dict(request.metadata)
+            metadata.pop("outline_prompt", None)
             metadata["llm"] = True
             metadata["token_budget"] = request.max_tokens
             generated[name] = Section(
                 name=name,
                 title=title,
-                body=response.strip(),
+                body=body,
                 metadata=metadata,
             )
         return generated
+
+
+    @staticmethod
+    def _clone_section(section: Section, *, reason: str | None = None, mark_llm: bool = True) -> Section:
+        metadata = dict(section.metadata)
+        if mark_llm:
+            metadata.setdefault("llm", False)
+            if reason:
+                metadata["llm_fallback_reason"] = reason
+        return Section(name=section.name, title=section.title, body=section.body, metadata=metadata)
+
+    @staticmethod
+    def _clone_sections(sections: Dict[str, Section]) -> Dict[str, Section]:
+        return {name: Orchestrator._clone_section(section, mark_llm=False) for name, section in sections.items()}
+
+    @staticmethod
+    def _looks_like_prompt_echo(body: str) -> bool:
+        if not body:
+            return True
+        markers = ("Project:", "Section:", "Outline and emphasis:", "Key signals (JSON):", "Context snippets:")
+        marker_hits = sum(1 for marker in markers if marker in body)
+        if marker_hits >= 2:
+            return True
+        if body.strip().startswith("Project:"):
+            return True
+        if body.count("# Repository Guidelines") >= 3:
+            return True
+        return False
 
     def _render_readme_from_sections(
         self,
