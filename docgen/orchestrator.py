@@ -1103,6 +1103,14 @@ class Orchestrator:
                 if fallback_section:
                     generated[name] = self._clone_section(fallback_section, reason="llm_empty")
                 continue
+            if name in {"quickstart", "configuration", "build_and_test"} and self._looks_like_structured_payload(body):
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="llm_structured_payload")
+                continue
+            if self._looks_low_quality_section(name, body):
+                if fallback_section:
+                    generated[name] = self._clone_section(fallback_section, reason="llm_low_quality")
+                continue
             if self._looks_like_prompt_echo(body):
                 if fallback_section:
                     generated[name] = self._clone_section(fallback_section, reason="llm_prompt_echo")
@@ -1155,6 +1163,42 @@ class Orchestrator:
             return True
         if body.count("# Repository Guidelines") >= 3:
             return True
+        return False
+
+    @staticmethod
+    def _looks_like_structured_payload(body: str) -> bool:
+        sample = body.strip()
+        if not sample:
+            return False
+        if sample.startswith("{") and sample.endswith("}"):
+            return True
+        if sample.startswith("[") and sample.endswith("]"):
+            return True
+        if sample.startswith("{") and '"steps"' in sample:
+            return True
+        if sample.startswith("[") and '"title"' in sample:
+            return True
+        if sample.count('"') >= 4 and ":" in sample and sample.count("\n") < 4:
+            return True
+        return False
+
+    @staticmethod
+    def _looks_low_quality_section(name: str, body: str) -> bool:
+        plain = body.strip()
+        if not plain:
+            return True
+        lowered = plain.lower()
+        if "i'm ready" in lowered or "how can i help" in lowered:
+            return True
+        if name == "features" and "- " not in plain and "* " not in plain:
+            return True
+        if name == "features":
+            lines = [line for line in plain.splitlines() if line.strip()]
+            if not any(line.lstrip().startswith(('- ', '* ')) for line in lines):
+                return True
+        if name == "architecture":
+            if "### " not in plain and "```mermaid" not in plain and "| ---" not in plain:
+                return True
         return False
 
     @staticmethod

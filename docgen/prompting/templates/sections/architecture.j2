@@ -31,7 +31,7 @@
 {% if metadata.artifacts %}
 ### Artifacts and Data Stores
 
-{% for artifact in metadata.artifacts %}- `{{ artifact.path }}` — {{ artifact.description }}
+{% for artifact in metadata.artifacts %}- `{{ artifact.path }}` - {{ artifact.description }}
 {% endfor %}
 {% endif %}
 
@@ -59,17 +59,27 @@
 ```
 {% endif %}
 
-{% if metadata.entities %}
+{% if metadata.entities_markdown %}
 ### Detected Entities
 
-{% for entity in metadata.entities %}- {{ entity.name }}{% if entity.bases %} ({{ entity.bases | join(', ') }}){% endif %}{% if entity.file %} — {{ entity.file }}{% endif %}
+{{ metadata.entities_markdown }}
+{% elif metadata.entities %}
+### Detected Entities
+
+{% for entity in metadata.entities %}
+- {{ entity.name }}{% if entity.bases %} ({{ entity.bases | join(', ') }}){% endif %}{% if entity.file %} - `{{ entity.file }}`{% endif %}
 {% endfor %}
 {% endif %}
 
-{% if metadata.context %}
+{% if metadata.context_markdown %}
 ### Context Highlights
 
-{% for snippet in metadata.context %}- {{ snippet }}
+{{ metadata.context_markdown }}
+{% elif metadata.context %}
+### Context Highlights
+
+{% for snippet in metadata.context %}
+- {{ snippet }}
 {% endfor %}
 {% endif %}
 

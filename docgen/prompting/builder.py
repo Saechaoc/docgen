@@ -283,6 +283,7 @@ class PromptBuilder:
             cleaned_context = self._normalise_context_snippets(section_context)
             body = self._inject_context(name, body, cleaned_context)
             meta["context"] = cleaned_context
+            meta["context_markdown"] = "\n".join(f"- {snippet}" for snippet in cleaned_context)
             meta["evidence"] = self._build_section_evidence(
                 meta.get("evidence"),
                 grouped_keys=list(grouped.keys()),
@@ -542,10 +543,18 @@ class PromptBuilder:
         artifacts = self._discover_artifacts(manifest)
         api_diagram = self._build_sequence_diagram(apis[:3])
         entity_rows: List[Dict[str, object]] = []
+        entity_lines: List[str] = []
         for signal in entities[:8]:
             metadata = signal.metadata or {}
             bases = metadata.get("bases")
             base_list = [str(base) for base in bases] if isinstance(bases, list) else []
+            fragment = f"- {signal.value}"
+            if base_list:
+                fragment += f" ({', '.join(base_list)})"
+            file_path = metadata.get("file")
+            if file_path:
+                fragment += f" - `{file_path}`"
+            entity_lines.append(fragment)
             entity_rows.append(
                 {
                     "name": signal.value,
@@ -564,6 +573,7 @@ class PromptBuilder:
             "update_sequence": update_sequence,
             "api_diagram": api_diagram,
             "entities": entity_rows,
+            "entities_markdown": "\n".join(entity_lines),
         }
         return flow_summary, info
 
@@ -789,7 +799,11 @@ class PromptBuilder:
             if not raw_cmd:
                 continue
             cmd = str(raw_cmd)
+            if cmd.strip().startswith('#'):
+                continue
             if self._is_runtime_test_command(cmd):
+                continue
+            if self._looks_like_test_only_command(cmd):
                 continue
             if cmd not in runtime_commands:
                 runtime_commands.append(cmd)
@@ -803,6 +817,19 @@ class PromptBuilder:
 
         metadata = {"steps": steps}
         return "", metadata
+
+    @staticmethod
+    def _looks_like_test_only_command(command: str) -> bool:
+        lowered = command.lower()
+        if "tests/" in lowered or lowered.startswith("tests "):
+            return True
+        if " tests." in lowered or lowered.startswith("tests."):
+            return True
+        if lowered.startswith("pytest"):
+            return True
+        if lowered.startswith("python -m pytest"):
+            return True
+        return False
 
     def _build_configuration(
         self,
@@ -1176,6 +1203,20 @@ class PromptBuilder:
             text = " ".join(str(snippet).strip().split())
             if not text:
                 continue
+            while text.startswith(('#', '-', '*')):
+                text = text[1:].lstrip()
+            text = text.replace('#', '')
+            text = re.sub(r"\s{2,}", " ", text)
+            text = text.replace('…', '...')
+            if ' - ' in text:
+                parts = [part.strip() for part in text.split(' - ') if part.strip()]
+                if parts:
+                    text = parts[0]
+                    if len(parts) > 1:
+                        text = f"{text}: {parts[1]}"
+            text = text.encode('ascii', 'ignore').decode('ascii')
+            if len(text) > 220:
+                text = text[:217].rstrip() + "..."
             cleaned.append(text)
             if len(cleaned) >= limit:
                 break
@@ -1491,11 +1532,38 @@ class PromptBuilder:
                 edges.append((frm, to, arrow, msg))
         if not edges:
             return ""
+        alias_lookup: Dict[str, str] = {}
+        used_aliases: set[str] = set()
+
+        def _alias(name: str) -> str:
+            if name in alias_lookup:
+                return alias_lookup[name]
+            if re.match(r"^[A-Za-z0-9_]+$", name):
+                alias_lookup[name] = name
+                used_aliases.add(name)
+                return name
+            slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip('-')
+            slug = slug.replace('-', '_')
+            if not slug or slug[0].isdigit():
+                slug = f"p{len(used_aliases)}"
+            candidate = slug
+            index = 1
+            while candidate in used_aliases:
+                candidate = f"{slug}_{index}"
+                index += 1
+            alias_lookup[name] = candidate
+            used_aliases.add(candidate)
+            return candidate
+
         lines = ["sequenceDiagram"]
-        for name in participants:
-            lines.append(f"    participant {name}")
+        for name in sorted(participants):
+            alias = _alias(name)
+            if alias == name:
+                lines.append(f"    participant {alias}")
+            else:
+                lines.append(f"    participant {alias} as \"{name}\"")
         for frm, to, arrow, msg in edges:
-            lines.append(f"    {frm} {arrow} {to}: {msg}")
+            lines.append(f"    {_alias(frm)} {arrow} {_alias(to)}: {msg}")
         return "\n".join(lines)
 
     @staticmethod

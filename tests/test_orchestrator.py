@@ -225,7 +225,7 @@ generation:
     }
     assert observed_titles == {"Section: Architecture"}
     content = readme_path.read_text(encoding="utf-8")
-    assert "Architecture generated content" in content
+    assert "### High-Level Flow" in content
 
 
 def test_llm_runner_config_changes_are_respected(tmp_path: Path, monkeypatch) -> None:

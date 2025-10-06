@@ -1,8 +1,8 @@
 # docgen
 <!-- docgen:begin:badges -->
-[![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)](#)
-[![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)](#)
-[![License](https://img.shields.io/badge/license-tbd-lightgrey.svg)](#)
+![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)
+![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)
+![License](https://img.shields.io/badge/license-tbd-lightgrey.svg)
 <!-- docgen:end:badges -->
 
 <!-- docgen:begin:toc -->
@@ -20,7 +20,7 @@
   - [Context Highlights](#context-highlights)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
-- [Build & Test](#build-test)
+- [Build & Test](#build--test)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
@@ -28,7 +28,23 @@
 <!-- docgen:end:toc -->
 
 <!-- docgen:begin:intro -->
-docgen is a local-first README generator for polyglot repositories built primarily with Python and YAML. It scans every tracked file, emits analyzer signals, retrieves grounded context, and drives a local LLM through templated sections to keep documentation accurate. The overview below captures the full pipeline so contributors understand the moving pieces before running `docgen init`. Refer to `spec/spec.md` for detailed architecture contracts and responsibilities.
+"docgen" is a repository-driven tool that analyzes a repository, builds context, and generates a README locally. It handles various languages and frameworks, including Python, YAML, and supports a variety of project structures.
+
+The main functions of docgen are:
+
+- Analyzing the repository to build context and generate the README.
+- Building the README with relevant information, such as project name, dependencies, and requirements.
+
+Key facts:
+
+- docgen analyzes the repository to build context and generate the README.
+- It handles various languages and frameworks, including Python, YAML, and supports a variety of project structures.
+
+Context snippets:
+
+- Repository Guidelines: Project structure and module organization.
+- README slices under `tests/data/` and update them with helper scripts.
+- Commit and Pull Request Guidelines: Follow conventional commits (`feat:`, `fix:`, `docs:`); keep subject lines <=72 charact...
 <!-- docgen:end:intro -->
 
 ## Features
@@ -106,11 +122,11 @@ flowchart LR
 
 ### Artifacts and Data Stores
 
-- `.docgen/manifest_cache.json` — Cache of file hashes for incremental repo scans.
-- `.docgen/embeddings.json` — Lightweight embedding store supporting section-scoped retrieval.
-- `.docgen/scorecard.json` — Scorecard output capturing lint, link, and coverage metrics.
-- `.docgen/validation.json` — Validation trace covering hallucination checks and sentence-level issues.
-- `.docgen/analyzers/cache.json` — Analyzer cache that enables incremental signal execution.
+- `.docgen/manifest_cache.json` - Cache of file hashes for incremental repo scans.
+- `.docgen/embeddings.json` - Lightweight embedding store supporting section-scoped retrieval.
+- `.docgen/scorecard.json` - Scorecard output capturing lint, link, and coverage metrics.
+- `.docgen/validation.json` - Validation trace covering hallucination checks and sentence-level issues.
+- `.docgen/analyzers/cache.json` - Analyzer cache that enables incremental signal execution.
 
 ### Pipeline Sequence (`docgen init`)
 
@@ -179,24 +195,28 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant FastAPI endpoint
     participant Client
-    Client ->> FastAPI endpoint: GET /health
-    FastAPI endpoint -->> Client: Response
-    Client ->> FastAPI endpoint: POST /init
-    FastAPI endpoint -->> Client: Response
-    Client ->> FastAPI endpoint: POST /update
-    FastAPI endpoint -->> Client: Response
+    participant fastapi_endpoint as "FastAPI endpoint"
+    Client ->> fastapi_endpoint: GET /health
+    fastapi_endpoint -->> Client: Response
+    Client ->> fastapi_endpoint: POST /init
+    fastapi_endpoint -->> Client: Response
+    Client ->> fastapi_endpoint: POST /update
+    fastapi_endpoint -->> Client: Response
 ```
 
 ### Detected Entities
 
-- InitRequest (BaseModel) — docgen/service/app.py- InitResponse (BaseModel) — docgen/service/app.py- UpdateRequest (BaseModel) — docgen/service/app.py- UpdateResponse (BaseModel) — docgen/service/app.py- HealthResponse (BaseModel) — docgen/service/app.py
+- InitRequest (BaseModel) - `docgen/service/app.py`
+- InitResponse (BaseModel) - `docgen/service/app.py`
+- UpdateRequest (BaseModel) - `docgen/service/app.py`
+- UpdateResponse (BaseModel) - `docgen/service/app.py`
+- HealthResponse (BaseModel) - `docgen/service/app.py`
 
 ### Context Highlights
 
-- # Repository Guidelines ## Project Structure & Module Organization - `spec/spec.md` captures the end-to-end architecture, component contracts, and must be updated whenever responsibilities shift. - Place Python source in a `docgen/` package (create it when implementation starts) with clear submodules for orchestrator, analyzers, runners, and stores; avoid leaving logic in the repo root. - Mirror r...
-- README slices under `tests/data/` and update them with helper scripts so diffs stay reviewable. ## Commit & Pull Request Guidelines - Follow Conventional Commits (`feat:`, `fix:`, `docs:`); keep subject lines <=72 characters and explain broader scope in the body when multiple subsystems change. - Bundle related work into a single PR that includes a summary, testing notes, and links to relevant iss...
+- Repository Guidelines Project Structure & Module Organization: `spec/spec.md` captures the end-to-end architecture, component contracts, and must be updated whenever responsibilities shift.
+- README slices under `tests/data/` and update them with helper scripts so diffs stay reviewable. Commit & Pull Request Guidelines: Follow Conventional Commits (`feat:`, `fix:`, `docs:`); keep subject lines <=72 charact...
 <!-- docgen:end:architecture -->
 
 ## Quick Start
@@ -234,10 +254,7 @@ python -m docgen.cli update --diff-base origin/main
 
 7. Run project commands discovered by analyzers
 ```bash
-# Document build steps here.
 uvicorn docgen.service.app:app --reload
-uvicorn tests.analyzers.test_entrypoints:napp --reload
-uvicorn tests.analyzers.test_structure:app --reload
 python docgen/cli.py
 ```
 <!-- docgen:end:quickstart -->
@@ -248,6 +265,7 @@ python docgen/cli.py
 `docgen/config.py` loads `.docgen.yml` into typed dataclasses and falls back to safe defaults when the file is missing.
 
 **Tracked configuration assets:**
+- `.docgen.yml`
 - `docs/ci/docgen-update.yml`
 - `docs/ci/github-actions.md`
 
