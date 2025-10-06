@@ -22,6 +22,7 @@ class LLMConfig:
 
     runner: Optional[str] = None
     model: Optional[str] = None
+    executable: Optional[str] = None
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     base_url: Optional[str] = None
@@ -97,6 +98,7 @@ def load_config(config_path: Path) -> DocGenConfig:
         llm = LLMConfig(
             runner=_as_str(llm_data.get("runner")),
             model=_as_str(llm_data.get("model")),
+            executable=_as_str(llm_data.get("executable")),
             temperature=_as_float(llm_data.get("temperature")),
             max_tokens=_as_int(llm_data.get("max_tokens")),
             base_url=_as_str(llm_data.get("base_url")),

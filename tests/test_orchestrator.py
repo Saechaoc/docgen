@@ -495,3 +495,37 @@ def test_analyzer_cache_reuses_results_between_runs(tmp_path: Path) -> None:
 
     assert outcome is None or isinstance(outcome, UpdateOutcome)
     assert cached_analyzer.calls == 0
+
+
+def test_resolve_llamacpp_runner(tmp_path: Path, monkeypatch) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    (repo_root / "model.gguf").write_text("data", encoding="utf-8")
+    (repo_root / ".docgen.yml").write_text(
+        f"""
+llm:
+  runner: llama.cpp
+  model: {repo_root / "model.gguf"}
+  executable: llama-cpp
+""",
+        encoding="utf-8",
+    )
+
+    called: dict[str, object] = {}
+
+    class _StubLlamaRunner:
+        def __init__(self, **kwargs):  # type: ignore[no-untyped-def]
+            called.update(kwargs)
+
+        def run(self, *_args, **_kwargs):  # pragma: no cover - not used
+            return ""
+
+    monkeypatch.setattr("docgen.llm.llamacpp.LlamaCppRunner", _StubLlamaRunner)
+
+    orchestrator = Orchestrator()
+    config = orchestrator._load_config(repo_root)
+    runner = orchestrator._resolve_llm_runner(config)
+
+    assert isinstance(runner, _StubLlamaRunner)
+    assert called["model_path"] == str((repo_root / "model.gguf").resolve())
+    assert called["executable"] == "llama-cpp"

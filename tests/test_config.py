@@ -70,6 +70,7 @@ validation:
     assert isinstance(config.llm, LLMConfig)
     assert config.llm.runner == "ollama"
     assert config.llm.model == "llama3:8b-instruct"
+    assert config.llm.executable is None
     assert config.llm.temperature == pytest.approx(0.15)
     assert config.llm.max_tokens == 256
     assert config.llm.base_url == "http://localhost:12434/engines/v1"
