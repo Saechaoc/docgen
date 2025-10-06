@@ -7,14 +7,7 @@
 
 <!-- docgen:begin:toc -->
 ## Table of Contents
-- [Features](#features)
-- [Architecture](#architecture)
-  - [High-Level Flow](#high-level-flow)
-  - [Component Responsibilities](#component-responsibilities)
-  - [Artifacts and Data Stores](#artifacts-and-data-stores)
-  - [Pipeline Sequence (`docgen init`)](#pipeline-sequence-docgen-init)
-  - [Patch Sequence (`docgen update`)](#patch-sequence-docgen-update)
-  - [API Signal Extraction](#api-signal-extraction)
+- [Table of Contents](#table-of-contents)
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Build & Test](#build-test)
@@ -25,171 +18,48 @@
 <!-- docgen:end:toc -->
 
 <!-- docgen:begin:intro -->
-docgen is a local-first README generator for polyglot repositories. It scans every tracked file, publishes analyzer signals, retrieves grounded context, and guides a local LLM through templated sections to produce or update documentation. This overview reflects a complete pass across `docgen/`, `tests/`, `spec/`, and `docs/` so contributors understand every abstraction before running `docgen init`.
-<!-- docgen:end:intro -->
+docgen is a Python and YAML project. This README was bootstrapped by ``docgen init`` to summarize the repository at a glance.
 
-## Features
-
-<!-- docgen:begin:features -->
-- **Repository manifest & caching** - `docgen/repo_scanner.py` walks the tree, respects `.gitignore`/`.docgen.yml`, hashes files, and persists `manifest_cache.json` for incremental runs.
-- **Analyzer plugin system** - `docgen/analyzers/*` discover language, build, dependency, entrypoint, pattern, and structure signals that describe frameworks, commands, APIs, entities, and repository topology.
-- **Template-driven prompting** - `docgen/prompting/builder.py` merges signals with Jinja templates, validates commands, applies style presets, and injects retrieved context per section.
-- **Lightweight RAG index** - `docgen/rag/indexer.py`, `embedder.py`, and `store.py` embed README/docs/source excerpts into `.docgen/embeddings.json` for section-scoped retrieval.
-- **Local LLM enforcement** - `docgen/llm/runner.py` targets loopback Model Runner or Ollama, blocks remote hosts, and exposes configurable temperature/token limits.
-- **Post-processing contract** - `docgen/postproc/*` add badges, rebuild the ToC, lint markdown, validate links, manage markers, and compute scorecards saved to `.docgen/scorecard.json`.
-- **Git-aware publishing** - `docgen/git/diff.py` maps changed files to sections while `docgen/git/publisher.py` commits or opens PRs with generated README deltas via the GitHub CLI.
-- **Resilient CLI UX** - `docgen/cli.py` and `docgen/failsafe.py` provide verbose logging hooks, dry-run preview support, and fallback stubs when the LLM pipeline cannot complete.
-<!-- docgen:end:features -->
-
-## Architecture
-
-<!-- docgen:begin:architecture -->
-### High-Level Flow
-
-The orchestrator (`docgen/orchestrator.py`) coordinates the end-to-end pipeline described in `spec/spec.md`, composing scanners, analyzers, prompting, RAG, post-processing, and publishing services.
-
-```mermaid
-flowchart LR
-    CLI["CLI (docgen init/update)"]
-    Orc["Orchestrator"]
-    Scan["RepoScanner\n(manifest)"]
-    Ana["Analyzers\n(language/build/etc)"]
-    RAG["RAGIndexer\n(embeddings)"]
-    Prompt["PromptBuilder\n(Jinja templates)"]
-    LLM["LLMRunner\n(local model)"]
-    Post["Post-Processing\n(lint, ToC, badges, links, scorecard)"]
-    Git["Publisher\n(commit/PR)"]
-    Output["README.md + .docgen artifacts"]
-
-    CLI --> Orc
-    Orc --> Scan
-    Orc --> Ana
-    Orc --> RAG
-    Orc --> Prompt
-    Prompt --> LLM
-    LLM --> Prompt
-    Prompt --> Orc
-    Orc --> Post
-    Post --> Output
-    Post --> Git
-```
-
-### Component Responsibilities
-
-| Layer | Key modules | Purpose |
-| --- | --- | --- |
-| CLI & Logging | `docgen/cli.py`, `docgen/logging.py` | Parses subcommands, wires `--verbose`, and configures namespaced loggers. |
-| Configuration | `docgen/config.py` | Parses `.docgen.yml` into `DocGenConfig`, `LLMConfig`, `PublishConfig`, `AnalyzerConfig`, and `CIConfig`, with a handwritten YAML fallback. |
-| Repository scanning | `docgen/repo_scanner.py` | Builds `RepoManifest` of `FileMeta` entries, enforces ignore rules, infers file roles, and caches hashes in `.docgen/manifest_cache.json`. |
-| Analyzer plugins | `docgen/analyzers/*` | Emit `Signal` objects for languages, frameworks, build tools, dependencies, entrypoints, structural modules, API routes, entities, patterns, and monorepo hints. |
-| Prompting | `docgen/prompting/builder.py`, `templates/` | Groups signals, retrieves context, renders section templates, performs command validation, and estimates token budgets. |
-| Retrieval (RAG) | `docgen/rag/indexer.py`, `embedder.py`, `store.py`, `constants.py` | Chunks README/docs/source files, computes bag-of-words embeddings, persists context per section, and prunes stale vectors. |
-| LLM runtime | `docgen/llm/runner.py` | Chooses HTTP or CLI execution, builds OpenAI-compatible payloads, restricts to loopback hosts, and normalizes responses. |
-| Post-processing | `docgen/postproc/*` | Manages markers, regenerates ToC, applies badges, lints markdown, validates links, and records README quality metrics. |
-| Git integration | `docgen/git/diff.py`, `docgen/git/publisher.py` | Maps file diffs to affected sections, handles staged changes, and pushes commits or PRs with optional labels. |
-| Safety nets | `docgen/failsafe.py` | Generates placeholder sections or full README stubs when prompting fails. |
-| Reference material | `spec/spec.md`, `spec/feature_order.md`, `spec/feature_checklist.md`, `docs/ci/*`, `AGENTS.md` | Capture architectural contracts, delivery roadmap, feature status, CI playbooks, and agent guidance. |
-| Tests | `tests/` mirroring runtime modules | Pytest suite covering CLI, orchestrator, analyzers, prompting, git workflows, LLM runner stubs, and post-processing helpers. |
-
-### Artifacts and Data Stores
-
-- `.docgen/manifest_cache.json` - cache of file sizes, mtimes, and hashes for fast re-scans.
-- `.docgen/embeddings.json` - persisted embedding vectors keyed by section/tag via `EmbeddingStore`.
-- `.docgen/scorecard.json` - output of `ReadmeScorecard.evaluate`, tracking coverage, link health, and quick-start quality.
-- Git metadata - branches/commits/PRs created by `Publisher` with summaries from `DiffAnalyzer`.
-### Pipeline Sequence (`docgen init`)
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer
-    participant CLI as docgen CLI
-    participant Orc as Orchestrator
-    participant Scan as RepoScanner
-    participant Ana as Analyzer plugins
-    participant RAG as RAGIndexer
-    participant Prompt as PromptBuilder
-    participant LLM as LLMRunner
-    participant Post as Post-processing
-    participant FS as Filesystem
-
-    Dev->>CLI: docgen init .
-    CLI->>Orc: run_init(path)
-    Orc->>Scan: scan()
-    Scan-->>Orc: RepoManifest(FileMeta[])
-    Orc->>Ana: analyze(manifest)
-    Ana-->>Orc: Signal[]
-    Orc->>RAG: build(manifest)
-    RAG-->>Orc: contexts per section
-    Orc->>Prompt: build(manifest, signals, contexts)
-    Prompt->>LLM: invoke(system, prompt)
-    LLM-->>Prompt: section markdown
-    Prompt-->>Orc: full README draft
-    Orc->>Post: lint -> toc -> badges -> links -> scorecard
-    Post-->>Orc: final markdown + quality report
-    Orc->>FS: write README.md
-    Orc->>Git: optional commit (publish mode "commit")
-```
-
-### Patch Sequence (`docgen update`)
-
-```mermaid
-sequenceDiagram
-    participant Dev as Developer/CI
-    participant CLI as docgen CLI
-    participant Orc as Orchestrator
-    participant Diff as DiffAnalyzer
-    participant Scan as RepoScanner
-    participant Ana as Analyzer plugins
-    participant RAG as RAGIndexer
-    participant Prompt as PromptBuilder
-    participant Mark as MarkerManager
-    participant Post as Post-processing
-    participant Pub as Publisher
-
-    Dev->>CLI: docgen update --diff-base <ref>
-    CLI->>Orc: run_update(path, base)
-    Orc->>Diff: compute(repo, base)
-    Diff-->>Orc: DiffResult(changed_files, sections)
-    Orc->>Scan: scan()
-    Scan-->>Orc: RepoManifest
-    Orc->>Ana: analyze(manifest)
-    Ana-->>Orc: Signal[]
-    Orc->>RAG: build(manifest, sections)
-    RAG-->>Orc: context snippets
-    Orc->>Prompt: render_sections(sections)
-    Prompt-->>Orc: new section bodies
-    Orc->>Mark: replace(markdown, section)
-    Mark-->>Orc: patched README
-    Orc->>Post: lint/toc/badges/link check/scorecard
-    Post-->>Orc: final README + diff
-    Orc->>Pub: commit or PR (branch, title, body)
-```
-
-### API Signal Extraction
-
-`StructureAnalyzer` inspects source files for FastAPI decorators, Express route calls, and Pydantic/ORM entities. Each match emits `Signal` metadata such as handler names, HTTP verbs, detected external calls (`requests`, `session`, `db`), and assembled `sequence` steps that downstream templates render as diagrams.
-
+> Context highlights:
+> name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted steps: - uses: actions/checkout@v4 with: fetch-depth: 0 - uses: actions/setup-python@v5 with: python-version: '3.11' - uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install dependencies run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README.md (optional) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi
+> # GitHub Actions Integration The workflow below runs `docgen update` on pushes and pull requests. It assumes a self-hosted runner (or GitHub-hosted runner with network access to your local model runtime). The job skips early when no files match `.docgen.yml`'s `ci.watched_globs` entries so that purely documentation-only changes do not trigger the generator. ```yaml name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted # requires local LLM access steps: - name: Checkout repository uses: actions/checkout@v4 with: fetch-depth: 0 - name: Set up Python uses: actions/setup-python@v5 with: python-version: '3.11' - name: Cache pip dependencies uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install docgen in editable mode run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: | python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README updates (if any) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi - name: Upload README artifact if: success() uses: actions/upload-artifact@v4 with: name: generated-readme path: README.md ``` > **Note:** the workflow relies on `DOCGEN_LLM_BASE_URL` pointing to a local or > private inference endpoint. For GitHub-hosted runners you will need to expose > the runner within your private network or switch to the `ollama` CLI with > appropriate caching. ```
+> # docgen <!-- docgen:begin:badges --> [![Build Status](https://img.shields.io/badge/build-pending-lightgrey.svg)](#) [![Coverage](https://img.shields.io/badge/coverage-review--needed-lightgrey.svg)](#) [![License](https://img.shields.io/badge/license-tbd-lightgrey.svg)](#) <!-- docgen:end:badges --> <!-- docgen:begin:toc --> ## Table of Contents - [Features](#features) - [Architecture](#architecture) - [High-Level Flow](#high-level-flow) - [Component Responsibilities](#component-responsibilities) - [Artifacts and Data Stores](#artifacts-and-data-stores) - [Pipeline Sequence (`docgen init`)](#pipeline-sequence-docgen-init) - [Patch Sequence (`docgen update`)](#patch-sequence-docgen-update) - [API Signal Extraction](#api-signal-extraction) - [Quick Start](#quick-start) - [Configuration](#configuration) - [Build & Test](#build-test) - [Deployment](#deployment) - [Troubleshooting](#troubleshooting) - [FAQ](#faq) - [License](#license) <!-- docgen:end:toc --> <!-- docgen:begin:intro --> docgen is a local-first README generator for polyglot repositories. It scans every tracked file, publishes analyzer signals, retrieves grounded context, and guides a local LLM through templated sections to produce or update documentation. This overview reflects a complete pass across `docgen/`, `tests/`, `spec/`, and `docs/` so contributors understand every abstraction before running `docgen init`. <!-- docgen:end:intro --> ## Features <!-- docgen:begin:features -->
+- Primary languages: Python, YAML
+- Supported build tooling: generic
+- Entry points: Run FastAPI application, Run FastAPI application, Run FastAPI application
+- Key modules: .gitignore (1 files), AGENTS.md (1 files), README.md (1 files)
+- API surface: /health, /init, /update
+- Entities detected: InitRequest, InitResponse, UpdateRequest
+- Ready for continuous README generation via docgen.
+> Context highlights:
+> name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted steps: - uses: actions/checkout@v4 with: fetch-depth: 0 - uses: actions/setup-python@v5 with: python-version: '3.11' - uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install dependencies run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README.md (optional) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi
+> # GitHub Actions Integration The workflow below runs `docgen update` on pushes and pull requests. It assumes a self-hosted runner (or GitHub-hosted runner with network access to your local model runtime). The job skips early when no files match `.docgen.yml`'s `ci.watched_globs` entries so that purely documentation-only changes do not trigger the generator. ```yaml name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted # requires local LLM access steps: - name: Checkout repository uses: actions/checkout@v4 with: fetch-depth: 0 - name: Set up Python uses: actions/setup-python@v5 with: python-version: '3.11' - name: Cache pip dependencies uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install docgen in editable mode run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: | python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README updates (if any) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi - name: Upload README artifact if: success() uses: actions/upload-artifact@v4 with: name: generated-readme path: README.md ``` > **Note:** the workflow relies on `DOCGEN_LLM_BASE_URL` pointing to a local or > private inference endpoint. For GitHub-hosted runners you will need to expose > the runner within your private network or switch to the `ollama` CLI with > appropriate caching. ```
+> """Analyzer to detect executable entrypoints across supported languages.""" from __future__ import annotations import re from dataclasses import dataclass from pathlib import Path from typing import Iterable, List, Optional from .base import Analyzer from .utils import ( build_node_script_command, detect_node_package_manager, load_node_dependencies, load_package_json, ) from ..models import RepoManifest, Signal @dataclass class EntryPoint: """Represents a detected entrypoint with an associated command.""" name: str command: str label: str priority: int = 50 framework: Optional[str] = None class EntryPointAnalyzer(Analyzer): """Detect executable entrypoints for quick-start guidance.""" def supports(self, manifest: RepoManifest) -> bool: return bool(manifest.files) def analyze(self, manifest: RepoManifest) -> Iterable[Signal]: entrypoints: List[EntryPoint] = [] manifest_paths = {file.path for file in manifest.files} entrypoints.extend(self._python_entrypoints(manifest)) entrypoints.extend(self._node_entrypoints(Path(manifest.root), manifest_paths)) entrypoints.extend(self._java_entrypoints(manifest)) signals: List[Signal] = [] for entry in sorted(entrypoints, key=lambda ep: ep.priority): metadata = { "command": entry.command, "label": entry.label, "priority": entry.priority, } if entry.framework: metadata["framework"] = entry.framework signals.append( Signal( name=f"entrypoint.{entry.name}", value=entry.command, source="entrypoints", metadata=metadata, ) ) if entrypoints: primary = min(entrypoints, key=lambda ep: ep.priority) signals.append( Signal(
+<!-- docgen:end:features --> ## Architecture <!-- docgen:begin:architecture -->
+- `.gitignore/` - src (1 file)
+- `AGENTS.md/` - docs (1 file)
+- `README.md/` - docs (1 file)
+- `docgen/` - src (61 files)
+- `docs/` - docs (2 files)
+- `spec/` - docs (5 files)
+- `tests/` - test (24 files)
 ```mermaid
 sequenceDiagram
     participant Client
-    participant API as FastAPI endpoint
-    participant Auth as External service
-    participant DB as Database
-    Client->>API: POST /login
-    API->>Auth: requests.post()
-    Auth-->>API: token/response
-    API->>DB: session.write()
-    DB-->>API: ack
-    API-->>Client: Authenticated response
+    participant FastAPI endpoint
+    Client ->> FastAPI endpoint: GET /health
+    FastAPI endpoint -->> Client: Response
+    Client ->> FastAPI endpoint: POST /init
+    FastAPI endpoint -->> Client: Response
+    Client ->> FastAPI endpoint: POST /update
+    FastAPI endpoint -->> Client: Response
 ```
-
-Other analyzers complement these signals:
-
-- `EntryPointAnalyzer` ranks executable commands (FastAPI `uvicorn`, Django `runserver`, npm `dev`, Spring Boot `bootRun`).
-- `BuildAnalyzer` pairs manifest files with reproducible build/test commands and OS-aware scripts.
-- `DependencyAnalyzer`, `PatternAnalyzer`, and `LanguageAnalyzer` describe frameworks, Docker/K8s/CI layouts, and monorepo hints that feed the features, architecture, and quick-start sections.
-- Tests under `tests/analyzers/`, `tests/prompting/`, and `tests/git/` assert signal accuracy, command selection, and publishing behavior.
+> Context highlights:
+> name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted steps: - uses: actions/checkout@v4 with: fetch-depth: 0 - uses: actions/setup-python@v5 with: python-version: '3.11' - uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install dependencies run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README.md (optional) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi
+> # GitHub Actions Integration The workflow below runs `docgen update` on pushes and pull requests. It assumes a self-hosted runner (or GitHub-hosted runner with network access to your local model runtime). The job skips early when no files match `.docgen.yml`'s `ci.watched_globs` entries so that purely documentation-only changes do not trigger the generator. ```yaml name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted # requires local LLM access steps: - name: Checkout repository uses: actions/checkout@v4 with: fetch-depth: 0 - name: Set up Python uses: actions/setup-python@v5 with: python-version: '3.11' - name: Cache pip dependencies uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install docgen in editable mode run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: | python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README updates (if any) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi - name: Upload README artifact if: success() uses: actions/upload-artifact@v4 with: name: generated-readme path: README.md ``` > **Note:** the workflow relies on `DOCGEN_LLM_BASE_URL` pointing to a local or > private inference endpoint. For GitHub-hosted runners you will need to expose > the runner within your private network or switch to the `ollama` CLI with > appropriate caching. ```
+> """Analyzer to detect executable entrypoints across supported languages.""" from __future__ import annotations import re from dataclasses import dataclass from pathlib import Path from typing import Iterable, List, Optional from .base import Analyzer from .utils import ( build_node_script_command, detect_node_package_manager, load_node_dependencies, load_package_json, ) from ..models import RepoManifest, Signal @dataclass class EntryPoint: """Represents a detected entrypoint with an associated command.""" name: str command: str label: str priority: int = 50 framework: Optional[str] = None class EntryPointAnalyzer(Analyzer): """Detect executable entrypoints for quick-start guidance.""" def supports(self, manifest: RepoManifest) -> bool: return bool(manifest.files) def analyze(self, manifest: RepoManifest) -> Iterable[Signal]: entrypoints: List[EntryPoint] = [] manifest_paths = {file.path for file in manifest.files} entrypoints.extend(self._python_entrypoints(manifest)) entrypoints.extend(self._node_entrypoints(Path(manifest.root), manifest_paths)) entrypoints.extend(self._java_entrypoints(manifest)) signals: List[Signal] = [] for entry in sorted(entrypoints, key=lambda ep: ep.priority): metadata = { "command": entry.command, "label": entry.label, "priority": entry.priority, } if entry.framework: metadata["framework"] = entry.framework signals.append( Signal( name=f"entrypoint.{entry.name}", value=entry.command, source="entrypoints", metadata=metadata, ) ) if entrypoints: primary = min(entrypoints, key=lambda ep: ep.priority) signals.append( Signal(
 <!-- docgen:end:architecture -->
+
 ## Quick Start
 
 <!-- docgen:begin:quickstart -->
@@ -262,26 +132,15 @@ Highlights:
 ## Build & Test
 
 <!-- docgen:begin:build_and_test -->
-- Format and lint:
-  ```bash
-  black docgen tests
-  python -m ruff check docgen tests
-  ```
-- Type-check core modules:
-  ```bash
-  python -m mypy docgen
-  ```
-- Run the full test suite (mirrors runtime modules: CLI, orchestrator, analyzers, prompting, git, RAG, post-processing):
-  ```bash
-  python -m pytest
-  ```
-- Target specific areas while iterating:
-  ```bash
-  python -m pytest -k orchestrator
-  python -m pytest tests/analyzers/test_structure.py
-  ```
-- Regenerate README fixtures or inspect scorecards stored under `.docgen/` to validate generated content.
+**Generic**
+- `# Document build steps here.`
+
+> Context highlights:
+> name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted steps: - uses: actions/checkout@v4 with: fetch-depth: 0 - uses: actions/setup-python@v5 with: python-version: '3.11' - uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install dependencies run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README.md (optional) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi
+> # GitHub Actions Integration The workflow below runs `docgen update` on pushes and pull requests. It assumes a self-hosted runner (or GitHub-hosted runner with network access to your local model runtime). The job skips early when no files match `.docgen.yml`'s `ci.watched_globs` entries so that purely documentation-only changes do not trigger the generator. ```yaml name: docgen-update on: push: branches: [ main ] pull_request: branches: [ main ] jobs: update-readme: runs-on: self-hosted # requires local LLM access steps: - name: Checkout repository uses: actions/checkout@v4 with: fetch-depth: 0 - name: Set up Python uses: actions/setup-python@v5 with: python-version: '3.11' - name: Cache pip dependencies uses: actions/cache@v4 with: path: ~/.cache/pip key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }} restore-keys: ${{ runner.os }}-pip- - name: Install docgen in editable mode run: | python -m pip install --upgrade pip python -m pip install -e .[dev] - name: Determine diff base id: diff run: | if [ "${{ github.event_name }}" = "pull_request" ]; then echo "base=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT" else echo "base=origin/main" >> "$GITHUB_OUTPUT" fi - name: Run docgen update env: DOCGEN_LLM_BASE_URL: http://localhost:12434/engines/v1 run: | python -m docgen.cli update --diff-base ${{ steps.diff.outputs.base }} - name: Commit README updates (if any) run: | if git status --short | grep -q README.md; then git config user.name "github-actions" git config user.email "github-actions@users.noreply.github.com" git commit -am "docs: update README via docgen" fi - name: Upload README artifact if: success() uses: actions/upload-artifact@v4 with: name: generated-readme path: README.md ``` > **Note:** the workflow relies on `DOCGEN_LLM_BASE_URL` pointing to a local or > private inference endpoint. For GitHub-hosted runners you will need to expose > the runner within your private network or switch to the `ollama` CLI with > appropriate caching. ```
+> # Repository Guidelines ## Project Structure & Module Organization - `spec/spec.md` captures the end-to-end architecture, component contracts, and must be updated whenever responsibilities shift. - Place Python source in a `docgen/` package (create it when implementation starts) with clear submodules for orchestrator, analyzers, runners, and stores; avoid leaving logic in the repo root. - Mirror runtime modules under `tests/` using `test_<module>.py`; co-locate fixtures in `tests/_fixtures/` so imports stay clean and reusable. - Keep throwaway experiments inside an ignored `sandbox/` directory so repository scans remain focused on production code paths. ## Build, Test, and Development Commands - `python -m venv .venv` followed by `.\\.venv\\Scripts\\activate` aligns local shells with the PyCharm interpreter settings. - `python -m pip install -e .[dev]` (after a `pyproject.toml` is committed) exposes the CLI and plugins in editable form without repeated reinstalls. - `python -m pytest` runs the full suite; append `-k <pattern>` to iterate on a single analyzer or pipeline stage. - `python -m mypy docgen` and `python -m ruff check docgen tests` catch type drift and lint violations before README generation is attempted. ## Coding Style & Naming Conventions - Follow PEP 8 with 4-space indents and explicit imports (for example, `from docgen.orchestrator import Pipeline`) so static tooling can trace dependencies. - Name modules after their roles (`orchestrator.py`, `prompt_builder.py`) and keep functions snake_case with descriptive nouns first (`build_prompt_section`). - Run `black docgen tests` before commits; avoid manual reformatting unless the formatter cannot resolve a construct. ## Testing Guidelines - Pytest is the default harness; every analyzer or pipeline component needs unit coverage plus an integration case under `tests/integration/` that walks a repo snapshot through generation. - Use descriptive test names such as `test_prompt_builder_handles_missing_signals` and keep Arrange-Act-Assert comments minimal but intentional. - Store regression fixtures for generated README slices under `tests/data/` and update them with helper scripts so diffs stay reviewable. ## Commit & Pull Request Guidelines - Follow Conventional Commits (`feat:`, `fix:`, `docs:`); keep subject lines <=72 characters and explain broader scope in the body when multiple subsystems change. - Bundle related work into a single PR that includes a summary, testing notes, and links to
 <!-- docgen:end:build_and_test -->
+
 ## Deployment
 
 <!-- docgen:begin:deployment -->
