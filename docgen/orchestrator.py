@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import inspect
 import json
 import logging
 import os
@@ -29,6 +31,7 @@ from .prompting.builder import PromptBuilder, Section
 from .prompting.constants import DEFAULT_SECTIONS, SECTION_TITLES
 from .rag.indexer import RAGIndexer
 from .repo_scanner import RepoScanner
+from .stores import AnalyzerCache
 from .validators import (
     NoHallucinationValidator,
     ValidationContext,
@@ -98,11 +101,8 @@ class Orchestrator:
         analyzers = self._select_analyzers(config)
         self.logger.debug("Selected %d analyzers", len(analyzers))
 
-        signals: List[Signal] = []
-        for analyzer in analyzers:
-            if analyzer.supports(manifest):
-                self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
-                signals.extend(analyzer.analyze(manifest))
+        cache = self._load_analyzer_cache(repo_path)
+        signals = self._execute_analyzers(manifest, analyzers, cache)
 
         builder = self._resolve_prompt_builder(config, repo_path)
 
@@ -232,11 +232,8 @@ class Orchestrator:
         analyzers = self._select_analyzers(config)
         self.logger.debug("Selected %d analyzers", len(analyzers))
 
-        signals: List[Signal] = []
-        for analyzer in analyzers:
-            if analyzer.supports(manifest):
-                self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
-                signals.extend(analyzer.analyze(manifest))
+        cache = self._load_analyzer_cache(repo_path)
+        signals = self._execute_analyzers(manifest, analyzers, cache)
 
         builder = self._resolve_prompt_builder(config, repo_path)
 
@@ -396,6 +393,88 @@ class Orchestrator:
         if config.token_budget_overrides:
             budgets.update(config.token_budget_overrides)
         return budgets
+
+    def _load_analyzer_cache(self, repo_path: Path) -> AnalyzerCache:
+        cache_path = repo_path / ".docgen" / "analyzers" / "cache.json"
+        return AnalyzerCache(cache_path)
+
+    def _execute_analyzers(
+        self,
+        manifest: RepoManifest,
+        analyzers: Sequence[Analyzer],
+        cache: AnalyzerCache,
+    ) -> List[Signal]:
+        fingerprint = self._manifest_fingerprint(manifest)
+        signals: List[Signal] = []
+        used_keys: List[str] = []
+        for analyzer in analyzers:
+            if not analyzer.supports(manifest):
+                continue
+            key = self._analyzer_cache_key(analyzer)
+            signature = self._analyzer_signature(analyzer)
+            used_keys.append(key)
+            cached = cache.get(key, signature=signature, fingerprint=fingerprint)
+            if cached is not None:
+                self.logger.debug("Using cached analyzer results for %s", key)
+                signals.extend(cached)
+                continue
+            self.logger.debug("Running analyzer %s", analyzer.__class__.__name__)
+            computed = list(analyzer.analyze(manifest))
+            cache.store(key, signature=signature, fingerprint=fingerprint, signals=computed)
+            signals.extend(computed)
+        cache.prune(used_keys)
+        cache.persist()
+        return signals
+
+    @staticmethod
+    def _analyzer_cache_key(analyzer: Analyzer) -> str:
+        return f"{analyzer.__class__.__module__}.{analyzer.__class__.__qualname__}"
+
+    @staticmethod
+    def _analyzer_signature(analyzer: Analyzer) -> str:
+        module = analyzer.__class__.__module__
+        qualname = analyzer.__class__.__qualname__
+        cache_version = (
+            getattr(analyzer, "cache_version", None)
+            or getattr(analyzer.__class__, "cache_version", None)
+            or getattr(analyzer, "__cache_version__", None)
+            or getattr(analyzer.__class__, "__cache_version__", None)
+            or "1"
+        )
+        try:
+            source = inspect.getsource(analyzer.__class__)
+        except (OSError, TypeError):
+            source_hash = f"{module}:{qualname}"
+        else:
+            source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        return f"{module}.{qualname}:{cache_version}:{source_hash}"
+
+    @staticmethod
+    def _manifest_fingerprint(manifest: RepoManifest) -> str:
+        entries = [
+            (
+                file.path.replace("\\", "/"),
+                file.hash or "",
+            )
+            for file in manifest.files
+            if Orchestrator._include_in_cache_fingerprint(file.path)
+        ]
+        entries.sort(key=lambda item: item[0])
+        digest = hashlib.sha256()
+        for path, file_hash in entries:
+            digest.update(path.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(file_hash.encode("utf-8"))
+            digest.update(b"\0")
+        digest.update(str(len(entries)).encode("utf-8"))
+        return digest.hexdigest()
+
+    @staticmethod
+    def _include_in_cache_fingerprint(path: str) -> bool:
+        normalized = path.replace("\\", "/").lower()
+        if normalized == "readme.md":
+            return False
+        return True
 
     def _fill_missing_sections(
         self,

@@ -57,6 +57,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 * Coordinates end-to-end pipelines (init, update, regenerate).
 * Computes *change impact* from Git diff; decides whether to regenerate full README or patch sections.
 * Schedules tasks and caches intermediate results.
+* Reuses analyzer outputs from `.docgen/analyzers/cache.json`, invalidating entries when file hashes or analyzer signatures change.
 * Emits structured logs (info by default, debug with `--verbose`), respects `.docgen.yml` `ci.watched_globs` to skip unrelated diffs, and substitutes fail-safe stubs when generation fails.
 * Supports dry-run previews (`docgen update --dry-run`) and records scorecards for each run under `.docgen/`.
 
@@ -124,7 +125,7 @@ Non-goals (for the POC): multi-repo orchestration, full website docs, API refere
 
 * Keeps generated drafts, logs, prompts, inputs/outputs, and diffs under `.docgen/` per repo.
 * Supports rollback and regression testing via “golden” READMEs.
-* Stores embedding cache (`embeddings.json`) and scorecards so subsequent runs are incremental.
+* Stores embedding cache (`embeddings.json`) and analyzer artifacts (`analyzers/cache.json`) with schema versioning so subsequent runs reuse work when file hashes remain unchanged.
 
 ### 3.10 Git Publisher
 

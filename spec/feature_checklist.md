@@ -82,7 +82,7 @@
 - [x] README scorecard (coverage, buildability, link validity, diff alignment, lint) **[NEXT]**
 
 ## 14) Performance & Caching
-- [ ] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
+- [x] Persist analyzer outputs & embeddings under `.docgen/` **[MVP]**
 - [x] Incremental RAG refresh (changed files only) **[NEXT]**
 
 ## 15) Error Handling & UX

@@ -7,7 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from docgen.analyzers import Analyzer
 from docgen.git.diff import DiffResult
+from docgen.models import Signal
 from docgen.orchestrator import Orchestrator, UpdateOutcome
 from docgen.prompting.builder import PromptBuilder, Section
 from docgen.prompting.constants import DEFAULT_SECTIONS
@@ -276,13 +278,32 @@ class _FailingPromptBuilder:
         raise RuntimeError("prompt builder exploded")
 
 
+class _CountingAnalyzer(Analyzer):
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def supports(self, manifest) -> bool:  # type: ignore[no-untyped-def]
+        return True
+
+    def analyze(self, manifest):  # type: ignore[no-untyped-def]
+        self.calls += 1
+        return [
+            Signal(
+                name="count",
+                value=str(self.calls),
+                source="counting",
+                metadata={"calls": self.calls},
+            )
+        ]
+
+
 def test_run_update_patches_targeted_sections(tmp_path: Path) -> None:
     repo_root = tmp_path / "sample"
     repo_root.mkdir()
     _seed_sample_repo(repo_root)
 
     init_orchestrator = Orchestrator()
-    init_orchestrator.run_init(str(repo_root))
+    init_orchestrator.run_init(str(repo_root), skip_validation=True)
 
     diff_analyzer = _StubDiffAnalyzer(["build_and_test"])
     publisher = RecordingPublisher()
@@ -450,3 +471,27 @@ def test_run_update_supports_dry_run(tmp_path: Path) -> None:
     assert "UPDATED features" in outcome.diff
     content = (repo_root / "README.md").read_text(encoding="utf-8")
     assert "UPDATED features" not in content
+
+
+def test_analyzer_cache_reuses_results_between_runs(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+
+    counting_analyzer = _CountingAnalyzer()
+    init_orchestrator = Orchestrator(analyzers=[counting_analyzer])
+    init_orchestrator.run_init(str(repo_root), skip_validation=True)
+
+    assert counting_analyzer.calls == 1
+
+    diff_analyzer = _StubDiffAnalyzer(["features"], changed_files=["src/app.py"])
+    cached_analyzer = _CountingAnalyzer()
+    update_orchestrator = Orchestrator(
+        analyzers=[cached_analyzer],
+        diff_analyzer=diff_analyzer,
+    )
+
+    outcome = update_orchestrator.run_update(str(repo_root), "origin/main", skip_validation=True)
+
+    assert outcome is None or isinstance(outcome, UpdateOutcome)
+    assert cached_analyzer.calls == 0

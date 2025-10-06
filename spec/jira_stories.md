@@ -35,7 +35,7 @@
   - Add regression fixtures asserting that disabling validation via config/CLI leaves runs untouched and that verbose logging enumerates flagged sentences.
 
 ## Story S-033 — Analyzer Artifact Persistence
-- **Status:** ☐ Not started
+- **Status:** ✔ Done
 - **Story Text:** Persist analyzer outputs alongside embeddings so repeated runs can reuse structured signals without reprocessing unchanged files.
 - **Dependencies already completed:** S-003 (Repo scanner), S-020 (embedding cache groundwork)
 - **Constraints:**
