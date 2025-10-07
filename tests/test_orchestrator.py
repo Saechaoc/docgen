@@ -23,7 +23,9 @@ class RecordingPublisher:
         self.calls: list[tuple[str, list[Path], str]] = []
         self.pr_calls: list[dict[str, object]] = []
 
-    def commit(self, repo_path: str, files, message: str) -> None:  # pragma: no cover - simple recorder
+    def commit(
+        self, repo_path: str, files, message: str
+    ) -> None:  # pragma: no cover - simple recorder
         self.calls.append((repo_path, [Path(f) for f in files], message))
 
     def publish_pr(
@@ -61,12 +63,16 @@ class RecordingLLMRunner:
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []
 
-    def run(self, prompt: str, *, system: str | None = None, max_tokens: int | None = None) -> str:
-        self.calls.append({
-            "prompt": prompt,
-            "system": system,
-            "max_tokens": max_tokens,
-        })
+    def run(
+        self, prompt: str, *, system: str | None = None, max_tokens: int | None = None
+    ) -> str:
+        self.calls.append(
+            {
+                "prompt": prompt,
+                "system": system,
+                "max_tokens": max_tokens,
+            }
+        )
         section_title = ""
         for line in prompt.splitlines():
             if line.startswith("Section: "):
@@ -74,7 +80,9 @@ class RecordingLLMRunner:
                 break
         if not section_title:
             section_title = f"Section {len(self.calls)}"
-        return f"{section_title} generated content"
+        return (
+            f"{section_title} generated content covering Python, fastapi, and pytest."
+        )
 
 
 def _seed_sample_repo(root: Path) -> None:
@@ -144,7 +152,7 @@ analyzers:
     content = readme_path.read_text(encoding="utf-8")
 
     assert "python -m pytest" not in content
-    assert "Primary languages" in content
+    assert "Primary stack" in content
 
 
 def test_run_init_commit_mode_triggers_publisher(tmp_path: Path) -> None:
@@ -181,9 +189,51 @@ def test_run_init_uses_llm_runner_streaming(tmp_path: Path) -> None:
 
     content = readme_path.read_text(encoding="utf-8")
     assert "generated content" in content
-    assert len(runner.calls) == len(DEFAULT_SECTIONS)
+    expected_titles = {
+        "Section: Introduction",
+        "Section: Features",
+        "Section: Architecture",
+        "Section: Deployment",
+    }
+    observed_titles = {
+        line.strip()
+        for call in runner.calls
+        for line in call["prompt"].splitlines()
+        if line.startswith("Section: ")
+    }
+    assert expected_titles.issubset(observed_titles)
+    assert len(runner.calls) == len(expected_titles)
     assert all(call["system"] == PromptBuilder.SYSTEM_PROMPT for call in runner.calls)
     assert all(call["max_tokens"] is None for call in runner.calls)
+
+
+def test_generation_mode_strict_with_override_limits_llm(tmp_path: Path) -> None:
+    repo_root = tmp_path / "sample"
+    repo_root.mkdir()
+    _seed_sample_repo(repo_root)
+    (repo_root / ".docgen.yml").write_text(
+        """
+generation:
+  mode: strict
+  sections:
+    architecture: true
+""",
+        encoding="utf-8",
+    )
+
+    runner = RecordingLLMRunner()
+    orchestrator = Orchestrator(llm_runner=runner)
+    readme_path = orchestrator.run_init(str(repo_root))
+
+    observed_titles = {
+        line.strip()
+        for call in runner.calls
+        for line in call["prompt"].splitlines()
+        if line.startswith("Section: ")
+    }
+    assert observed_titles == {"Section: Architecture"}
+    content = readme_path.read_text(encoding="utf-8")
+    assert "### High-Level Flow" in content
 
 
 def test_llm_runner_config_changes_are_respected(tmp_path: Path, monkeypatch) -> None:
@@ -195,7 +245,13 @@ def test_llm_runner_config_changes_are_respected(tmp_path: Path, monkeypatch) ->
             self.calls: list[tuple[str, str | None, int | None]] = []
             stub_instances.append(self)
 
-        def run(self, prompt: str, *, system: str | None = None, max_tokens: int | None = None) -> str:
+        def run(
+            self,
+            prompt: str,
+            *,
+            system: str | None = None,
+            max_tokens: int | None = None,
+        ) -> str:
             self.calls.append((prompt, system, max_tokens))
             return "Generated section"
 
@@ -244,14 +300,18 @@ llm:
 
 
 class _StubDiffAnalyzer:
-    def __init__(self, sections: list[str], changed_files: list[str] | None = None) -> None:
+    def __init__(
+        self, sections: list[str], changed_files: list[str] | None = None
+    ) -> None:
         self.sections = sections
         self.changed_files = changed_files or ["requirements.txt"]
         self.calls: list[tuple[str, str]] = []
 
     def compute(self, repo_path: str, diff_base: str) -> DiffResult:
         self.calls.append((repo_path, diff_base))
-        return DiffResult(base=diff_base, changed_files=self.changed_files, sections=self.sections)
+        return DiffResult(
+            base=diff_base, changed_files=self.changed_files, sections=self.sections
+        )
 
 
 class _StubPromptBuilder:
@@ -341,7 +401,7 @@ def test_run_init_falls_back_to_stub_on_prompt_failure(tmp_path: Path) -> None:
     readme_path = orchestrator.run_init(str(repo_root))
 
     content = readme_path.read_text(encoding="utf-8")
-    assert "placeholder README" in content
+    assert "placeholder introduction" in content
     assert "## Table of Contents" in content
 
 
@@ -364,10 +424,12 @@ def test_run_update_uses_stub_when_builder_fails(tmp_path: Path) -> None:
     assert isinstance(outcome, UpdateOutcome)
     assert not outcome.dry_run
     content = (repo_root / "README.md").read_text(encoding="utf-8")
-    assert "docgen could not populate the Build & Test section automatically." in content
+    assert "Outline how contributors lint, test, and build the project." in content
 
 
-def test_run_update_with_llm_runner_and_custom_builder_falls_back(tmp_path: Path) -> None:
+def test_run_update_with_llm_runner_and_custom_builder_falls_back(
+    tmp_path: Path,
+) -> None:
     repo_root = tmp_path / "sample"
     repo_root.mkdir()
     _seed_sample_repo(repo_root)
@@ -491,7 +553,9 @@ def test_analyzer_cache_reuses_results_between_runs(tmp_path: Path) -> None:
         diff_analyzer=diff_analyzer,
     )
 
-    outcome = update_orchestrator.run_update(str(repo_root), "origin/main", skip_validation=True)
+    outcome = update_orchestrator.run_update(
+        str(repo_root), "origin/main", skip_validation=True
+    )
 
     assert outcome is None or isinstance(outcome, UpdateOutcome)
     assert cached_analyzer.calls == 0

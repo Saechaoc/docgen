@@ -163,8 +163,12 @@ class DiffAnalyzer:
         changed_files = self._changed_files(repo, diff_base)
         sections = self._sections_for_changes(changed_files)
         ordered_sections = sorted(sections, key=_section_sort_key)
-        filtered_files = [path for path in changed_files if path not in self._IGNORED_PATHS]
-        return DiffResult(base=diff_base, changed_files=filtered_files, sections=ordered_sections)
+        filtered_files = [
+            path for path in changed_files if path not in self._IGNORED_PATHS
+        ]
+        return DiffResult(
+            base=diff_base, changed_files=filtered_files, sections=ordered_sections
+        )
 
     # ------------------------------------------------------------------
     # Internals
@@ -179,9 +183,22 @@ class DiffAnalyzer:
             stripped = line.strip()
             if not stripped:
                 continue
-            path = stripped.split(maxsplit=1)[-1]
-            if path not in files:
-                files.append(path)
+            parts = stripped.split(maxsplit=1)
+            if len(parts) < 2:
+                continue
+            path_info = parts[1]
+            if " -> " in path_info:
+                candidates = [
+                    segment.strip().strip('"') for segment in path_info.split(" -> ", 1)
+                ]
+            else:
+                candidates = [path_info.strip().strip('"')]
+            for candidate in candidates:
+                normalized = candidate.strip()
+                if not normalized:
+                    continue
+                if normalized not in files:
+                    files.append(normalized)
         return files
 
     def _sections_for_changes(self, paths: Sequence[str]) -> Set[str]:

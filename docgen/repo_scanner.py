@@ -230,7 +230,9 @@ def _store_manifest_cache(root: Path, entries: Dict[str, Dict[str, object]]) -> 
         cache_dir.mkdir(parents=True, exist_ok=True)
         cache_path = cache_dir / _CACHE_FILENAME
         payload = {"version": _CACHE_VERSION, "files": entries}
-        cache_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        cache_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
+        )
     except OSError:
         pass
 
@@ -238,7 +240,9 @@ def _store_manifest_cache(root: Path, entries: Dict[str, Dict[str, object]]) -> 
 def _iter_files(root: Path, rules: Sequence[IgnoreRule]) -> Iterator[Path]:
     for dirpath, dirnames, filenames in os.walk(root):
         current_dir = Path(dirpath)
-        rel_dir = current_dir.relative_to(root).as_posix() if current_dir != root else ""
+        rel_dir = (
+            current_dir.relative_to(root).as_posix() if current_dir != root else ""
+        )
 
         dirnames[:] = [name for name in dirnames if name not in _EXCLUDED_DIRS]
 
@@ -306,7 +310,9 @@ class RepoScanner:
             rel_path = path.relative_to(root_path).as_posix()
             stat_result = path.stat()
             size = stat_result.st_size
-            mtime_ns = getattr(stat_result, "st_mtime_ns", int(stat_result.st_mtime * 1_000_000_000))
+            mtime_ns = getattr(
+                stat_result, "st_mtime_ns", int(stat_result.st_mtime * 1_000_000_000)
+            )
 
             cached = cache.get(rel_path)
             if (

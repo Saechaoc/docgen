@@ -21,12 +21,17 @@ class PatternAnalyzer(Analyzer):
 
         signals: List[Signal] = []
 
-        docker_files = _collect(paths, {"Dockerfile", "docker-compose.yml", "docker-compose.yaml"})
+        docker_files = _collect(
+            paths, {"Dockerfile", "docker-compose.yml", "docker-compose.yaml"}
+        )
         if docker_files:
             quickstart: List[str] = []
             if "Dockerfile" in docker_files:
                 quickstart.append("docker build -t <image> .")
-            if any(name in docker_files for name in {"docker-compose.yml", "docker-compose.yaml"}):
+            if any(
+                name in docker_files
+                for name in {"docker-compose.yml", "docker-compose.yaml"}
+            ):
                 quickstart.append("docker compose up")
             signals.append(
                 Signal(

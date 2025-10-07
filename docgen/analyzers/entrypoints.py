@@ -124,7 +124,7 @@ class EntryPointAnalyzer(Analyzer):
                 )
                 continue
 
-            if "if __name__ == \"__main__\":" in text:
+            if 'if __name__ == "__main__":' in text:
                 command = f"python {path.as_posix()}"
                 entries.append(
                     EntryPoint(
@@ -159,7 +159,11 @@ class EntryPointAnalyzer(Analyzer):
         for priority, script in enumerate(preferred_scripts, start=30):
             if script in scripts:
                 command = build_node_script_command(script, manager)
-                label = f"{manager.title()} {script}" if script != "start" else "Start application"
+                label = (
+                    f"{manager.title()} {script}"
+                    if script != "start"
+                    else "Start application"
+                )
                 entries.append(
                     EntryPoint(
                         name=f"node.{script}",

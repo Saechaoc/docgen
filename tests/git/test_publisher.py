@@ -113,7 +113,9 @@ def test_publisher_publish_pr_applies_labels(tmp_path: Path) -> None:
     )
 
     assert result is True
-    label_call = [call for call in calls if call[0][:4] == ["gh", "pr", "edit", "docgen/test"]][-1]
+    label_call = [
+        call for call in calls if call[0][:4] == ["gh", "pr", "edit", "docgen/test"]
+    ][-1]
     assert "--add-label" in label_call[0]
 
 
@@ -131,7 +133,7 @@ def test_publisher_publish_pr_updates_existing(tmp_path: Path) -> None:
         if args == ["git", "status", "--porcelain"]:
             return " M README.md\n"
         if args[:4] == ["gh", "pr", "view", "docgen/test"]:
-            return "{\"number\":1}"
+            return '{"number":1}'
         return ""
 
     publisher = Publisher(runner=runner)

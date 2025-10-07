@@ -69,3 +69,21 @@ def test_diff_analyzer_infers_code_sections_from_suffix(tmp_path: Path) -> None:
 
     assert result.sections[:3] == ["intro", "features", "architecture"]
     assert "docgen/analyzer.py" in result.changed_files
+
+
+def test_diff_analyzer_handles_renamed_files(tmp_path: Path) -> None:
+    repo = _make_repo(tmp_path)
+
+    def runner(args, cwd, capture_output=False):  # type: ignore[no-untyped-def]
+        if args[:3] == ["git", "diff", "--name-only"]:
+            return ""
+        if args[:2] == ["git", "status"]:
+            return "R  setup.py -> pyproject.toml\n"
+        return ""
+
+    analyzer = DiffAnalyzer(runner=runner)
+    result = analyzer.compute(str(repo), "origin/main")
+
+    assert "build_and_test" in result.sections
+    assert "pyproject.toml" in result.changed_files
+    assert all("->" not in path for path in result.changed_files)

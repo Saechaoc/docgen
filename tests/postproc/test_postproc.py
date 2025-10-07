@@ -30,6 +30,13 @@ def test_table_of_contents_builder_inserts_placeholder() -> None:
     assert "<!-- docgen:end:toc -->" in result
 
 
+def test_table_of_contents_builder_slug_matches_github() -> None:
+    md = "# Project\n\n<!-- docgen:toc -->\n\n" "## Build & Test\n" "## Build & Test\n"
+    result = TableOfContentsBuilder().build(md)
+    assert "- [Build & Test](#build--test)" in result
+    assert "- [Build & Test](#build--test-1)" in result
+
+
 def test_table_of_contents_builder_replaces_existing_block() -> None:
     md = (
         "# Project\n\n"
@@ -62,6 +69,16 @@ def test_badge_manager_inserts_block() -> None:
     result = manager.apply(markdown)
     assert "<!-- docgen:begin:badges -->" in result
     assert result.count("Build Status") == 1
+    assert "](#" not in result
+
+
+def test_markdown_linter_normalises_unicode_punctuation() -> None:
+    markdown = "- Item — example“quote”"
+    linted = MarkdownLinter().lint(markdown)
+    assert "—" not in linted
+    assert "“" not in linted
+    assert "”" not in linted
+    assert '- Item - example"quote"' in linted
 
 
 def test_link_validator_detects_missing_file(tmp_path: Path) -> None:

@@ -91,8 +91,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "service",
         help="Start the FastAPI service for docgen operations.",
     )
-    service_parser.add_argument("--host", default="0.0.0.0", help="Host address to bind (default: 0.0.0.0).")
-    service_parser.add_argument("--port", type=int, default=8000, help="Port to bind (default: 8000).")
+    service_parser.add_argument(
+        "--host", default="0.0.0.0", help="Host address to bind (default: 0.0.0.0)."
+    )
+    service_parser.add_argument(
+        "--port", type=int, default=8000, help="Port to bind (default: 8000)."
+    )
 
     return parser
 
@@ -115,7 +119,9 @@ def main(argv: list[str] | None = None) -> None:
         except FileExistsError as exc:
             parser.exit(1, f"{exc}\n")
         except Exception as exc:  # pragma: no cover - defensive guard
-            parser.exit(1, f"docgen init failed: {exc}\nRun with --verbose for more details.\n")
+            parser.exit(
+                1, f"docgen init failed: {exc}\nRun with --verbose for more details.\n"
+            )
         rel_path = _relativize(readme_path)
         print(f"README created at {rel_path}")
     elif args.command == "update":
@@ -129,9 +135,15 @@ def main(argv: list[str] | None = None) -> None:
         except FileNotFoundError as exc:
             parser.exit(1, f"{exc}\n")
         except RuntimeError as exc:
-            parser.exit(1, f"docgen update failed: {exc}\nRun with --verbose for more details.\n")
+            parser.exit(
+                1,
+                f"docgen update failed: {exc}\nRun with --verbose for more details.\n",
+            )
         except Exception as exc:  # pragma: no cover - defensive guard
-            parser.exit(1, f"docgen update failed: {exc}\nRun with --verbose for more details.\n")
+            parser.exit(
+                1,
+                f"docgen update failed: {exc}\nRun with --verbose for more details.\n",
+            )
         dry_run = bool(getattr(args, "dry_run", False))
         if result is None:
             message = "README already up to date"
@@ -153,7 +165,10 @@ def main(argv: list[str] | None = None) -> None:
         )
     elif args.command == "service":
         try:
-            run_service(host=getattr(args, "host", "0.0.0.0"), port=int(getattr(args, "port", 8000)))
+            run_service(
+                host=getattr(args, "host", "0.0.0.0"),
+                port=int(getattr(args, "port", 8000)),
+            )
         except Exception as exc:  # pragma: no cover - runtime safeguard
             parser.exit(1, f"docgen service failed: {exc}\n")
     else:  # pragma: no cover - argparse enforces choices
