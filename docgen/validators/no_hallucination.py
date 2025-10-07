@@ -83,13 +83,14 @@ class NoHallucinationValidator(Validator):
                 )
                 if overlap >= self._min_overlap:
                     continue
-                missing = self._missing_with_synonyms(
-                    tokens, context.evidence, section_name, self._allowed_tiers
+                global_overlap = self._count_overlap(
+                    tokens, context.evidence, None, self._allowed_tiers
                 )
-                if not missing:
-                    missing = self._missing_with_synonyms(
-                        tokens, context.evidence, None, self._allowed_tiers
-                    )
+                if global_overlap >= self._min_overlap:
+                    continue
+                missing = self._missing_with_synonyms(
+                    tokens, context.evidence, None, self._allowed_tiers
+                )
                 detail = self._build_detail(missing, context.evidence)
                 issues.append(
                     ValidationIssue(

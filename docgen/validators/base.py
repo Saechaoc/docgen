@@ -325,19 +325,12 @@ def build_evidence_index(
                 index.add(
                     as_str, section=name, source=f"context:{name}", tier="observed"
                 )
-                index.add(
-                    as_str, section=None, source=f"context:{name}", tier="observed"
-                )
         for meta_value in _flatten(section.metadata):
             as_str = str(meta_value)
             index.add(as_str, section=name, source=f"metadata:{name}", tier="observed")
-            index.add(as_str, section=None, source=f"metadata:{name}", tier="observed")
         if section.title:
             index.add(
                 section.title, section=name, source=f"title:{name}", tier="observed"
-            )
-            index.add(
-                section.title, section=None, source=f"title:{name}", tier="observed"
             )
     return index
 

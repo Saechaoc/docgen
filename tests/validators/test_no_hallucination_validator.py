@@ -189,3 +189,72 @@ def test_validator_strict_requires_observed_terms() -> None:
 
     assert len(issues) == 1
     assert issues[0].section == "deployment"
+
+
+def test_validator_does_not_share_context_between_sections() -> None:
+    signals = []
+    sections = {
+        "architecture": Section(
+            name="architecture",
+            title="Architecture",
+            body="Kubernetes controllers define the service topology.",
+            metadata={
+                "context": ["Kubernetes cluster manages workloads."],
+                "evidence": {"signals": [], "context_chunks": 1},
+            },
+        ),
+        "deployment": Section(
+            name="deployment",
+            title="Deployment",
+            body="Deployments run on Kubernetes clusters managed by the platform.",
+            metadata={
+                "context": [],
+                "evidence": {"signals": [], "context_chunks": 0},
+            },
+        ),
+    }
+    context = ValidationContext(
+        manifest=_manifest(),
+        signals=signals,
+        sections=sections,
+        evidence=build_evidence_index(signals, sections),
+    )
+    validator = NoHallucinationValidator()
+
+    issues = validator.validate(context)
+
+    assert len(issues) == 1
+    assert issues[0].section == "deployment"
+
+
+def test_validator_uses_global_signals_when_section_missing() -> None:
+    signals = [
+        Signal(
+            name="dependencies.framework",
+            value="FastAPI",
+            source="deps",
+            metadata={"packages": ["fastapi"]},
+        )
+    ]
+    sections = {
+        "features": Section(
+            name="features",
+            title="Features",
+            body="FastAPI support is provided for building HTTP APIs.",
+            metadata={
+                "context": [],
+                "evidence": {"signals": ["dependencies.framework"], "context_chunks": 0},
+            },
+        )
+    }
+    context = ValidationContext(
+        manifest=_manifest(),
+        signals=signals,
+        sections=sections,
+        evidence=build_evidence_index(signals, sections),
+    )
+    validator = NoHallucinationValidator()
+
+    issues = validator.validate(context)
+
+    assert issues == []
