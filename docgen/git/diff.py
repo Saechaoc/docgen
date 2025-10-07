@@ -183,9 +183,22 @@ class DiffAnalyzer:
             stripped = line.strip()
             if not stripped:
                 continue
-            path = stripped.split(maxsplit=1)[-1]
-            if path not in files:
-                files.append(path)
+            parts = stripped.split(maxsplit=1)
+            if len(parts) < 2:
+                continue
+            path_info = parts[1]
+            if " -> " in path_info:
+                candidates = [
+                    segment.strip().strip('"') for segment in path_info.split(" -> ", 1)
+                ]
+            else:
+                candidates = [path_info.strip().strip('"')]
+            for candidate in candidates:
+                normalized = candidate.strip()
+                if not normalized:
+                    continue
+                if normalized not in files:
+                    files.append(normalized)
         return files
 
     def _sections_for_changes(self, paths: Sequence[str]) -> Set[str]:
