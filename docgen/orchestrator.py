@@ -652,6 +652,13 @@ class Orchestrator:
         settings = self._compute_validation_settings(config)
         issues: List[ValidationIssue] = []
 
+        validatable_sections = {
+            name: section
+            for name, section in sections.items()
+            if self._should_validate_section(section)
+        }
+        skipped_count = len(sections) - len(validatable_sections)
+
         if skip_validation:
             reason = skip_reason or "override"
             self.logger.info("Skipping README validation for this run (%s).", reason)
@@ -688,6 +695,29 @@ class Orchestrator:
             )
             return sections
 
+        if not validatable_sections:
+            reason = skip_reason or "deterministic"
+            if skipped_count:
+                self.logger.info(
+                    "Skipping README validation; %d deterministic section(s) detected.",
+                    skipped_count,
+                )
+            else:
+                self.logger.info("Skipping README validation; no sections require checks.")
+            self._write_validation_report(
+                repo_path,
+                status="skipped",
+                mode=settings.mode,
+                mode_source=settings.source,
+                allow_inferred=settings.allow_inferred,
+                validators=[],
+                issues=issues,
+                sections=sections,
+                request_sections=request_sections,
+                skip_reason=reason,
+            )
+            return sections
+
         validators = self._resolve_validators(settings)
         if not validators:
             self.logger.debug("No validators configured; skipping validation stage")
@@ -709,9 +739,16 @@ class Orchestrator:
         context = ValidationContext(
             manifest=manifest,
             signals=signals,
-            sections=sections,
+            sections=validatable_sections,
             evidence=evidence,
         )
+
+        if skipped_count:
+            self.logger.debug(
+                "Validation limited to %d LLM-generated section(s); skipping %d deterministic section(s).",
+                len(validatable_sections),
+                skipped_count,
+            )
 
         for validator in validators:
             issues.extend(validator.validate(context))
@@ -1266,6 +1303,14 @@ class Orchestrator:
         }
 
     @staticmethod
+    def _should_validate_section(section: Section) -> bool:
+        metadata = section.metadata if isinstance(section.metadata, dict) else {}
+        flag = metadata.get("llm")
+        if flag is None:
+            return True
+        return bool(flag)
+
+    @staticmethod
     def _looks_like_prompt_echo(body: str) -> bool:
         if not body:
             return True
@@ -1384,10 +1429,18 @@ class Orchestrator:
                     "llm_fallback_reason"
                 ) not in {None, "validation_failed"}:
                     continue
-            sections[name] = Orchestrator._clone_section(
+            replacement = Orchestrator._clone_section(
                 fallback, reason="validation_failed"
             )
+            fallback_meta = (
+                fallback.metadata if isinstance(fallback.metadata, dict) else {}
+            )
+            if fallback_meta.get("llm") is True or any(
+                key in fallback_meta for key in ("context", "evidence")
+            ):
+                replacement.metadata["llm"] = True
             replaced = True
+            sections[name] = replacement
         return replaced
 
     def _render_readme_from_sections(
